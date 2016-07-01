@@ -280,51 +280,13 @@
 							org.oddgen.bitemp.sqldev.model,
 							org.oddgen.bitemp.sqldev.resources
 						</Export-Package>
-						<!-- TODO: remove unnecessary bundles, missing bundles might lead to 
-							strange runtime behavior, therefore the list is extensive -->
 						<Require-Bundle>
-							oracle.external.nlsrtl,
-							oracle.external.xmlparser,
-							oracle.javatools,
+							org.oddgen.sqldev,
 							oracle.javatools-nodeps,
-							oracle.ide,
-							oracle.ide.ceditor,
-							oracle.ide.status,
-							oracle.ide.audit,
-							oracle.peek,
-							oracle.ide.navigator,
-							oracle.ide.runner,
-							oracle.ide.webbrowser,
-							oracle.ide.externaltools,
-							oracle.ide.inspector,
-							oracle.ide.palette2,
 							oracle.uic,
 							oracle.idert,
-							oracle.javaxide,
-							oracle.icons,
-							oracle.jdeveloper.java.core,
-							oracle.jdeveloper.common,
-							oracle.layout-managers,
-							oracle.db-api,
-							oracle.db-api-impl,
-							oracle.db-ca,
-							oracle.jdev-cm,
 							oracle.ide.db,
-							oracle.jdeveloper.db.connection,
-							oracle.ide.db.explorer,
-							oracle.jewt-dbui,
-							oracle.orahelp-helpshare,
-							oracle.orahelp-ohj,
-							oracle.external.oracle-ice,
-							oracle.balipi,
-							oracle.jewt-core,
-							oracle.external.balishare,
-							oracle.external.jdbc,
-							oracle.sqldeveloper,
-							oracle.sqldeveloper.utils-nodeps,
-							oracle.sqldeveloper.utils,
-							oracle.sqldeveloper.worksheet,
-							oracle.external.itext
+							oracle.sqldeveloper
 						</Require-Bundle>
 						<Import-Package>!*</Import-Package>
 						<Embed-Directory>lib</Embed-Directory>
