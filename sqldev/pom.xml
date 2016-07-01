@@ -451,7 +451,7 @@
 
 	<!-- More Project Information -->
 	<name>org.oddgen.bitemp.sqldev</name>
-	<description>SQL Developer extension to generate non-temporal, uni-temporal and bi-temporal table APIs.</description>
+	<description>SQL Developer extension to generate non-temporal, uni-temporal and bi-temporal table API.</description>
 	<url>https://github.com/oddgen/bitemp</url>
 	<inceptionYear>2016</inceptionYear>
 	<licenses>
