@@ -7,7 +7,7 @@
 		<triggers>
 			<settings-ui-hook>
 				<page id="BITEMP_PREFERENCES_PAGE" parent-idref="/preferences">
-					<label>bitemp</label>
+					<label>${PREF_LABEL}</label>
 					<traversable-class>org.oddgen.bitemp.sqldev.PreferencePanel
 					</traversable-class>
 				</page>
