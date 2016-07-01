@@ -21,6 +21,8 @@ import java.util.LinkedHashMap
 import java.util.List
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.generators.OddgenGenerator
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
 class BitempTapiGenerator implements OddgenGenerator {
 	
@@ -33,11 +35,20 @@ class BitempTapiGenerator implements OddgenGenerator {
 	}
 
 	override getObjectTypes(Connection conn) {
-		return #[]
+		return #["TABLE"]
 	}
 
 	override getObjectNames(Connection conn, String objectType) {
-		return #[]
+		val sql = '''
+			SELECT object_name
+			  FROM user_objects
+			 WHERE object_type = ?
+			   AND generated = 'N'
+			ORDER BY object_name
+		'''
+		val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
+		val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
+		return objectNames
 	}
 
 	override getParams(Connection conn, String objectType, String objectName) {
