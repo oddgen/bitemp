@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<updates version="2.0"
+  xmlns="http://xmlns.oracle.com/jdeveloper/updatecenter"
+  xmlns:u="http://xmlns.oracle.com/jdeveloper/update">
+    <u:update id="org.oddgen.bitemp.sqldev">
+        <u:name>#EXTENSION_NAME#</u:name>
+        <u:version>#EXTENSION_VERSION#</u:version>
+        <u:author>#EXTENSION_OWNER#</u:author>
+        <u:author-url>https://www.oddgen.org/</u:author-url>
+		<u:description><![CDATA[SQL Developer extension to generate non-temporal, uni-temporal and bi-temporal table APIs.]]></u:description>
+        <u:bundle-url>https://github.com/oddgen/bitemp/releases/download/v#EXTENSION_SHORT_VERSION#/#EXTENSION_DEPLOYABLE#</u:bundle-url>
+    </u:update>
+</updates>

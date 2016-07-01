@@ -1,0 +1,17 @@
+<extension id="org.oddgen.bitemp.sqldev" version="#EXTENSION_VERSION#"
+	esdk-version="2.0" xmlns="http://jcp.org/jsr/198/extension-manifest"
+	rsbundle-class="org.oddgen.bitemp.sqldev.resources.BitempResources">
+	<name rskey="EXTENSION_NAME" />
+	<owner rskey="EXTENSION_OWNER" />
+	<trigger-hooks xmlns="http://xmlns.oracle.com/ide/extension">
+		<triggers>
+			<settings-ui-hook>
+				<page id="BITEMP_PREFERENCES_PAGE" parent-idref="/preferences">
+					<label>bitemp</label>
+					<traversable-class>org.oddgen.bitemp.sqldev.PreferencePanel
+					</traversable-class>
+				</page>
+			</settings-ui-hook>
+		</triggers>
+	</trigger-hooks>
+</extension>
