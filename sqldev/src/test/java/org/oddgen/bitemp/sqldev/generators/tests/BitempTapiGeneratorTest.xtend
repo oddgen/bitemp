@@ -27,12 +27,12 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 
 	@Test
 	def getName() {
-		Assert.assertEquals(BitempResources.get("GEN_NAME"), gen.getName(dataSource.connection))
+		Assert.assertEquals(BitempResources.get("GEN_TAPI_NAME"), gen.getName(dataSource.connection))
 	}
 
 	@Test
 	def getDescription() {
-		Assert.assertEquals(BitempResources.get("GEN_DESCRIPTION"), gen.getDescription(dataSource.connection))
+		Assert.assertEquals(BitempResources.get("GEN_TAPI_DESCRIPTION"), gen.getDescription(dataSource.connection))
 	}
 
 	@Test

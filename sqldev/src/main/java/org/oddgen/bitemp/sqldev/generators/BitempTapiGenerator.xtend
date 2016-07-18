@@ -26,12 +26,28 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
 class BitempTapiGenerator implements OddgenGenerator {
 	
+	public static String PREF_GEN_VALID_TIME_LABEL = BitempResources.get("PREF_GEN_VALID_TIME_LABEL")
+	public static String PREF_GEN_TRANSACTION_TIME_LABEL = BitempResources.get("PREF_GEN_TRANSACTION_TIME_LABEL")
+	public static String PREF_FLASHBACK_ARCHIVE_NAME_LABEL = BitempResources.get("PREF_FLASHBACK_ARCHIVE_NAME_LABEL")
+	public static String PREF_VALID_FROM_COL_NAME_LABEL = BitempResources.get("PREF_VALID_FROM_COL_NAME_LABEL")
+	public static String PREF_VALID_TO_COL_NAME_LABEL = BitempResources.get("PREF_VALID_FROM_TO_NAME_LABEL")
+	public static String PREF_IS_DELETED_COL_NAME_LABEL = BitempResources.get("PREF_IS_DELETED_COL_NAME_LABEL")
+	public static String PREF_OBJECT_TYPE_SUFFIX_LABEL = BitempResources.get("PREF_OBJECT_TYPE_SUFFIX_LABEL")
+	public static String PREF_COLLECTION_TYPE_SUFFIX_LABEL = BitempResources.get("PREF_COLLECTION_TYPE_SUFFIX_LABEL")
+	public static String PREF_LATEST_TABLE_SUFFIX_LABEL = BitempResources.get("PREF_HISTORY_TABLE_SUFFIX_LABEL")
+	public static String PREF_HISTORY_TABLE_SUFFIX_LABEL = BitempResources.get("PREF_HISTORY_TABLE_SUFFIX_LABEL")
+	public static String PREF_HISTORY_SEQUENCE_SUFFIX_LABEL = BitempResources.get("PREF_HISTORY_SEQUENCE_SUFFIX_LABEL")
+	public static String PREF_HISTORY_VIEW_SUFFIX_LABEL = BitempResources.get("PREF_HISTORY_VIEW_SUFFIX_LABEL")
+	public static String PREF_IOT_SUFFIX_LABEL = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
+	public static String PREF_API_PACKAGE_SUFFIX_LABEL = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
+	public static String PREF_API_HOOK_PACKAGE_SUFFIX_LABEL = BitempResources.get("PREF_API_HOOK_PACKAGE_SUFFIX_LABEL")	
+
 	override getName(Connection conn) {
-		return BitempResources.get("GEN_NAME")
+		return BitempResources.get("GEN_TAPI_NAME")
 	}
 
 	override getDescription(Connection conn) {
-		return BitempResources.get("GEN_DESCRIPTION")
+		return BitempResources.get("GEN_TAPI_DESCRIPTION")
 	}
 
 	override getObjectTypes(Connection conn) {

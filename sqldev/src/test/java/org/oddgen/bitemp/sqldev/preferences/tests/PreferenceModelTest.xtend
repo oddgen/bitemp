@@ -25,7 +25,7 @@ class PreferenceModelTest {
 	def testDefaultValues() {
 		val PreferenceModel model = PreferenceModel.getInstance(null)
 		Logger.info(this, "model: " + model)
-		Assert.assertFalse(model.transactionTimeDefault)
-		Assert.assertTrue(model.validTimeDefault)
+		Assert.assertFalse(model.genTransactionTime)
+		Assert.assertTrue(model.genValidTime)
 	}
 }

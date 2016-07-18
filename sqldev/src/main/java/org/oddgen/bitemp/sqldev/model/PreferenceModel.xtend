@@ -31,31 +31,154 @@ class PreferenceModel extends HashStructureAdapter {
 		return new PreferenceModel(findOrCreate(prefs, DATA_KEY))
 	}
 
-	/** 
-	 * default value for transaction time
-	 */
-	static final String KEY_TRANSACTION_TIME_DEFAULT = "transactionTimeDefault"
+	static final String KEY_GEN_VALID_TIME = "genValidTime"
+	static final String KEY_GEN_TRANSACTION_TIME = "genTransactionTime"
+	static final String KEY_FLASHBACK_ARCHIVE_NAME = "flashbackArchiveName"
+	static final String KEY_VALID_FROM_COL_NAME = "validFromColName"
+	static final String KEY_VALID_TO_COL_NAME = "validToColName"
+	static final String KEY_IS_DELETED_COL_NAME = "isDeletedColName"
+	static final String KEY_OBJECT_TYPE_SUFFIX = "objectTypeSuffix"
+	static final String KEY_COLLECTION_TYPE_SUFFIX = "collectionTypeSuffix"
+	static final String KEY_LATEST_TABLE_SUFFIX = "latestTableSuffix"
+	static final String KEY_HISTORY_TABLE_SUFFIX = "historyTableSuffix"
+	static final String KEY_HISTORY_SEQUENCE_SUFFIX = "historySequenceSuffix"
+	static final String KEY_HISTORY_VIEW_SUFFIX = "historyViewSuffix"
+	static final String KEY_IOT_SUFFIX = "iotSuffix"
+	static final String KEY_API_PACKAGE_SUFFIX = "apiPackageSuffix"
+	static final String KEY_API_HOOK_PACKAGE_SUFFIX = "apiHookPackageSuffix"	
 
-	/**
-	 * default value for valid time
-	 */
-	static final String KEY_VALID_TIME_DEFAULT = "validTimeDefault"
-
-	def isTransactionTimeDefault() {
-		return getHashStructure.getBoolean(PreferenceModel.KEY_TRANSACTION_TIME_DEFAULT, false)
+	def isGenValidTime() {
+		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_VALID_TIME, true)
 	}
 
-	def setTransactionTimeDefault(boolean transactionTimeDefault) {
-		getHashStructure.putBoolean(PreferenceModel.KEY_TRANSACTION_TIME_DEFAULT, transactionTimeDefault)
+	def setGenValidTime(boolean validTimeDefault) {
+		getHashStructure.putBoolean(PreferenceModel.KEY_GEN_VALID_TIME, validTimeDefault)
 	}
 
-	def isValidTimeDefault() {
-		return getHashStructure.getBoolean(PreferenceModel.KEY_VALID_TIME_DEFAULT, true)
+	def isGenTransactionTime() {
+		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_TRANSACTION_TIME, false)
 	}
 
-	def setValidTimeDefault(boolean validTimeDefault) {
-		getHashStructure.putBoolean(PreferenceModel.KEY_VALID_TIME_DEFAULT, validTimeDefault)
+	def setGenTransactionTime(boolean transactionTimeDefault) {
+		getHashStructure.putBoolean(PreferenceModel.KEY_GEN_TRANSACTION_TIME, transactionTimeDefault)
 	}
+	
+	def getFlashbackArchiveName() {
+		return getHashStructure.getString(PreferenceModel.KEY_FLASHBACK_ARCHIVE_NAME, "")
+	}
+	
+	def setFlashbackArchiveName(String flashbackArchiveName) {
+		getHashStructure.putString(PreferenceModel.KEY_VALID_TO_COL_NAME, flashbackArchiveName)
+		
+	}
+
+	def getValidFromColName() {
+		return getHashStructure.getString(PreferenceModel.KEY_VALID_FROM_COL_NAME, "valid_from")
+	}
+	
+	def setValidFromColName(String validFromColName) {
+		getHashStructure.putString(PreferenceModel.KEY_VALID_FROM_COL_NAME, validFromColName)
+		
+	}
+
+	def getValidToColName() {
+		return getHashStructure.getString(PreferenceModel.KEY_VALID_TO_COL_NAME, "valid_to")
+	}
+	
+	def setValidToColName(String validToColName) {
+		getHashStructure.putString(PreferenceModel.KEY_VALID_TO_COL_NAME, validToColName)
+		
+	}
+
+	def getIsDeletedColName() {
+		return getHashStructure.getString(PreferenceModel.KEY_IS_DELETED_COL_NAME, "is_deleted")
+	}
+	
+	def setIsDeletedColName(String isDeletedColName) {
+		getHashStructure.putString(PreferenceModel.KEY_IS_DELETED_COL_NAME, isDeletedColName)
+		
+	}
+
+	def getObjectTypeSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_OBJECT_TYPE_SUFFIX, "_ot")
+	}
+	
+	def setObjectTypeSuffix(String objectTypeSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_OBJECT_TYPE_SUFFIX, objectTypeSuffix)
+		
+	}
+
+	def getCollectionTypeSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_COLLECTION_TYPE_SUFFIX, "_ct")
+	}
+	
+	def setCollectionTypeSuffix(String objectTypeSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_COLLECTION_TYPE_SUFFIX, objectTypeSuffix)
+		
+	}
+	
+	def getLatestTableSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_LATEST_TABLE_SUFFIX, "_l")
+	}
+	
+	def setLatestTableSuffix(String latestTableSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_LATEST_TABLE_SUFFIX, latestTableSuffix)
+		
+	}	
+
+	def getHistoryTableSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_HISTORY_TABLE_SUFFIX, "_h")
+	}
+	
+	def setHistoryTableSuffix(String historyTableSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_HISTORY_TABLE_SUFFIX, historyTableSuffix)
+		
+	}	
+
+	def getHistorySequenceSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_HISTORY_SEQUENCE_SUFFIX, "_seq")
+	}
+	
+	def setHistorySequenceSuffix(String historySequenceSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_HISTORY_SEQUENCE_SUFFIX, historySequenceSuffix)
+		
+	}	
+
+	def getHistoryViewSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_HISTORY_VIEW_SUFFIX, "_v")
+	}
+	
+	def setHistoryViewSuffix(String historyViewSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_HISTORY_VIEW_SUFFIX, historyViewSuffix)
+		
+	}	
+
+	def getIotSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_IOT_SUFFIX, "_trg")
+	}
+	
+	def setIotSuffix(String iotSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_IOT_SUFFIX, iotSuffix)
+		
+	}	
+
+	def getApiPackageSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_API_PACKAGE_SUFFIX, "_api")
+	}
+	
+	def setApiPackageSuffix(String apiPackageSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_API_PACKAGE_SUFFIX, apiPackageSuffix)
+		
+	}	
+
+	def getApiHookPackageSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_API_HOOK_PACKAGE_SUFFIX, "_hook")
+	}
+	
+	def setApiHookPackageSuffix(String apiHookPackageSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_API_HOOK_PACKAGE_SUFFIX, apiHookPackageSuffix)
+		
+	}	
 
 	override toString() {
 		new ToStringBuilder(this).addAllFields.toString
