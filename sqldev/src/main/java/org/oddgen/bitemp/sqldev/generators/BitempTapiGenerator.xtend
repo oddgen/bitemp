@@ -19,28 +19,29 @@ import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
+import org.oddgen.bitemp.sqldev.model.PreferenceModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.generators.OddgenGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
 class BitempTapiGenerator implements OddgenGenerator {
-	
-	public static String PREF_GEN_VALID_TIME_LABEL = BitempResources.get("PREF_GEN_VALID_TIME_LABEL")
-	public static String PREF_GEN_TRANSACTION_TIME_LABEL = BitempResources.get("PREF_GEN_TRANSACTION_TIME_LABEL")
-	public static String PREF_FLASHBACK_ARCHIVE_NAME_LABEL = BitempResources.get("PREF_FLASHBACK_ARCHIVE_NAME_LABEL")
-	public static String PREF_VALID_FROM_COL_NAME_LABEL = BitempResources.get("PREF_VALID_FROM_COL_NAME_LABEL")
-	public static String PREF_VALID_TO_COL_NAME_LABEL = BitempResources.get("PREF_VALID_FROM_TO_NAME_LABEL")
-	public static String PREF_IS_DELETED_COL_NAME_LABEL = BitempResources.get("PREF_IS_DELETED_COL_NAME_LABEL")
-	public static String PREF_OBJECT_TYPE_SUFFIX_LABEL = BitempResources.get("PREF_OBJECT_TYPE_SUFFIX_LABEL")
-	public static String PREF_COLLECTION_TYPE_SUFFIX_LABEL = BitempResources.get("PREF_COLLECTION_TYPE_SUFFIX_LABEL")
-	public static String PREF_LATEST_TABLE_SUFFIX_LABEL = BitempResources.get("PREF_HISTORY_TABLE_SUFFIX_LABEL")
-	public static String PREF_HISTORY_TABLE_SUFFIX_LABEL = BitempResources.get("PREF_HISTORY_TABLE_SUFFIX_LABEL")
-	public static String PREF_HISTORY_SEQUENCE_SUFFIX_LABEL = BitempResources.get("PREF_HISTORY_SEQUENCE_SUFFIX_LABEL")
-	public static String PREF_HISTORY_VIEW_SUFFIX_LABEL = BitempResources.get("PREF_HISTORY_VIEW_SUFFIX_LABEL")
-	public static String PREF_IOT_SUFFIX_LABEL = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
-	public static String PREF_API_PACKAGE_SUFFIX_LABEL = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
-	public static String PREF_API_HOOK_PACKAGE_SUFFIX_LABEL = BitempResources.get("PREF_API_HOOK_PACKAGE_SUFFIX_LABEL")	
+
+	public static String GEN_VALID_TIME = BitempResources.get("PREF_GEN_VALID_TIME_LABEL")
+	public static String GEN_TRANSACTION_TIME = BitempResources.get("PREF_GEN_TRANSACTION_TIME_LABEL")
+	public static String FLASHBACK_ARCHIVE_NAME = BitempResources.get("PREF_FLASHBACK_ARCHIVE_NAME_LABEL")
+	public static String VALID_FROM_COL_NAME = BitempResources.get("PREF_VALID_FROM_COL_NAME_LABEL")
+	public static String VALID_TO_COL_NAME = BitempResources.get("PREF_VALID_TO_COL_NAME_LABEL")
+	public static String IS_DELETED_COL_NAME = BitempResources.get("PREF_IS_DELETED_COL_NAME_LABEL")
+	public static String OBJECT_TYPE_SUFFIX = BitempResources.get("PREF_OBJECT_TYPE_SUFFIX_LABEL")
+	public static String COLLECTION_TYPE_SUFFIX = BitempResources.get("PREF_COLLECTION_TYPE_SUFFIX_LABEL")
+	public static String LATEST_TABLE_SUFFIX = BitempResources.get("PREF_LATEST_TABLE_SUFFIX_LABEL")
+	public static String HISTORY_TABLE_SUFFIX = BitempResources.get("PREF_HISTORY_TABLE_SUFFIX_LABEL")
+	public static String HISTORY_SEQUENCE_SUFFIX = BitempResources.get("PREF_HISTORY_SEQUENCE_SUFFIX_LABEL")
+	public static String HISTORY_VIEW_SUFFIX = BitempResources.get("PREF_HISTORY_VIEW_SUFFIX_LABEL")
+	public static String IOT_SUFFIX = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
+	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
+	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
 
 	override getName(Connection conn) {
 		return BitempResources.get("GEN_TAPI_NAME")
@@ -68,15 +69,48 @@ class BitempTapiGenerator implements OddgenGenerator {
 	}
 
 	override getParams(Connection conn, String objectType, String objectName) {
-		return new LinkedHashMap<String, String>()
+		val params = new LinkedHashMap<String, String>()
+		val PreferenceModel pref = PreferenceModel.getInstance(null)
+		params.put(GEN_TRANSACTION_TIME, if(pref.genTransactionTime) "1" else "0")
+		params.put(FLASHBACK_ARCHIVE_NAME, pref.flashbackArchiveName)
+		params.put(GEN_VALID_TIME, if(pref.genValidTime) "1" else "0")
+		params.put(VALID_FROM_COL_NAME, pref.validFromColName)
+		params.put(VALID_TO_COL_NAME, pref.validToColName)
+		params.put(IS_DELETED_COL_NAME, pref.isDeletedColName)
+		params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
+		params.put(HISTORY_TABLE_SUFFIX, pref.historyTableSuffix)
+		params.put(HISTORY_SEQUENCE_SUFFIX, pref.historySequenceSuffix)
+		params.put(HISTORY_VIEW_SUFFIX, pref.historyViewSuffix)
+		params.put(OBJECT_TYPE_SUFFIX, pref.objectTypeSuffix)
+		params.put(COLLECTION_TYPE_SUFFIX, pref.collectionTypeSuffix)
+		params.put(IOT_SUFFIX, pref.iotSuffix)
+		params.put(API_PACKAGE_SUFFIX, pref.apiPackageSuffix)
+		params.put(org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator.HOOK_PACKAGE_SUFFIX, pref.hookPackageSuffix)
+		return params
 	}
 
 	override getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
-		return new HashMap<String, List<String>>()
+		val lov = new HashMap<String, List<String>>()
+		// true values have to be defined first for checkbox to work properly in v0.2.3
+		lov.put(GEN_VALID_TIME, #["1", "0"])
+		lov.put(GEN_TRANSACTION_TIME, #["1", "0"])
+		return lov
 	}
 
-	override getParamStates(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
-		return new HashMap<String, Boolean>()
+	override getParamStates(Connection conn, String objectType, String objectName,
+		LinkedHashMap<String, String> params) {
+		val paramStates = new HashMap<String, Boolean>()
+		val isTransactionTime = params.get(GEN_TRANSACTION_TIME) == "1"
+		paramStates.put(FLASHBACK_ARCHIVE_NAME, isTransactionTime)
+		val isValidTime = params.get(GEN_VALID_TIME) == "1"
+		paramStates.put(VALID_FROM_COL_NAME, isValidTime)
+		paramStates.put(VALID_TO_COL_NAME, isValidTime)
+		paramStates.put(IS_DELETED_COL_NAME, isValidTime)
+		paramStates.put(LATEST_TABLE_SUFFIX, isValidTime)
+		paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
+		paramStates.put(HISTORY_SEQUENCE_SUFFIX, isValidTime)
+		paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime) 
+		return paramStates
 	}
 
 	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {

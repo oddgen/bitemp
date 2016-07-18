@@ -31,29 +31,21 @@ class PreferenceModel extends HashStructureAdapter {
 		return new PreferenceModel(findOrCreate(prefs, DATA_KEY))
 	}
 
-	static final String KEY_GEN_VALID_TIME = "genValidTime"
 	static final String KEY_GEN_TRANSACTION_TIME = "genTransactionTime"
 	static final String KEY_FLASHBACK_ARCHIVE_NAME = "flashbackArchiveName"
+	static final String KEY_GEN_VALID_TIME = "genValidTime"
 	static final String KEY_VALID_FROM_COL_NAME = "validFromColName"
 	static final String KEY_VALID_TO_COL_NAME = "validToColName"
 	static final String KEY_IS_DELETED_COL_NAME = "isDeletedColName"
-	static final String KEY_OBJECT_TYPE_SUFFIX = "objectTypeSuffix"
-	static final String KEY_COLLECTION_TYPE_SUFFIX = "collectionTypeSuffix"
 	static final String KEY_LATEST_TABLE_SUFFIX = "latestTableSuffix"
 	static final String KEY_HISTORY_TABLE_SUFFIX = "historyTableSuffix"
 	static final String KEY_HISTORY_SEQUENCE_SUFFIX = "historySequenceSuffix"
 	static final String KEY_HISTORY_VIEW_SUFFIX = "historyViewSuffix"
+	static final String KEY_OBJECT_TYPE_SUFFIX = "objectTypeSuffix"
+	static final String KEY_COLLECTION_TYPE_SUFFIX = "collectionTypeSuffix"
 	static final String KEY_IOT_SUFFIX = "iotSuffix"
 	static final String KEY_API_PACKAGE_SUFFIX = "apiPackageSuffix"
-	static final String KEY_API_HOOK_PACKAGE_SUFFIX = "apiHookPackageSuffix"	
-
-	def isGenValidTime() {
-		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_VALID_TIME, true)
-	}
-
-	def setGenValidTime(boolean validTimeDefault) {
-		getHashStructure.putBoolean(PreferenceModel.KEY_GEN_VALID_TIME, validTimeDefault)
-	}
+	static final String KEY_HOOK_PACKAGE_SUFFIX = "hookPackageSuffix"	
 
 	def isGenTransactionTime() {
 		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_TRANSACTION_TIME, false)
@@ -70,6 +62,14 @@ class PreferenceModel extends HashStructureAdapter {
 	def setFlashbackArchiveName(String flashbackArchiveName) {
 		getHashStructure.putString(PreferenceModel.KEY_VALID_TO_COL_NAME, flashbackArchiveName)
 		
+	}
+
+	def isGenValidTime() {
+		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_VALID_TIME, true)
+	}
+
+	def setGenValidTime(boolean validTimeDefault) {
+		getHashStructure.putBoolean(PreferenceModel.KEY_GEN_VALID_TIME, validTimeDefault)
 	}
 
 	def getValidFromColName() {
@@ -99,24 +99,6 @@ class PreferenceModel extends HashStructureAdapter {
 		
 	}
 
-	def getObjectTypeSuffix() {
-		return getHashStructure.getString(PreferenceModel.KEY_OBJECT_TYPE_SUFFIX, "_ot")
-	}
-	
-	def setObjectTypeSuffix(String objectTypeSuffix) {
-		getHashStructure.putString(PreferenceModel.KEY_OBJECT_TYPE_SUFFIX, objectTypeSuffix)
-		
-	}
-
-	def getCollectionTypeSuffix() {
-		return getHashStructure.getString(PreferenceModel.KEY_COLLECTION_TYPE_SUFFIX, "_ct")
-	}
-	
-	def setCollectionTypeSuffix(String objectTypeSuffix) {
-		getHashStructure.putString(PreferenceModel.KEY_COLLECTION_TYPE_SUFFIX, objectTypeSuffix)
-		
-	}
-	
 	def getLatestTableSuffix() {
 		return getHashStructure.getString(PreferenceModel.KEY_LATEST_TABLE_SUFFIX, "_l")
 	}
@@ -153,6 +135,24 @@ class PreferenceModel extends HashStructureAdapter {
 		
 	}	
 
+	def getObjectTypeSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_OBJECT_TYPE_SUFFIX, "_ot")
+	}
+	
+	def setObjectTypeSuffix(String objectTypeSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_OBJECT_TYPE_SUFFIX, objectTypeSuffix)
+		
+	}
+
+	def getCollectionTypeSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_COLLECTION_TYPE_SUFFIX, "_ct")
+	}
+	
+	def setCollectionTypeSuffix(String objectTypeSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_COLLECTION_TYPE_SUFFIX, objectTypeSuffix)
+		
+	}
+	
 	def getIotSuffix() {
 		return getHashStructure.getString(PreferenceModel.KEY_IOT_SUFFIX, "_trg")
 	}
@@ -171,12 +171,12 @@ class PreferenceModel extends HashStructureAdapter {
 		
 	}	
 
-	def getApiHookPackageSuffix() {
-		return getHashStructure.getString(PreferenceModel.KEY_API_HOOK_PACKAGE_SUFFIX, "_hook")
+	def getHookPackageSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_HOOK_PACKAGE_SUFFIX, "_hook")
 	}
 	
-	def setApiHookPackageSuffix(String apiHookPackageSuffix) {
-		getHashStructure.putString(PreferenceModel.KEY_API_HOOK_PACKAGE_SUFFIX, apiHookPackageSuffix)
+	def setHookPackageSuffix(String hookPackageSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_HOOK_PACKAGE_SUFFIX, hookPackageSuffix)
 		
 	}	
 

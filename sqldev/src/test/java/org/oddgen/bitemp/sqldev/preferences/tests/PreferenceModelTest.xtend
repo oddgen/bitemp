@@ -15,7 +15,6 @@
  */
 package org.oddgen.bitemp.sqldev.preferences.tests
 
-import com.jcabi.log.Logger
 import org.junit.Assert
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.model.PreferenceModel
@@ -24,8 +23,20 @@ class PreferenceModelTest {
 	@Test
 	def testDefaultValues() {
 		val PreferenceModel model = PreferenceModel.getInstance(null)
-		Logger.info(this, "model: " + model)
 		Assert.assertFalse(model.genTransactionTime)
+		Assert.assertEquals("", model.flashbackArchiveName)
 		Assert.assertTrue(model.genValidTime)
+		Assert.assertEquals("valid_from", model.validFromColName)
+		Assert.assertEquals("valid_to", model.validToColName)
+		Assert.assertEquals("is_deleted", model.isDeletedColName)
+		Assert.assertEquals("_l", model.latestTableSuffix)
+		Assert.assertEquals("_h", model.historyTableSuffix)
+		Assert.assertEquals("_seq", model.historySequenceSuffix)
+		Assert.assertEquals("_v", model.historyViewSuffix)
+		Assert.assertEquals("_ot", model.objectTypeSuffix)
+		Assert.assertEquals("_ct", model.collectionTypeSuffix)
+		Assert.assertEquals("_trg", model.iotSuffix)
+		Assert.assertEquals("_api", model.apiPackageSuffix)
+		Assert.assertEquals("_hook", model.hookPackageSuffix)
 	}
 }

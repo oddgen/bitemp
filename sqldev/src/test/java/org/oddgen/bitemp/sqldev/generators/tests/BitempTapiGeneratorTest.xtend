@@ -44,28 +44,27 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 	@Test
 	def getObjectNamesTest() {
 		val objectNames = gen.getObjectNames(dataSource.connection, "TABLE")
-		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], objectNames)
+		Assert.assertTrue(objectNames.length > 0)
 	}
 
 	@Test
 	def getParamsTest() {
 		val params = gen.getParams(dataSource.connection, null, null)
-		Assert.assertEquals(0, params.size)
-		Assert.assertEquals(#[], params.keySet.toList)
-		Assert.assertEquals(#[], params.values.toList)
+		Assert.assertEquals(15, params.size)
 	}
 
 	@Test
 	def getLov() {
 		val lov = gen.getLov(dataSource.connection, null, null, null)
-		Assert.assertEquals(0, lov.size)
+		Assert.assertEquals(2, lov.size)
 	}
 
 	@Test
 	def getParamStates() {
 		val params = gen.getParams(dataSource.connection, null, null)
 		var paramStates = gen.getParamStates(dataSource.connection, null, null, params)
-		Assert.assertEquals(0, paramStates.size)
+		Assert.assertEquals(8, paramStates.size)
+		Assert.assertEquals(false,paramStates.get(BitempTapiGenerator.FLASHBACK_ARCHIVE_NAME))
 	}
 
 	@Test
