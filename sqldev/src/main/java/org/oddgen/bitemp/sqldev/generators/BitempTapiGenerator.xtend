@@ -27,10 +27,12 @@ import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.generators.OddgenGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
+import org.oddgen.bitemp.sqldev.dal.TemporalValidityPeriodDao
 
 class BitempTapiGenerator implements OddgenGenerator {
 
-	public static String CRUD_COMPATIBILITY_ORIGINAL_TABLE = BitempResources.get("PREF_CRUD_COMPATIBILITY_ORIGINAL_TABLE_LABEL")
+	public static String CRUD_COMPATIBILITY_ORIGINAL_TABLE = BitempResources.get(
+		"PREF_CRUD_COMPATIBILITY_ORIGINAL_TABLE_LABEL")
 	public static String LATEST_TABLE_SUFFIX = BitempResources.get("PREF_LATEST_TABLE_SUFFIX_LABEL")
 	public static String LATEST_VIEW_SUFFIX = BitempResources.get("PREF_LATEST_VIEW_SUFFIX_LABEL")
 	public static String GEN_VALID_TIME = BitempResources.get("PREF_GEN_VALID_TIME_LABEL")
@@ -48,7 +50,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 	public static String IOT_SUFFIX = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
 	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
-	
+
 	private GeneratorModel model = new GeneratorModel;
 
 	override getName(Connection conn) {
@@ -123,11 +125,11 @@ class BitempTapiGenerator implements OddgenGenerator {
 		paramStates.put(IS_DELETED_COL_NAME, isValidTime)
 		paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
 		paramStates.put(HISTORY_SEQUENCE_SUFFIX, isValidTime)
-		paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime) 
-		paramStates.put(FULL_HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime) 
+		paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
+		paramStates.put(FULL_HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
 		return paramStates
 	}
-	
+
 	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		populateModel(conn, objectName, params)
 		return "-- TODO"
@@ -138,12 +140,15 @@ class BitempTapiGenerator implements OddgenGenerator {
 		model.originalTable = new OriginalTable
 		model.originalTable.tableName = tableName
 		val flashbackArchiveTableDao = new FlashbackArchiveTableDao(conn)
-		model.originalTable.flashbackArchiveTable = flashbackArchiveTableDao.getArchiveTable(model.originalTable.tableName)
-		
+		model.originalTable.flashbackArchiveTable = flashbackArchiveTableDao.getArchiveTable(
+			model.originalTable.tableName)
+		val temporalValidityPeriodDao = new TemporalValidityPeriodDao(conn)
+		model.originalTable.temporalValidityPeriods = temporalValidityPeriodDao.getTemporalValidityPeriods(
+			model.originalTable.tableName)
 	}
-	
+
 	def getModel() {
 		return model
 	}
-  
+
 }
