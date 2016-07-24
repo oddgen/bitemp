@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.oddgen.bitemp.sqldev.generators.tests
+package org.oddgen.bitemp.sqldev.tests
 
 import java.util.Properties
 import org.springframework.jdbc.core.JdbcTemplate
@@ -22,7 +22,8 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource
 class AbstractJdbcTest {
 	protected static var SingleConnectionDataSource dataSource
 	protected static var JdbcTemplate jdbcTemplate
-
+	protected static var SingleConnectionDataSource sysDataSource
+	protected static var JdbcTemplate sysJdbcTemplate
 	// static initializer not supported in Xtend, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=429141
 	protected static val _staticInitializerForDataSourceAndJdbcTemplate = {
 		val p = new Properties()
@@ -34,6 +35,24 @@ class AbstractJdbcTest {
 		dataSource.url = '''jdbc:oracle:thin:@«p.getProperty("host")»:«p.getProperty("port")»/«p.getProperty("service")»'''
 		dataSource.username = p.getProperty("scott_username")
 		dataSource.password = p.getProperty("scott_password")
-		jdbcTemplate = new JdbcTemplate(dataSource)
+		jdbcTemplate = new JdbcTemplate(
+			dataSource)
+		// create dbaDataSource and dbaJdbcTemplate
+		sysDataSource = new SingleConnectionDataSource()
+		sysDataSource.driverClassName = "oracle.jdbc.OracleDriver"
+		sysDataSource.url = '''jdbc:oracle:thin:@«p.getProperty("host")»:«p.getProperty("port")»/«p.getProperty("service")»'''
+		sysDataSource.username = p.getProperty("sys_username")
+		sysDataSource.password = p.getProperty("sys_password")
+		sysJdbcTemplate = new JdbcTemplate(org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest.sysDataSource)
+	}
+
+	new() {
+		// setup for all test to ensure irrelevance of execution order
+		// for FBDA
+		sysJdbcTemplate.execute("GRANT EXECUTE ON dbms_flashback_archive TO scott")
+		sysJdbcTemplate.execute("GRANT EXECUTE ON dbms_flashback TO scott")
+		sysJdbcTemplate.execute("GRANT FLASHBACK ARCHIVE ADMINISTER TO scott")
+		// for sys.ku$_fba_period_view
+		sysJdbcTemplate.execute("GRANT select_catalog_role TO scott")
 	}
 }

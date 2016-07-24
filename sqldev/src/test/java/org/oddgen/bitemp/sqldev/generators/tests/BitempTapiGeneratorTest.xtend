@@ -20,6 +20,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
 import org.oddgen.bitemp.sqldev.resources.BitempResources
+import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 import org.oddgen.sqldev.generators.OddgenGenerator
 
 class BitempTapiGeneratorTest extends AbstractJdbcTest {

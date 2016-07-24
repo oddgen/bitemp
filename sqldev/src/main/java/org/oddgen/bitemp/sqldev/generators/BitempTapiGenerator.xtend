@@ -19,6 +19,9 @@ import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
+import org.oddgen.bitemp.sqldev.dal.FlashbackArchiveTableDao
+import org.oddgen.bitemp.sqldev.model.GeneratorModel
+import org.oddgen.bitemp.sqldev.model.OriginalTable
 import org.oddgen.bitemp.sqldev.model.PreferenceModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.generators.OddgenGenerator
@@ -45,6 +48,8 @@ class BitempTapiGenerator implements OddgenGenerator {
 	public static String IOT_SUFFIX = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
 	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
+	
+	private GeneratorModel model = new GeneratorModel;
 
 	override getName(Connection conn) {
 		return BitempResources.get("GEN_TAPI_NAME")
@@ -91,7 +96,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 		params.put(COLLECTION_TYPE_SUFFIX, pref.collectionTypeSuffix)
 		params.put(IOT_SUFFIX, pref.iotSuffix)
 		params.put(API_PACKAGE_SUFFIX, pref.apiPackageSuffix)
-		params.put(org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator.HOOK_PACKAGE_SUFFIX, pref.hookPackageSuffix)
+		params.put(BitempTapiGenerator.HOOK_PACKAGE_SUFFIX, pref.hookPackageSuffix)
 		return params
 	}
 
@@ -122,8 +127,23 @@ class BitempTapiGenerator implements OddgenGenerator {
 		paramStates.put(FULL_HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime) 
 		return paramStates
 	}
-
+	
 	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
+		populateModel(conn, objectName, params)
 		return "-- TODO"
 	}
+
+	def private populateModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {
+		model.params = params
+		model.originalTable = new OriginalTable
+		model.originalTable.tableName = tableName
+		val flashbackArchiveTableDao = new FlashbackArchiveTableDao(conn)
+		model.originalTable.flashbackArchiveTable = flashbackArchiveTableDao.getArchiveTable(model.originalTable.tableName)
+		
+	}
+	
+	def getModel() {
+		return model
+	}
+  
 }
