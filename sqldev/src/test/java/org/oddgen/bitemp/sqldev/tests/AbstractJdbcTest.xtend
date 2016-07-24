@@ -16,6 +16,7 @@
 package org.oddgen.bitemp.sqldev.tests
 
 import java.util.Properties
+import org.junit.BeforeClass
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
@@ -43,10 +44,11 @@ class AbstractJdbcTest {
 		sysDataSource.url = '''jdbc:oracle:thin:@«p.getProperty("host")»:«p.getProperty("port")»/«p.getProperty("service")»'''
 		sysDataSource.username = p.getProperty("sys_username")
 		sysDataSource.password = p.getProperty("sys_password")
-		sysJdbcTemplate = new JdbcTemplate(org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest.sysDataSource)
+		sysJdbcTemplate = new JdbcTemplate(AbstractJdbcTest.sysDataSource)
 	}
 
-	new() {
+	@BeforeClass
+	def static void setup() {
 		// setup for all test to ensure irrelevance of execution order
 		// for FBDA
 		sysJdbcTemplate.execute("GRANT EXECUTE ON dbms_flashback_archive TO scott")
@@ -55,4 +57,5 @@ class AbstractJdbcTest {
 		// for sys.ku$_fba_period_view
 		sysJdbcTemplate.execute("GRANT select_catalog_role TO scott")
 	}
+	
 }
