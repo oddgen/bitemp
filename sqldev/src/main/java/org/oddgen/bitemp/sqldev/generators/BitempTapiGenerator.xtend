@@ -27,6 +27,9 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
 class BitempTapiGenerator implements OddgenGenerator {
 
+	public static String CRUD_COMPATIBILITY_ORIGINAL_TABLE = BitempResources.get("PREF_CRUD_COMPATIBILITY_ORIGINAL_TABLE_LABEL")
+	public static String LATEST_TABLE_SUFFIX = BitempResources.get("PREF_LATEST_TABLE_SUFFIX_LABEL")
+	public static String LATEST_VIEW_SUFFIX = BitempResources.get("PREF_LATEST_VIEW_SUFFIX_LABEL")
 	public static String GEN_VALID_TIME = BitempResources.get("PREF_GEN_VALID_TIME_LABEL")
 	public static String GEN_TRANSACTION_TIME = BitempResources.get("PREF_GEN_TRANSACTION_TIME_LABEL")
 	public static String FLASHBACK_ARCHIVE_NAME = BitempResources.get("PREF_FLASHBACK_ARCHIVE_NAME_LABEL")
@@ -35,10 +38,10 @@ class BitempTapiGenerator implements OddgenGenerator {
 	public static String IS_DELETED_COL_NAME = BitempResources.get("PREF_IS_DELETED_COL_NAME_LABEL")
 	public static String OBJECT_TYPE_SUFFIX = BitempResources.get("PREF_OBJECT_TYPE_SUFFIX_LABEL")
 	public static String COLLECTION_TYPE_SUFFIX = BitempResources.get("PREF_COLLECTION_TYPE_SUFFIX_LABEL")
-	public static String LATEST_TABLE_SUFFIX = BitempResources.get("PREF_LATEST_TABLE_SUFFIX_LABEL")
 	public static String HISTORY_TABLE_SUFFIX = BitempResources.get("PREF_HISTORY_TABLE_SUFFIX_LABEL")
 	public static String HISTORY_SEQUENCE_SUFFIX = BitempResources.get("PREF_HISTORY_SEQUENCE_SUFFIX_LABEL")
 	public static String HISTORY_VIEW_SUFFIX = BitempResources.get("PREF_HISTORY_VIEW_SUFFIX_LABEL")
+	public static String FULL_HISTORY_VIEW_SUFFIX = BitempResources.get("PREF_FULL_HISTORY_VIEW_SUFFIX_LABEL")
 	public static String IOT_SUFFIX = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
 	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
@@ -71,16 +74,19 @@ class BitempTapiGenerator implements OddgenGenerator {
 	override getParams(Connection conn, String objectType, String objectName) {
 		val params = new LinkedHashMap<String, String>()
 		val PreferenceModel pref = PreferenceModel.getInstance(null)
+		params.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, if(pref.crudCompatiblityOriginalTable) "1" else "0")
+		params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
+		params.put(LATEST_VIEW_SUFFIX, pref.latestViewSuffix)
 		params.put(GEN_TRANSACTION_TIME, if(pref.genTransactionTime) "1" else "0")
 		params.put(FLASHBACK_ARCHIVE_NAME, pref.flashbackArchiveName)
 		params.put(GEN_VALID_TIME, if(pref.genValidTime) "1" else "0")
 		params.put(VALID_FROM_COL_NAME, pref.validFromColName)
 		params.put(VALID_TO_COL_NAME, pref.validToColName)
 		params.put(IS_DELETED_COL_NAME, pref.isDeletedColName)
-		params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
 		params.put(HISTORY_TABLE_SUFFIX, pref.historyTableSuffix)
 		params.put(HISTORY_SEQUENCE_SUFFIX, pref.historySequenceSuffix)
 		params.put(HISTORY_VIEW_SUFFIX, pref.historyViewSuffix)
+		params.put(FULL_HISTORY_VIEW_SUFFIX, pref.fullHistoryViewSuffix)
 		params.put(OBJECT_TYPE_SUFFIX, pref.objectTypeSuffix)
 		params.put(COLLECTION_TYPE_SUFFIX, pref.collectionTypeSuffix)
 		params.put(IOT_SUFFIX, pref.iotSuffix)
@@ -91,7 +97,8 @@ class BitempTapiGenerator implements OddgenGenerator {
 
 	override getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		val lov = new HashMap<String, List<String>>()
-		// true values have to be defined first for checkbox to work properly in v0.2.3
+		// true values have to be defined first for a check box to work properly in oddgen v0.2.3
+		lov.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, #["1", "0"])
 		lov.put(GEN_VALID_TIME, #["1", "0"])
 		lov.put(GEN_TRANSACTION_TIME, #["1", "0"])
 		return lov
@@ -100,16 +107,19 @@ class BitempTapiGenerator implements OddgenGenerator {
 	override getParamStates(Connection conn, String objectType, String objectName,
 		LinkedHashMap<String, String> params) {
 		val paramStates = new HashMap<String, Boolean>()
+		val isCrudCompatiblityOriginalTable = params.get(CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1"
+		paramStates.put(LATEST_TABLE_SUFFIX, isCrudCompatiblityOriginalTable)
+		paramStates.put(LATEST_VIEW_SUFFIX, !isCrudCompatiblityOriginalTable)
 		val isTransactionTime = params.get(GEN_TRANSACTION_TIME) == "1"
 		paramStates.put(FLASHBACK_ARCHIVE_NAME, isTransactionTime)
 		val isValidTime = params.get(GEN_VALID_TIME) == "1"
 		paramStates.put(VALID_FROM_COL_NAME, isValidTime)
 		paramStates.put(VALID_TO_COL_NAME, isValidTime)
 		paramStates.put(IS_DELETED_COL_NAME, isValidTime)
-		paramStates.put(LATEST_TABLE_SUFFIX, isValidTime)
 		paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
 		paramStates.put(HISTORY_SEQUENCE_SUFFIX, isValidTime)
-		paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime) 
+		paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime) 
+		paramStates.put(FULL_HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime) 
 		return paramStates
 	}
 

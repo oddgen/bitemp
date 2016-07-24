@@ -50,20 +50,20 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 	@Test
 	def getParamsTest() {
 		val params = gen.getParams(dataSource.connection, null, null)
-		Assert.assertEquals(15, params.size)
+		Assert.assertEquals(18, params.size)
 	}
 
 	@Test
 	def getLov() {
 		val lov = gen.getLov(dataSource.connection, null, null, null)
-		Assert.assertEquals(2, lov.size)
+		Assert.assertEquals(3, lov.size)
 	}
 
 	@Test
 	def getParamStates() {
 		val params = gen.getParams(dataSource.connection, null, null)
 		var paramStates = gen.getParamStates(dataSource.connection, null, null, params)
-		Assert.assertEquals(8, paramStates.size)
+		Assert.assertEquals(10, paramStates.size)
 		Assert.assertEquals(false,paramStates.get(BitempTapiGenerator.FLASHBACK_ARCHIVE_NAME))
 	}
 

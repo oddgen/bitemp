@@ -28,6 +28,9 @@ import javax.swing.JTextField
 
 @Loggable(LoggableConstants.DEBUG)
 class PreferencePanel extends DefaultTraversablePanel {
+	final JCheckBox crudCompitiblityForOriginalTableCheckBox = new JCheckBox
+	final JTextField latestTableSuffix = new JTextField
+	final JTextField latestViewSuffix = new JTextField
 	final JCheckBox validTimeDefaultCheckBox = new JCheckBox
 	final JCheckBox transactionTimeDefaultCheckBox = new JCheckBox
 	final JTextField flashbackArchiveName = new JTextField
@@ -36,10 +39,10 @@ class PreferencePanel extends DefaultTraversablePanel {
 	final JTextField isDeletedColName = new JTextField
 	final JTextField objectTypeSuffix = new JTextField
 	final JTextField collectionTypeSuffix = new JTextField
-	final JTextField latestTableSuffix = new JTextField
 	final JTextField historyTableSuffix = new JTextField
 	final JTextField historySequenceSuffix = new JTextField
 	final JTextField historyViewSuffix = new JTextField
+	final JTextField fullHistoryViewSuffix = new JTextField
 	final JTextField iotSuffix = new JTextField
 	final JTextField apiPackageSuffix = new JTextField
 	final JTextField hookPackageSuffix = new JTextField
@@ -51,6 +54,15 @@ class PreferencePanel extends DefaultTraversablePanel {
 	def private layoutControls() {
 		val FieldLayoutBuilder builder = new FieldLayoutBuilder(this)
 		builder.alignLabelsLeft = true
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_CRUD_COMPATIBILITY_ORIGINAL_TABLE_LABEL")).component(
+				crudCompitiblityForOriginalTableCheckBox))
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_LATEST_TABLE_SUFFIX_LABEL")).component(
+				latestTableSuffix))						
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_LATEST_VIEW_SUFFIX_LABEL")).component(
+				latestViewSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_GEN_TRANSACTION_TIME_LABEL")).component(
 				transactionTimeDefaultCheckBox))
@@ -70,9 +82,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 			builder.field.label.withText(BitempResources.getString("PREF_IS_DELETED_COL_NAME_LABEL")).component(
 				isDeletedColName))
 		builder.add(
-			builder.field.label.withText(BitempResources.getString("PREF_LATEST_TABLE_SUFFIX_LABEL")).component(
-				latestTableSuffix))						
-		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_HISTORY_TABLE_SUFFIX_LABEL")).component(
 				historyTableSuffix))						
 		builder.add(
@@ -81,6 +90,9 @@ class PreferencePanel extends DefaultTraversablePanel {
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_HISTORY_VIEW_SUFFIX_LABEL")).component(
 				historyViewSuffix))						
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_FULL_HISTORY_VIEW_SUFFIX_LABEL")).component(
+				fullHistoryViewSuffix))						
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_OBJECT_TYPE_SUFFIX_LABEL")).component(
 				objectTypeSuffix))						
@@ -101,6 +113,9 @@ class PreferencePanel extends DefaultTraversablePanel {
 
 	override onEntry(TraversableContext traversableContext) {
 		var PreferenceModel info = traversableContext.userInformation
+		crudCompitiblityForOriginalTableCheckBox.selected = info.crudCompatiblityOriginalTable
+		latestTableSuffix.text = info.latestTableSuffix
+		latestViewSuffix.text = info.latestViewSuffix		
 		transactionTimeDefaultCheckBox.selected = info.genTransactionTime
 		flashbackArchiveName.text = info.flashbackArchiveName
 		validTimeDefaultCheckBox.selected = info.isGenValidTime
@@ -111,6 +126,7 @@ class PreferencePanel extends DefaultTraversablePanel {
 		historyTableSuffix.text = info.historyTableSuffix
 		historySequenceSuffix.text = info.historySequenceSuffix
 		historyViewSuffix.text = info.historyViewSuffix
+		fullHistoryViewSuffix.text = info.fullHistoryViewSuffix
 		objectTypeSuffix.text = info.objectTypeSuffix
 		collectionTypeSuffix.text = info.collectionTypeSuffix
 		iotSuffix.text = info.iotSuffix
@@ -121,22 +137,24 @@ class PreferencePanel extends DefaultTraversablePanel {
 
 	override onExit(TraversableContext traversableContext) throws TraversalException {
 		var PreferenceModel info = traversableContext.userInformation
+		info.crudCompatiblityOriginalTable = crudCompitiblityForOriginalTableCheckBox.selected
+		info.latestTableSuffix = latestTableSuffix.text
+		info.latestViewSuffix = latestViewSuffix.text
 		info.genTransactionTime = transactionTimeDefaultCheckBox.selected
 		info.flashbackArchiveName = flashbackArchiveName.text
 		info.genValidTime = validTimeDefaultCheckBox.selected
 		info.validFromColName = validFromColName.text
 		info.validToColName = validToColName.text
 		info.isDeletedColName = isDeletedColName.text
-		info.latestTableSuffix = latestTableSuffix.text
 		info.historyTableSuffix = historyTableSuffix.text
 		info.historySequenceSuffix = historySequenceSuffix.text
 		info.historyViewSuffix = historyViewSuffix.text
+		info.fullHistoryViewSuffix = fullHistoryViewSuffix.text
 		info.objectTypeSuffix = objectTypeSuffix.text
 		info.collectionTypeSuffix = collectionTypeSuffix.text
 		info.iotSuffix = iotSuffix.text
 		info.apiPackageSuffix = apiPackageSuffix.text
 		info.hookPackageSuffix = hookPackageSuffix.text
-
 		super.onExit(traversableContext)
 	}
 

@@ -31,21 +31,48 @@ class PreferenceModel extends HashStructureAdapter {
 		return new PreferenceModel(findOrCreate(prefs, DATA_KEY))
 	}
 
+	static final String KEY_CRUD_COMPATIBILITY_ORIGINAL_TABLE = "crudCompatiblityOriginalTable"
+	static final String KEY_LATEST_TABLE_SUFFIX = "latestTableSuffix"
+	static final String KEY_LATEST_VIEW_SUFFIX = "latestViewSuffix"
 	static final String KEY_GEN_TRANSACTION_TIME = "genTransactionTime"
 	static final String KEY_FLASHBACK_ARCHIVE_NAME = "flashbackArchiveName"
 	static final String KEY_GEN_VALID_TIME = "genValidTime"
 	static final String KEY_VALID_FROM_COL_NAME = "validFromColName"
 	static final String KEY_VALID_TO_COL_NAME = "validToColName"
 	static final String KEY_IS_DELETED_COL_NAME = "isDeletedColName"
-	static final String KEY_LATEST_TABLE_SUFFIX = "latestTableSuffix"
 	static final String KEY_HISTORY_TABLE_SUFFIX = "historyTableSuffix"
 	static final String KEY_HISTORY_SEQUENCE_SUFFIX = "historySequenceSuffix"
 	static final String KEY_HISTORY_VIEW_SUFFIX = "historyViewSuffix"
+	static final String KEY_FULL_HISTORY_VIEW_SUFFIX = "fullHistoryViewSuffix"
 	static final String KEY_OBJECT_TYPE_SUFFIX = "objectTypeSuffix"
 	static final String KEY_COLLECTION_TYPE_SUFFIX = "collectionTypeSuffix"
 	static final String KEY_IOT_SUFFIX = "iotSuffix"
 	static final String KEY_API_PACKAGE_SUFFIX = "apiPackageSuffix"
 	static final String KEY_HOOK_PACKAGE_SUFFIX = "hookPackageSuffix"	
+
+	def isCrudCompatiblityOriginalTable() {
+		return getHashStructure.getBoolean(PreferenceModel.KEY_CRUD_COMPATIBILITY_ORIGINAL_TABLE, true)
+	}
+
+	def setCrudCompatiblityOriginalTable(boolean crudCompatiblityOriginalTable) {
+		getHashStructure.putBoolean(PreferenceModel.KEY_CRUD_COMPATIBILITY_ORIGINAL_TABLE, crudCompatiblityOriginalTable)
+	}
+	
+	def getLatestTableSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_LATEST_TABLE_SUFFIX, "_lt")
+	}
+	
+	def setLatestTableSuffix(String latestTableSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_LATEST_TABLE_SUFFIX, latestTableSuffix)	
+	}
+
+	def getLatestViewSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_LATEST_VIEW_SUFFIX, "_lv")
+	}
+	
+	def setLatestViewSuffix(String latestObjectViewSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_LATEST_VIEW_SUFFIX, latestObjectViewSuffix)	
+	}
 
 	def isGenTransactionTime() {
 		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_TRANSACTION_TIME, false)
@@ -99,17 +126,8 @@ class PreferenceModel extends HashStructureAdapter {
 		
 	}
 
-	def getLatestTableSuffix() {
-		return getHashStructure.getString(PreferenceModel.KEY_LATEST_TABLE_SUFFIX, "_l")
-	}
-	
-	def setLatestTableSuffix(String latestTableSuffix) {
-		getHashStructure.putString(PreferenceModel.KEY_LATEST_TABLE_SUFFIX, latestTableSuffix)
-		
-	}	
-
 	def getHistoryTableSuffix() {
-		return getHashStructure.getString(PreferenceModel.KEY_HISTORY_TABLE_SUFFIX, "_h")
+		return getHashStructure.getString(PreferenceModel.KEY_HISTORY_TABLE_SUFFIX, "_ht")
 	}
 	
 	def setHistoryTableSuffix(String historyTableSuffix) {
@@ -127,11 +145,20 @@ class PreferenceModel extends HashStructureAdapter {
 	}	
 
 	def getHistoryViewSuffix() {
-		return getHashStructure.getString(PreferenceModel.KEY_HISTORY_VIEW_SUFFIX, "_v")
+		return getHashStructure.getString(PreferenceModel.KEY_HISTORY_VIEW_SUFFIX, "_hv")
 	}
 	
 	def setHistoryViewSuffix(String historyViewSuffix) {
 		getHashStructure.putString(PreferenceModel.KEY_HISTORY_VIEW_SUFFIX, historyViewSuffix)
+		
+	}	
+
+	def getFullHistoryViewSuffix() {
+		return getHashStructure.getString(PreferenceModel.KEY_FULL_HISTORY_VIEW_SUFFIX, "_fhv")
+	}
+	
+	def setFullHistoryViewSuffix(String historyViewSuffix) {
+		getHashStructure.putString(PreferenceModel.KEY_FULL_HISTORY_VIEW_SUFFIX, historyViewSuffix)
 		
 	}	
 
