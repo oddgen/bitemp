@@ -29,6 +29,7 @@ class PreferenceModelTest {
 		Assert.assertFalse(model.genTransactionTime)
 		Assert.assertEquals("", model.flashbackArchiveName)
 		Assert.assertTrue(model.genValidTime)
+		Assert.assertEquals("Day", model.granularity)
 		Assert.assertEquals("valid_from", model.validFromColName)
 		Assert.assertEquals("valid_to", model.validToColName)
 		Assert.assertEquals("is_deleted", model.isDeletedColName)
@@ -41,5 +42,14 @@ class PreferenceModelTest {
 		Assert.assertEquals("_trg", model.iotSuffix)
 		Assert.assertEquals("_api", model.apiPackageSuffix)
 		Assert.assertEquals("_hook", model.hookPackageSuffix)
+	}
+	
+	@Test
+	def testGranularity() {
+		val PreferenceModel model = PreferenceModel.getInstance(null)
+		model.granularity = "Week"
+		Assert.assertEquals("Week", model.granularity)
+		model.granularity = "Woche"
+		Assert.assertEquals("Day", model.granularity)		
 	}
 }

@@ -28,6 +28,7 @@ import org.oddgen.sqldev.generators.OddgenGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.oddgen.bitemp.sqldev.dal.TemporalValidityPeriodDao
+import oracle.ide.config.Preferences
 
 class BitempTapiGenerator implements OddgenGenerator {
 
@@ -36,6 +37,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 	public static String LATEST_TABLE_SUFFIX = BitempResources.get("PREF_LATEST_TABLE_SUFFIX_LABEL")
 	public static String LATEST_VIEW_SUFFIX = BitempResources.get("PREF_LATEST_VIEW_SUFFIX_LABEL")
 	public static String GEN_VALID_TIME = BitempResources.get("PREF_GEN_VALID_TIME_LABEL")
+	public static String GRANULARITY = BitempResources.get("PREF_GRANULARITY_LABEL")
 	public static String GEN_TRANSACTION_TIME = BitempResources.get("PREF_GEN_TRANSACTION_TIME_LABEL")
 	public static String FLASHBACK_ARCHIVE_NAME = BitempResources.get("PREF_FLASHBACK_ARCHIVE_NAME_LABEL")
 	public static String VALID_FROM_COL_NAME = BitempResources.get("PREF_VALID_FROM_COL_NAME_LABEL")
@@ -80,13 +82,15 @@ class BitempTapiGenerator implements OddgenGenerator {
 
 	override getParams(Connection conn, String objectType, String objectName) {
 		val params = new LinkedHashMap<String, String>()
-		val PreferenceModel pref = PreferenceModel.getInstance(null)
+		val preferences = Preferences.getPreferences();
+		val PreferenceModel pref = PreferenceModel.getInstance(preferences)
 		params.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, if(pref.crudCompatiblityOriginalTable) "1" else "0")
 		params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
 		params.put(LATEST_VIEW_SUFFIX, pref.latestViewSuffix)
 		params.put(GEN_TRANSACTION_TIME, if(pref.genTransactionTime) "1" else "0")
 		params.put(FLASHBACK_ARCHIVE_NAME, pref.flashbackArchiveName)
 		params.put(GEN_VALID_TIME, if(pref.genValidTime) "1" else "0")
+		params.put(GRANULARITY, pref.granularity)
 		params.put(VALID_FROM_COL_NAME, pref.validFromColName)
 		params.put(VALID_TO_COL_NAME, pref.validToColName)
 		params.put(IS_DELETED_COL_NAME, pref.isDeletedColName)
@@ -108,6 +112,14 @@ class BitempTapiGenerator implements OddgenGenerator {
 		lov.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, #["1", "0"])
 		lov.put(GEN_VALID_TIME, #["1", "0"])
 		lov.put(GEN_TRANSACTION_TIME, #["1", "0"])
+		lov.put(GRANULARITY,
+			#[BitempResources.getString("PREF_GRANULARITY_YEAR"), BitempResources.getString("PREF_GRANULARITY_MONTH"),
+				BitempResources.getString("PREF_GRANULARITY_WEEK"), BitempResources.getString("PREF_GRANULARITY_DAY"),
+				BitempResources.getString("PREF_GRANULARITY_SECOND"),
+				BitempResources.getString("PREF_GRANULARITY_CENTISECOND"),
+				BitempResources.getString("PREF_GRANULARITY_MILLISECOND"),
+				BitempResources.getString("PREF_GRANULARITY_MICROSECOND"),
+				BitempResources.getString("PREF_GRANULARITY_NANOSECOND")])
 		return lov
 	}
 
@@ -120,6 +132,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 		val isTransactionTime = params.get(GEN_TRANSACTION_TIME) == "1"
 		paramStates.put(FLASHBACK_ARCHIVE_NAME, isTransactionTime)
 		val isValidTime = params.get(GEN_VALID_TIME) == "1"
+		paramStates.put(GRANULARITY, isValidTime)
 		paramStates.put(VALID_FROM_COL_NAME, isValidTime)
 		paramStates.put(VALID_TO_COL_NAME, isValidTime)
 		paramStates.put(IS_DELETED_COL_NAME, isValidTime)

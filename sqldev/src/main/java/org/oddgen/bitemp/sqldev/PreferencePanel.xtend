@@ -16,7 +16,10 @@
 package org.oddgen.bitemp.sqldev
 
 import com.jcabi.aspects.Loggable
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JTextField
 import oracle.ide.panels.DefaultTraversablePanel
 import oracle.ide.panels.TraversableContext
 import oracle.ide.panels.TraversalException
@@ -24,28 +27,28 @@ import oracle.javatools.ui.layout.FieldLayoutBuilder
 import org.oddgen.bitemp.sqldev.model.PreferenceModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.LoggableConstants
-import javax.swing.JTextField
 
 @Loggable(LoggableConstants.DEBUG)
 class PreferencePanel extends DefaultTraversablePanel {
-	final JCheckBox crudCompitiblityForOriginalTableCheckBox = new JCheckBox
-	final JTextField latestTableSuffix = new JTextField
-	final JTextField latestViewSuffix = new JTextField
-	final JCheckBox validTimeDefaultCheckBox = new JCheckBox
-	final JCheckBox transactionTimeDefaultCheckBox = new JCheckBox
-	final JTextField flashbackArchiveName = new JTextField
-	final JTextField validFromColName = new JTextField
-	final JTextField validToColName = new JTextField
-	final JTextField isDeletedColName = new JTextField
-	final JTextField objectTypeSuffix = new JTextField
-	final JTextField collectionTypeSuffix = new JTextField
-	final JTextField historyTableSuffix = new JTextField
-	final JTextField historySequenceSuffix = new JTextField
-	final JTextField historyViewSuffix = new JTextField
-	final JTextField fullHistoryViewSuffix = new JTextField
-	final JTextField iotSuffix = new JTextField
-	final JTextField apiPackageSuffix = new JTextField
-	final JTextField hookPackageSuffix = new JTextField
+	val JCheckBox crudCompitiblityForOriginalTableCheckBox = new JCheckBox
+	val JTextField latestTableSuffix = new JTextField
+	val JTextField latestViewSuffix = new JTextField
+	val JCheckBox validTimeDefaultCheckBox = new JCheckBox
+	var JComboBox<String> granularityComboBox
+	val JCheckBox transactionTimeDefaultCheckBox = new JCheckBox
+	val JTextField flashbackArchiveName = new JTextField
+	val JTextField validFromColName = new JTextField
+	val JTextField validToColName = new JTextField
+	val JTextField isDeletedColName = new JTextField
+	val JTextField objectTypeSuffix = new JTextField
+	val JTextField collectionTypeSuffix = new JTextField
+	val JTextField historyTableSuffix = new JTextField
+	val JTextField historySequenceSuffix = new JTextField
+	val JTextField historyViewSuffix = new JTextField
+	val JTextField fullHistoryViewSuffix = new JTextField
+	val JTextField iotSuffix = new JTextField
+	val JTextField apiPackageSuffix = new JTextField
+	val JTextField hookPackageSuffix = new JTextField
 
 	new() {
 		layoutControls()
@@ -72,6 +75,20 @@ class PreferencePanel extends DefaultTraversablePanel {
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_GEN_VALID_TIME_LABEL")).component(
 				validTimeDefaultCheckBox))
+		val granularityModel = new DefaultComboBoxModel<String>();
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_YEAR"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_MONTH"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_WEEK"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_DAY"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_SECOND"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_CENTISECOND"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_MILLISECOND"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_MICROSECOND"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_NANOSECOND"))
+		granularityComboBox = new JComboBox<String>(granularityModel)
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_GRANULARITY_LABEL")).component(
+				granularityComboBox))		
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_VALID_FROM_COL_NAME_LABEL")).component(
 				validFromColName))
@@ -119,6 +136,7 @@ class PreferencePanel extends DefaultTraversablePanel {
 		transactionTimeDefaultCheckBox.selected = info.genTransactionTime
 		flashbackArchiveName.text = info.flashbackArchiveName
 		validTimeDefaultCheckBox.selected = info.isGenValidTime
+		granularityComboBox.selectedItem = info.granularity
 		validFromColName.text = info.validFromColName
 		validToColName.text = info.validToColName
 		isDeletedColName.text = info.isDeletedColName
@@ -143,6 +161,7 @@ class PreferencePanel extends DefaultTraversablePanel {
 		info.genTransactionTime = transactionTimeDefaultCheckBox.selected
 		info.flashbackArchiveName = flashbackArchiveName.text
 		info.genValidTime = validTimeDefaultCheckBox.selected
+		info.granularity = granularityComboBox.selectedItem as String
 		info.validFromColName = validFromColName.text
 		info.validToColName = validToColName.text
 		info.isDeletedColName = isDeletedColName.text

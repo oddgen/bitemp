@@ -14,6 +14,22 @@
 		<final.name>bitemp_for_SQLDev_${project.version}</final.name>
 	</properties>
 	<dependencies>
+		<!-- SQL Developer specific dependencies (not available in public maven 
+			repositories) -->
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>idert</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/ide/lib/idert.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>xmlparserv2</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/modules/oracle.xdk/xmlparserv2.jar</systemPath>
+		</dependency>
 		<!-- ordinary dependencies -->
 		<dependency>
 			<groupId>org.oddgen</groupId>
