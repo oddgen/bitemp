@@ -20,6 +20,7 @@ import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
 import oracle.ide.config.Preferences
+import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.model.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.PreferenceModel
@@ -27,6 +28,7 @@ import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.generators.OddgenGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
+import oracle.javatools.dialogs.MessageDialog
 
 class BitempTapiGenerator implements OddgenGenerator {
 
@@ -51,7 +53,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
 
-	private GeneratorModel model = new GeneratorModel;
+	private GeneratorModel model = new GeneratorModel
 
 	override getName(Connection conn) {
 		return BitempResources.get("GEN_TAPI_NAME")
@@ -79,6 +81,12 @@ class BitempTapiGenerator implements OddgenGenerator {
 	}
 
 	override getParams(Connection conn, String objectType, String objectName) {
+		val sessionDao = new SessionDao(conn)
+		if (!sessionDao.hasRole("SELECT_CATALOG_ROLE")) {
+			MessageDialog.error(null, BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED"),
+				BitempResources.get("ERROR_MISSING_PREREQUISITES_TITLE"), "")
+			throw new RuntimeException(BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED"))
+		}
 		val params = new LinkedHashMap<String, String>()
 		val preferences = Preferences.getPreferences();
 		val PreferenceModel pref = PreferenceModel.getInstance(preferences)
