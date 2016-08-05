@@ -21,55 +21,56 @@ import org.junit.Test
 import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
-class FlashbackArchiveTableDaoTest extends AbstractJdbcTest {
+class HistoryTableDaoTest extends AbstractJdbcTest {
 
 	@Test
 	def void notFound() {
 		val dao = new TableDao(dataSource.connection)
-		val table = dao.getArchiveTable("BONUS")
-		Assert.assertTrue(table == null)
+		val historyTable = dao.isHistoryTable("DEPT")
+		Assert.assertEquals(false, historyTable)
 	}
 
 	@Test
-	def void found() {
+	def void table1() {
+		try {
 		jdbcTemplate.execute('''
-			DECLARE
-			   e_fba_exists EXCEPTION;
-			   PRAGMA EXCEPTION_INIT(e_fba_exists, -55605);
-			BEGIN
-			   EXECUTE IMMEDIATE 'CREATE FLASHBACK ARCHIVE fba1 TABLESPACE users RETENTION 1 YEAR';
-			EXCEPTION
-			   WHEN e_fba_exists THEN
-			     NULL;
-			END;
+			CREATE TABLE t1 (
+			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+			   c1 VARCHAR2(20)
+			)
 		''')
-		jdbcTemplate.execute('''
-			CREATE TABLE fba_table (c1 integer) FLASHBACK ARCHIVE fba1
-		''')
+		} catch (Exception e) {
+		}
 		val dao = new TableDao(dataSource.connection)
-		val table = dao.getArchiveTable("FBA_TABLE")
-		Assert.assertTrue(table != null)
-		Assert.assertEquals("FBA1", table.flashbackArchiveName)
-		val objectId = jdbcTemplate.queryForObject('''
-			SELECT object_id 
-			  FROM user_objects 
-			 WHERE object_type = 'TABLE' AND object_name = 'FBA_TABLE'
-		''', Integer)
-		Assert.assertEquals("SYS_FBA_HIST_" + objectId, table.archiveTableName)
-		Assert.assertEquals("ENABLED", table.status)
+		val historyTable = dao.isHistoryTable("T1")
+		Assert.assertEquals(true, historyTable)
+	}
+	
+	@Test
+	def void table2() {
+		try {
+		jdbcTemplate.execute('''
+			CREATE TABLE t2 (
+			   hist_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+			   c1 VARCHAR2(20)
+			)
+		''')
+		} catch (Exception e) {
+		}
+		val dao = new TableDao(dataSource.connection)
+		val historyTable = dao.isHistoryTable("T2")
+		Assert.assertEquals(false, historyTable)
 	}
 
 	@AfterClass
 	def static void tearDown() {
 		try {
-			jdbcTemplate.execute("ALTER TABLE fba_table NO FLASHBACK ARCHIVE")
+			jdbcTemplate.execute("DROP TABLE t1 PURGE")
 		} catch (Exception e) {
 		}
 		try {
-			jdbcTemplate.execute("DROP TABLE fba_table PURGE")
+			jdbcTemplate.execute("DROP TABLE t2 PURGE")
 		} catch (Exception e) {
 		}
-
 	}
-
 }

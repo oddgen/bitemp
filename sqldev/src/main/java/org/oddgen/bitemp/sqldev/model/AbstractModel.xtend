@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,10 @@
  */
 package org.oddgen.bitemp.sqldev.model
 
-import java.util.LinkedHashMap
-import org.eclipse.xtend.lib.annotations.Accessors
+import org.eclipse.xtext.xbase.lib.util.ToStringBuilder
 
-@Accessors
-class GeneratorModel extends AbstractModel {
-	LinkedHashMap<String, String> params
-	ApiType originModel
-	ApiType targetModel
-	Table inputTable
-	Table latestContentTable
-	Table historyTable
+abstract class AbstractModel {
+	override toString() {
+		new ToStringBuilder(this).addAllFields.toString
+	}
 }

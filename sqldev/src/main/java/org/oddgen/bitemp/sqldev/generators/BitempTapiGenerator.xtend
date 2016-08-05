@@ -19,16 +19,14 @@ import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
-import org.oddgen.bitemp.sqldev.dal.FlashbackArchiveTableDao
+import oracle.ide.config.Preferences
+import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.model.GeneratorModel
-import org.oddgen.bitemp.sqldev.model.OriginalTable
 import org.oddgen.bitemp.sqldev.model.PreferenceModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.generators.OddgenGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
-import org.oddgen.bitemp.sqldev.dal.TemporalValidityPeriodDao
-import oracle.ide.config.Preferences
 
 class BitempTapiGenerator implements OddgenGenerator {
 
@@ -150,14 +148,8 @@ class BitempTapiGenerator implements OddgenGenerator {
 
 	def private populateModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {
 		model.params = params
-		model.originalTable = new OriginalTable
-		model.originalTable.tableName = tableName
-		val flashbackArchiveTableDao = new FlashbackArchiveTableDao(conn)
-		model.originalTable.flashbackArchiveTable = flashbackArchiveTableDao.getArchiveTable(
-			model.originalTable.tableName)
-		val temporalValidityPeriodDao = new TemporalValidityPeriodDao(conn)
-		model.originalTable.temporalValidityPeriods = temporalValidityPeriodDao.getTemporalValidityPeriods(
-			model.originalTable.tableName)
+		val tableDao = new TableDao(conn)
+		model.inputTable = tableDao.getTable(tableName)
 	}
 
 	def getModel() {

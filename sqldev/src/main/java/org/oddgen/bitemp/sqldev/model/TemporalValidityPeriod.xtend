@@ -18,7 +18,7 @@ package org.oddgen.bitemp.sqldev.model
 import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
-class TemporalValidityPeriod {
+class TemporalValidityPeriod extends AbstractModel {
 	String periodname
 	String periodstart
 	String periodend

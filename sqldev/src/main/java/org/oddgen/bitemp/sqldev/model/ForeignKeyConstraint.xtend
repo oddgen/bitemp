@@ -19,8 +19,9 @@ import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
-class OriginalTable {
-	String tableName
-	FlashbackArchiveTable flashbackArchiveTable
-	List<TemporalValidityPeriod> temporalValidityPeriods
+class ForeignKeyConstraint extends AbstractModel {
+	String constraintName
+	String referencedConstraintName
+	String referencedTableName 
+	List<String> columnNames
 }

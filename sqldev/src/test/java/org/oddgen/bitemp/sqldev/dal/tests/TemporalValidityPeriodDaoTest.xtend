@@ -18,21 +18,21 @@ package org.oddgen.bitemp.sqldev.dal.tests
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
-import org.oddgen.bitemp.sqldev.dal.TemporalValidityPeriodDao
+import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.model.TemporalValidityPeriod
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
 class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {
 
 	@Test
-	def void getTemporalValidityPeriodsNotFound() {
-		val dao = new TemporalValidityPeriodDao(dataSource.connection)
+	def void notFound() {
+		val dao = new TableDao(dataSource.connection)
 		val periods = dao.getTemporalValidityPeriods("BONUS")
 		Assert.assertEquals(0, periods.size)
 	}
 
 	@Test
-	def void getTemporalValidityPeriodsTable1() {
+	def void table1() {
 		jdbcTemplate.execute('''
 			CREATE TABLE tv_table1 (
 			   c1 integer, 
@@ -40,7 +40,7 @@ class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {
 			)
 		''')
 
-		val dao = new TemporalValidityPeriodDao(dataSource.connection)
+		val dao = new TableDao(dataSource.connection)
 		val periods = dao.getTemporalValidityPeriods("TV_TABLE1")
 		Assert.assertEquals(1, periods.size)
 		val TemporalValidityPeriod period = periods.get(0)
@@ -51,7 +51,7 @@ class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def void getTemporalValidityPeriodsTable2() {
+	def void table2() {
 		jdbcTemplate.execute('''
 			CREATE TABLE tv_table2 (
 			   c1         INTEGER, 
@@ -60,7 +60,7 @@ class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {
 			   PERIOD FOR vt (valid_from, valid_to)
 			)
 		''')
-		val dao = new TemporalValidityPeriodDao(dataSource.connection)
+		val dao = new TableDao(dataSource.connection)
 		val periods = dao.getTemporalValidityPeriods("TV_TABLE2")
 		Assert.assertEquals(1, periods.size)
 		val period = periods.get(0)
@@ -71,7 +71,7 @@ class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def void getTemporalValidityPeriodsTable3() {
+	def void table3() {
 		jdbcTemplate.execute('''
 			CREATE TABLE tv_table3 (
 			   c1         integer, 
@@ -89,7 +89,7 @@ class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {
 			   PERIOD FOR dt (decision_from, decision_to)
 			)
 		''')
-		val dao = new TemporalValidityPeriodDao(dataSource.connection)
+		val dao = new TableDao(dataSource.connection)
 		val periods = dao.getTemporalValidityPeriods("TV_TABLE3")
 		Assert.assertEquals(2, periods.size)
 		val vt = periods.filter[it.periodname == "VT"].get(0)

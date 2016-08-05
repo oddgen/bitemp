@@ -15,15 +15,15 @@
  */
 package org.oddgen.bitemp.sqldev.model
 
-import java.util.LinkedHashMap
+import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
-class GeneratorModel extends AbstractModel {
-	LinkedHashMap<String, String> params
-	ApiType originModel
-	ApiType targetModel
-	Table inputTable
-	Table latestContentTable
-	Table historyTable
+class Table extends AbstractModel {
+	String tableName
+	Boolean historyTable
+	FlashbackArchiveTable flashbackArchiveTable
+	List<TemporalValidityPeriod> temporalValidityPeriods
+	PrimaryKeyConstraint primaryKeyConstraint
+	List<ForeignKeyConstraint> foreignKeyConstraints
 }

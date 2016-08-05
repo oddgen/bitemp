@@ -18,7 +18,7 @@ package org.oddgen.bitemp.sqldev.model
 import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
-class FlashbackArchiveTable {
+class FlashbackArchiveTable extends AbstractModel {
 	String flashbackArchiveName
 	String archiveTableName
 	String status 

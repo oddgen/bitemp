@@ -15,18 +15,18 @@
  */
 package org.oddgen.bitemp.sqldev.templates
 
-import org.oddgen.bitemp.sqldev.model.GeneratorModel
+import org.oddgen.bitemp.sqldev.model.Table
 
 class RemoveFlashbackArchive {
-	def compile(GeneratorModel model) {
-		val flashbackArchiveTable = model.originalTable.flashbackArchiveTable
+	def compile(Table table) {
+		val flashbackArchiveTable = table.flashbackArchiveTable
 		if (flashbackArchiveTable !=
 			null) {
 			val result = '''
 				--
 				-- Remove archive table «flashbackArchiveTable.archiveTableName» from archive «flashbackArchiveTable.flashbackArchiveName»
 				--
-				ALTER TABLE «model.originalTable.tableName» NO FLASHBACK ARCHIVE;
+				ALTER TABLE «table.tableName» NO FLASHBACK ARCHIVE;
 			'''
 			return result
 		} else {
