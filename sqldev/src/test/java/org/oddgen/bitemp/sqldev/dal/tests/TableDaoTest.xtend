@@ -109,7 +109,6 @@ class TableDaoTest extends AbstractJdbcTest {
 		Assert.assertEquals(#["C3"], t2.primaryKeyConstraint.columnNames)
 		Assert.assertEquals(0, t2.primaryKeyConstraint.referencingTables.size)
 		Assert.assertEquals(1, t2.foreignKeyConstraints.size)
-
 	}	
 
 	@AfterClass
