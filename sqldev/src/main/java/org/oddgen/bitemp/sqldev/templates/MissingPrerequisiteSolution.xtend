@@ -16,6 +16,7 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import java.sql.Connection
+import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 
 class MissingPrerequisiteSolution {
@@ -30,6 +31,29 @@ class MissingPrerequisiteSolution {
 				'''
 					-- to solve "«BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED")»" run the following statement as SYS:
 					GRANT SELECT_CATALOG_ROLE TO «conn.metaData.userName»;
+				'''
+			case BitempResources.get("ERROR_NO_FLASHBACK_ARCHIVE"):
+				'''
+					-- to solve "«BitempResources.get("ERROR_NO_FLASHBACK_ARCHIVE")»" run the following statements as SYS:
+					«val dao = new SessionDao(conn)»
+					«val fbas = dao.allFlashbackArchives»
+					«IF fbas.size > 0»
+						GRANT FLASHBACK ARCHIVE ON «fbas.get(0)» TO «conn.metaData.userName»;
+					«ELSE»
+						CREATE TABLESPACE fba DATAFILE '«dao.dataFilePath»fba01.dbf' SIZE 10M AUTOEXTEND ON NEXT 1M;
+						CREATE FLASHBACK ARCHIVE fba TABLESPACE fba RETENTION 1 YEAR;
+						GRANT FLASHBACK ARCHIVE ON fba TO «conn.metaData.userName»;
+					«ENDIF»
+				'''
+			case BitempResources.get("ERROR_DBMS_FLASHBACK_ARCHIVE_REQUIRED"):
+				'''
+					-- to solve "«BitempResources.get("ERROR_DBMS_FLASHBACK_ARCHIVE_REQUIRED")»" run the following statement as SYS:
+					GRANT EXECUTE ON SYS.DBMS_FLASHBACK_ARCHIVE TO «conn.metaData.userName»;
+				'''
+			case BitempResources.get("ERROR_DBMS_FLASHBACK_REQUIRED"):
+				'''
+					-- to solve "«BitempResources.get("ERROR_DBMS_FLASHBACK_REQUIRED")»" run the following statement as SYS:
+					GRANT EXECUTE ON SYS.DBMS_FLASHBACK TO «conn.metaData.userName»;
 				'''
 			default:
 				'''

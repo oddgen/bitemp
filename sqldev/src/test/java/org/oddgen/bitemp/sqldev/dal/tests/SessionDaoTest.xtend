@@ -148,6 +148,13 @@ class SessionDaoTest extends AbstractJdbcTest {
 		''')		
 		Assert.assertEquals(#[""], fbas)
 	}
+	
+	@Test
+	def void dataFilePath() {
+		val dao = new SessionDao(dataSource.connection)
+		val path = dao.dataFilePath
+		Assert.assertEquals("/u01/app/oracle/oradata/odb/", path)
+	}
 
 	@Test
 	def void getMissingGeneratorPrerequisites() {

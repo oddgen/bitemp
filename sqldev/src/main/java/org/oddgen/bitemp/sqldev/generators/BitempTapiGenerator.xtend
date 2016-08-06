@@ -16,6 +16,7 @@
 package org.oddgen.bitemp.sqldev.generators
 
 import java.sql.Connection
+import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
@@ -66,12 +67,17 @@ class BitempTapiGenerator implements OddgenGenerator {
 	}
 
 	override getObjectTypes(Connection conn) {
+		val result = new ArrayList<String>
 		conn.populatePrerequisiteModel
 		if (prerequisiteModel.missingGeneratePrerequisites.size > 0) {
-			return #[BitempResources.get("MISSING_GENERATE_PREREQUISITES_LABEL")]
+			result.add(BitempResources.get("MISSING_GENERATE_PREREQUISITES_LABEL"))
 		} else {
-			return #["TABLE"]
+			result.add("TABLE")
 		}
+		if (prerequisiteModel.missingInstallPrerequisites.size > 0) {
+			result.add(BitempResources.get("MISSING_INSTALL_PREREQUISITES_LABEL"))
+		}
+		return result
 	}
 
 	override getObjectNames(Connection conn, String objectType) {
@@ -86,6 +92,8 @@ class BitempTapiGenerator implements OddgenGenerator {
 			val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
 			val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
 			return objectNames
+		} else if (objectType == BitempResources.get("MISSING_INSTALL_PREREQUISITES_LABEL")) {
+			return prerequisiteModel.missingInstallPrerequisites
 		} else if (objectType == BitempResources.get("MISSING_GENERATE_PREREQUISITES_LABEL")) {
 			return prerequisiteModel.missingGeneratePrerequisites
 		}
@@ -175,6 +183,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 	def private populatePrerequisiteModel(Connection conn) {
 		val sessionDao = new SessionDao(conn)
 		prerequisiteModel.missingGeneratePrerequisites = sessionDao.missingGeneratorPrerequisites
+		prerequisiteModel.missingInstallPrerequisites = sessionDao.missingInstallPrerequisites
 	}
 
 	def private populateGeneratorModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {

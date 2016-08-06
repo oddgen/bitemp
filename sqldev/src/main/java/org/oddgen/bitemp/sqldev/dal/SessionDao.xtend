@@ -76,49 +76,87 @@ class SessionDao {
 
 	def getAllFlashbackArchives() {
 		var List<String> result = new ArrayList<String>
-		try {
-			val sql = '''
-				SELECT flashback_archive_name
-				  FROM dba_flashback_archive
-				 ORDER BY flashback_archive_name
-			'''
-			result = jdbcTemplate.queryForList(sql, String)
-		} catch (Exception e) {
+		if (conn.metaData.databaseMajorVersion >= 11) {
+			try {
+				val sql = '''
+					SELECT flashback_archive_name
+					  FROM dba_flashback_archive
+					 ORDER BY flashback_archive_name
+				'''
+				result = jdbcTemplate.queryForList(sql, String)
+			} catch (Exception e) {
+				// ignore error if dba_flashback_archive is not accessible
+			}
 		}
 		return result
 	}
 
 	def getAccessibleFlashbackArchives() {
 		val result = new ArrayList<String>
-		var hasDefaultFba = false
-		val sqlUserFba = '''
-			SELECT flashback_archive_name
-			  FROM user_flashback_archive
-			 ORDER BY flashback_archive_name
-		'''
-		val userFba = jdbcTemplate.queryForList(sqlUserFba, String)
-		var List<String> dbaFba = new ArrayList<String>
-		if ("FLASHBACK ARCHIVE ADMINISTER".hasPrivilege) {
-			dbaFba = getAllFlashbackArchives
-		}
-		try {
-			val sqlDbaFbaDefault = '''
-				SELECT count(*)
-				  FROM dba_flashback_archive
-				 WHERE status = 'DEFAULT'
+		if (conn.metaData.databaseMajorVersion >= 11) {
+			var hasDefaultFba = false
+			val sqlUserFba = '''
+				SELECT flashback_archive_name
+				  FROM user_flashback_archive
+				 ORDER BY flashback_archive_name
 			'''
-			hasDefaultFba = jdbcTemplate.queryForObject(sqlDbaFbaDefault, Integer) == 1
-		} catch (Exception e) {
-		}
-		if (hasDefaultFba) {
-			result.add("") // empty entry for default FBA
-		}
-		if (dbaFba.size > 0) {
-			result.addAll(dbaFba)
-		} else {
-			result.addAll(userFba)
+			val userFba = jdbcTemplate.queryForList(sqlUserFba, String)
+			var List<String> dbaFba = new ArrayList<String>
+			if ("FLASHBACK ARCHIVE ADMINISTER".hasPrivilege) {
+				dbaFba = getAllFlashbackArchives
+			}
+			try {
+				val sqlDbaFbaDefault = '''
+					SELECT count(*)
+					  FROM dba_flashback_archive
+					 WHERE status = 'DEFAULT'
+				'''
+				hasDefaultFba = jdbcTemplate.queryForObject(sqlDbaFbaDefault, Integer) == 1
+			} catch (Exception e) {
+				// ignore error if dba_flashback_archive is not accessible
+			}
+			if (hasDefaultFba) {
+				result.add("") // empty entry for default FBA
+			}
+			if (dbaFba.size > 0) {
+				result.addAll(dbaFba)
+			} else {
+				result.addAll(userFba)
+			}
 		}
 		return result
+	}
+	
+	def getDataFilePath() {
+		try {
+			val sql = '''
+				SELECT file_name
+				  FROM dba_data_files
+				 WHERE tablespace_name IN (SELECT default_tablespace
+				                             FROM dba_users
+				                            WHERE username = USER)
+				       AND rownum = 1
+			'''
+			val fileName = jdbcTemplate.queryForObject(sql, String)
+			if (fileName != null && !fileName.empty) {
+				var String separator = null
+				if (fileName.contains("/")) {
+					separator = "/"
+				} else if (fileName.contains("\\")) {
+					separator = "\\"
+				}
+				if (separator != null) {
+					return '''«fileName.substring(0,fileName.lastIndexOf(separator))»«separator»'''
+				} else {
+					return ""
+				}
+			} else {
+				return ""
+			}
+		} catch (Exception e) {
+			// ignore if dba views are not accesible
+			return ""
+		}
 	}
 
 	def getMissingGeneratorPrerequisites() {
@@ -128,6 +166,9 @@ class SessionDao {
 		}
 		if (! "SELECT_CATALOG_ROLE".hasRole) {
 			result.add(BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED"))
+		}
+		if (accessibleFlashbackArchives.size == 0) {
+			result.add(BitempResources.get("ERROR_NO_FLASHBACK_ARCHIVE"))
 		}
 		return result
 	}
@@ -141,7 +182,6 @@ class SessionDao {
 			result.add(BitempResources.get("ERROR_DBMS_FLASHBACK_REQUIRED"))
 		}
 		return result
-
 	}
 
 }
