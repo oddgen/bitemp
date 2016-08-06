@@ -35,4 +35,131 @@ class SessionDaoTest extends AbstractJdbcTest {
 		val hasDba = dao.hasRole("DBA")
 		Assert.assertEquals(false, hasDba)
 	}
+	
+	@Test
+	def void flashbackArchiveAdminister() {
+		val dao = new SessionDao(dataSource.connection)
+		val hasFbaAdminister = dao.hasPrivilege("FLASHBACK ARCHIVE ADMINISTER")
+		Assert.assertEquals(true, hasFbaAdminister)
+	}
+	
+	@Test
+	def void dbmsFlashbackArchive() {
+		val dao = new SessionDao(dataSource.connection)
+		val hasDbmsFba = dao.hasExecuteRights("DBMS_FLASHBACK_ARCHIVE")
+		Assert.assertEquals(true, hasDbmsFba)
+	}
+
+	@Test
+	def void allFlashbackArchives() {
+		val dao = new SessionDao(dataSource.connection)
+		val fbas = dao.allFlashbackArchives
+		Assert.assertEquals(1, fbas.size)
+		Assert.assertEquals("FBA1", fbas.get(0))
+	}
+
+	@Test
+	def void accessibleFlashbackArchives() {
+		val dao = new SessionDao(dataSource.connection)
+		val fbas = dao.accessibleFlashbackArchives
+		Assert.assertEquals(#["FBA1"], fbas)
+	}
+
+	@Test
+	def void accessibleFbaWithDefault() {
+		sysJdbcTemplate.execute('''
+			CREATE FLASHBACK ARCHIVE DEFAULT fba2 TABLESPACE users RETENTION 1 YEAR
+		''')
+
+		val dao = new SessionDao(dataSource.connection)
+		val fbas = dao.accessibleFlashbackArchives
+		sysJdbcTemplate.execute('''
+			DROP FLASHBACK ARCHIVE fba2
+		''')		
+		Assert.assertEquals(#["", "FBA1", "FBA2"], fbas)
+	}
+
+	@Test
+	def void accessibleUserDefaultImplicit() {
+		sysJdbcTemplate.execute('''
+			CREATE FLASHBACK ARCHIVE DEFAULT fba2 TABLESPACE users RETENTION 1 YEAR
+		''')
+		sysJdbcTemplate.execute('''
+			REVOKE FLASHBACK ARCHIVE ADMINISTER FROM scott
+		''')
+		sysJdbcTemplate.execute('''
+			GRANT FLASHBACK ARCHIVE ON fba1 TO scott
+		''')
+		val dao = new SessionDao(dataSource.connection)
+		val fbas = dao.accessibleFlashbackArchives
+		sysJdbcTemplate.execute('''
+			REVOKE FLASHBACK ARCHIVE ON fba1 FROM scott
+		''')		
+		sysJdbcTemplate.execute('''
+			GRANT FLASHBACK ARCHIVE ADMINISTER TO scott
+		''')
+		sysJdbcTemplate.execute('''
+			DROP FLASHBACK ARCHIVE fba2
+		''')		
+		Assert.assertEquals(#["","FBA1"], fbas)
+	}
+
+
+	@Test
+	def void accessibleUserDefaultExplicit() {
+		sysJdbcTemplate.execute('''
+			CREATE FLASHBACK ARCHIVE DEFAULT fba2 TABLESPACE users RETENTION 1 YEAR
+		''')
+		sysJdbcTemplate.execute('''
+			REVOKE FLASHBACK ARCHIVE ADMINISTER FROM scott
+		''')
+		sysJdbcTemplate.execute('''
+			GRANT FLASHBACK ARCHIVE ON fba2 TO scott
+		''')
+		val dao = new SessionDao(dataSource.connection)
+		val fbas = dao.accessibleFlashbackArchives
+		sysJdbcTemplate.execute('''
+			REVOKE FLASHBACK ARCHIVE ON fba2 FROM scott
+		''')		
+		sysJdbcTemplate.execute('''
+			GRANT FLASHBACK ARCHIVE ADMINISTER TO scott
+		''')
+		sysJdbcTemplate.execute('''
+			DROP FLASHBACK ARCHIVE fba2
+		''')		
+		Assert.assertEquals(#["","FBA2"], fbas)
+	}
+
+	@Test
+	def void accessibleUserDefaultOnly() {
+		sysJdbcTemplate.execute('''
+			CREATE FLASHBACK ARCHIVE DEFAULT fba2 TABLESPACE users RETENTION 1 YEAR
+		''')
+		sysJdbcTemplate.execute('''
+			REVOKE FLASHBACK ARCHIVE ADMINISTER FROM scott
+		''')
+		val dao = new SessionDao(dataSource.connection)
+		val fbas = dao.accessibleFlashbackArchives
+		sysJdbcTemplate.execute('''
+			GRANT FLASHBACK ARCHIVE ADMINISTER TO scott
+		''')
+		sysJdbcTemplate.execute('''
+			DROP FLASHBACK ARCHIVE fba2
+		''')		
+		Assert.assertEquals(#[""], fbas)
+	}
+
+	@Test
+	def void getMissingGeneratorPrerequisites() {
+		val dao = new SessionDao(dataSource.connection)
+		val prereqs = dao.missingGeneratorPrerequisites
+		Assert.assertEquals(0, prereqs.size)
+	}
+	
+	@Test
+	def void getMissingInstallPrerequisites() {
+		val doa = new SessionDao(dataSource.connection)
+		val prereqs = doa.missingInstallPrerequisites
+		Assert.assertEquals(0, prereqs.size)
+	}
 }

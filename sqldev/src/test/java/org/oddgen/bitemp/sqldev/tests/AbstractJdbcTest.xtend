@@ -56,6 +56,18 @@ class AbstractJdbcTest {
 		sysJdbcTemplate.execute("GRANT FLASHBACK ARCHIVE ADMINISTER TO scott")
 		// for sys.ku$_fba_period_view
 		sysJdbcTemplate.execute("GRANT select_catalog_role TO scott")
+		// create FBA if not existing
+		sysJdbcTemplate.execute('''
+			DECLARE
+			   e_fba_exists EXCEPTION;
+			   PRAGMA EXCEPTION_INIT(e_fba_exists, -55605);
+			BEGIN
+			   EXECUTE IMMEDIATE 'CREATE FLASHBACK ARCHIVE fba1 TABLESPACE users RETENTION 1 YEAR';
+			EXCEPTION
+			   WHEN e_fba_exists THEN
+			     NULL;
+			END;
+		''')
 	}
 	
 }

@@ -20,12 +20,13 @@ import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
 import oracle.ide.config.Preferences
-import oracle.javatools.dialogs.MessageDialog
 import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.preference.PreferenceModel
+import org.oddgen.bitemp.sqldev.model.prerequisite.PrerequisiteModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
+import org.oddgen.bitemp.sqldev.templates.MissingPrerequisiteSolution
 import org.oddgen.sqldev.generators.OddgenGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
@@ -53,7 +54,8 @@ class BitempTapiGenerator implements OddgenGenerator {
 	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
 
-	private GeneratorModel model = new GeneratorModel
+	private PrerequisiteModel prerequisiteModel = new PrerequisiteModel
+	private GeneratorModel generatorModel = new GeneratorModel
 
 	override getName(Connection conn) {
 		return BitempResources.get("GEN_TAPI_NAME")
@@ -64,104 +66,125 @@ class BitempTapiGenerator implements OddgenGenerator {
 	}
 
 	override getObjectTypes(Connection conn) {
-		return #["TABLE"]
+		conn.populatePrerequisiteModel
+		if (prerequisiteModel.missingGeneratePrerequisites.size > 0) {
+			return #[BitempResources.get("MISSING_GENERATE_PREREQUISITES_LABEL")]
+		} else {
+			return #["TABLE"]
+		}
 	}
 
 	override getObjectNames(Connection conn, String objectType) {
-		val sql = '''
-			SELECT object_name
-			  FROM user_objects
-			 WHERE object_type = ?
-			   AND generated = 'N'
-			ORDER BY object_name
-		'''
-		val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-		val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
-		return objectNames
+		if (objectType == "TABLE") {
+			val sql = '''
+				SELECT object_name
+				  FROM user_objects
+				 WHERE object_type = ?
+				   AND generated = 'N'
+				ORDER BY object_name
+			'''
+			val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
+			val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
+			return objectNames
+		} else if (objectType == BitempResources.get("MISSING_GENERATE_PREREQUISITES_LABEL")) {
+			return prerequisiteModel.missingGeneratePrerequisites
+		}
 	}
 
 	override getParams(Connection conn, String objectType, String objectName) {
-		val sessionDao = new SessionDao(conn)
-		if (!sessionDao.hasRole("SELECT_CATALOG_ROLE")) {
-			MessageDialog.error(null, BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED"),
-				BitempResources.get("ERROR_MISSING_PREREQUISITES_TITLE"), "")
-			throw new RuntimeException(BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED"))
-		}
 		val params = new LinkedHashMap<String, String>()
-		val preferences = Preferences.getPreferences();
-		val PreferenceModel pref = PreferenceModel.getInstance(preferences)
-		params.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, if(pref.crudCompatiblityOriginalTable) "1" else "0")
-		params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
-		params.put(LATEST_VIEW_SUFFIX, pref.latestViewSuffix)
-		params.put(GEN_TRANSACTION_TIME, if(pref.genTransactionTime) "1" else "0")
-		params.put(FLASHBACK_ARCHIVE_NAME, pref.flashbackArchiveName)
-		params.put(GEN_VALID_TIME, if(pref.genValidTime) "1" else "0")
-		params.put(GRANULARITY, pref.granularity)
-		params.put(VALID_FROM_COL_NAME, pref.validFromColName)
-		params.put(VALID_TO_COL_NAME, pref.validToColName)
-		params.put(IS_DELETED_COL_NAME, pref.isDeletedColName)
-		params.put(HISTORY_TABLE_SUFFIX, pref.historyTableSuffix)
-		params.put(HISTORY_SEQUENCE_SUFFIX, pref.historySequenceSuffix)
-		params.put(HISTORY_VIEW_SUFFIX, pref.historyViewSuffix)
-		params.put(FULL_HISTORY_VIEW_SUFFIX, pref.fullHistoryViewSuffix)
-		params.put(OBJECT_TYPE_SUFFIX, pref.objectTypeSuffix)
-		params.put(COLLECTION_TYPE_SUFFIX, pref.collectionTypeSuffix)
-		params.put(IOT_SUFFIX, pref.iotSuffix)
-		params.put(API_PACKAGE_SUFFIX, pref.apiPackageSuffix)
-		params.put(BitempTapiGenerator.HOOK_PACKAGE_SUFFIX, pref.hookPackageSuffix)
+		if (objectType == "TABLE") {
+			val preferences = Preferences.getPreferences();
+			val PreferenceModel pref = PreferenceModel.getInstance(preferences)
+			params.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, if(pref.crudCompatiblityOriginalTable) "1" else "0")
+			params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
+			params.put(LATEST_VIEW_SUFFIX, pref.latestViewSuffix)
+			params.put(GEN_TRANSACTION_TIME, if(pref.genTransactionTime) "1" else "0")
+			params.put(FLASHBACK_ARCHIVE_NAME, pref.flashbackArchiveName)
+			params.put(GEN_VALID_TIME, if(pref.genValidTime) "1" else "0")
+			params.put(GRANULARITY, pref.granularity)
+			params.put(VALID_FROM_COL_NAME, pref.validFromColName)
+			params.put(VALID_TO_COL_NAME, pref.validToColName)
+			params.put(IS_DELETED_COL_NAME, pref.isDeletedColName)
+			params.put(HISTORY_TABLE_SUFFIX, pref.historyTableSuffix)
+			params.put(HISTORY_SEQUENCE_SUFFIX, pref.historySequenceSuffix)
+			params.put(HISTORY_VIEW_SUFFIX, pref.historyViewSuffix)
+			params.put(FULL_HISTORY_VIEW_SUFFIX, pref.fullHistoryViewSuffix)
+			params.put(OBJECT_TYPE_SUFFIX, pref.objectTypeSuffix)
+			params.put(COLLECTION_TYPE_SUFFIX, pref.collectionTypeSuffix)
+			params.put(IOT_SUFFIX, pref.iotSuffix)
+			params.put(API_PACKAGE_SUFFIX, pref.apiPackageSuffix)
+			params.put(BitempTapiGenerator.HOOK_PACKAGE_SUFFIX, pref.hookPackageSuffix)
+		}
 		return params
 	}
 
 	override getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		val lov = new HashMap<String, List<String>>()
-		// true values have to be defined first for a check box to work properly in oddgen v0.2.3
-		lov.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, #["1", "0"])
-		lov.put(GEN_VALID_TIME, #["1", "0"])
-		lov.put(GEN_TRANSACTION_TIME, #["1", "0"])
-		lov.put(GRANULARITY,
-			#[BitempResources.getString("PREF_GRANULARITY_YEAR"), BitempResources.getString("PREF_GRANULARITY_MONTH"),
-				BitempResources.getString("PREF_GRANULARITY_WEEK"), BitempResources.getString("PREF_GRANULARITY_DAY"),
-				BitempResources.getString("PREF_GRANULARITY_SECOND"),
-				BitempResources.getString("PREF_GRANULARITY_CENTISECOND"),
-				BitempResources.getString("PREF_GRANULARITY_MILLISECOND"),
-				BitempResources.getString("PREF_GRANULARITY_MICROSECOND"),
-				BitempResources.getString("PREF_GRANULARITY_NANOSECOND")])
+		if (objectType == "TABLE") {
+			// true values have to be defined first for a check box to work properly in oddgen v0.2.3
+			lov.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, #["1", "0"])
+			lov.put(GEN_VALID_TIME, #["1", "0"])
+			lov.put(GEN_TRANSACTION_TIME, #["1", "0"])
+			lov.put(GRANULARITY,
+				#[BitempResources.getString("PREF_GRANULARITY_YEAR"),
+					BitempResources.getString("PREF_GRANULARITY_MONTH"),
+					BitempResources.getString("PREF_GRANULARITY_WEEK"),
+					BitempResources.getString("PREF_GRANULARITY_DAY"),
+					BitempResources.getString("PREF_GRANULARITY_SECOND"),
+					BitempResources.getString("PREF_GRANULARITY_CENTISECOND"),
+					BitempResources.getString("PREF_GRANULARITY_MILLISECOND"),
+					BitempResources.getString("PREF_GRANULARITY_MICROSECOND"),
+					BitempResources.getString("PREF_GRANULARITY_NANOSECOND")])
+		}
 		return lov
 	}
 
 	override getParamStates(Connection conn, String objectType, String objectName,
 		LinkedHashMap<String, String> params) {
 		val paramStates = new HashMap<String, Boolean>()
-		val isCrudCompatiblityOriginalTable = params.get(CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1"
-		paramStates.put(LATEST_TABLE_SUFFIX, isCrudCompatiblityOriginalTable)
-		paramStates.put(LATEST_VIEW_SUFFIX, !isCrudCompatiblityOriginalTable)
-		val isTransactionTime = params.get(GEN_TRANSACTION_TIME) == "1"
-		paramStates.put(FLASHBACK_ARCHIVE_NAME, isTransactionTime)
-		val isValidTime = params.get(GEN_VALID_TIME) == "1"
-		paramStates.put(GRANULARITY, isValidTime)
-		paramStates.put(VALID_FROM_COL_NAME, isValidTime)
-		paramStates.put(VALID_TO_COL_NAME, isValidTime)
-		paramStates.put(IS_DELETED_COL_NAME, isValidTime)
-		paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
-		paramStates.put(HISTORY_SEQUENCE_SUFFIX, isValidTime)
-		paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
-		paramStates.put(FULL_HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
+		if (objectType == "TABLE") {
+			val isCrudCompatiblityOriginalTable = params.get(CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1"
+			paramStates.put(LATEST_TABLE_SUFFIX, isCrudCompatiblityOriginalTable)
+			paramStates.put(LATEST_VIEW_SUFFIX, !isCrudCompatiblityOriginalTable)
+			val isTransactionTime = params.get(GEN_TRANSACTION_TIME) == "1"
+			paramStates.put(FLASHBACK_ARCHIVE_NAME, isTransactionTime)
+			val isValidTime = params.get(GEN_VALID_TIME) == "1"
+			paramStates.put(GRANULARITY, isValidTime)
+			paramStates.put(VALID_FROM_COL_NAME, isValidTime)
+			paramStates.put(VALID_TO_COL_NAME, isValidTime)
+			paramStates.put(IS_DELETED_COL_NAME, isValidTime)
+			paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
+			paramStates.put(HISTORY_SEQUENCE_SUFFIX, isValidTime)
+			paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
+			paramStates.put(FULL_HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
+		}
 		return paramStates
 	}
 
 	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
-		populateModel(conn, objectName, params)
-		return "-- TODO"
+		if (objectType == "TABLE") {
+			populateGeneratorModel(conn, objectName, params)
+			return "-- TODO"
+		} else {
+			val template = new MissingPrerequisiteSolution
+			return template.compile(conn, objectName)
+		}
 	}
 
-	def private populateModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {
-		model.params = params
+	def private populatePrerequisiteModel(Connection conn) {
+		val sessionDao = new SessionDao(conn)
+		prerequisiteModel.missingGeneratePrerequisites = sessionDao.missingGeneratorPrerequisites
+	}
+
+	def private populateGeneratorModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {
+		generatorModel.params = params
 		val tableDao = new TableDao(conn)
-		model.inputTable = tableDao.getTable(tableName)
+		generatorModel.inputTable = tableDao.getTable(tableName)
 	}
 
 	def getModel() {
-		return model
+		return generatorModel
 	}
 
 }

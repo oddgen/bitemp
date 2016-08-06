@@ -33,17 +33,6 @@ class FlashbackArchiveTableDaoTest extends AbstractJdbcTest {
 	@Test
 	def void found() {
 		jdbcTemplate.execute('''
-			DECLARE
-			   e_fba_exists EXCEPTION;
-			   PRAGMA EXCEPTION_INIT(e_fba_exists, -55605);
-			BEGIN
-			   EXECUTE IMMEDIATE 'CREATE FLASHBACK ARCHIVE fba1 TABLESPACE users RETENTION 1 YEAR';
-			EXCEPTION
-			   WHEN e_fba_exists THEN
-			     NULL;
-			END;
-		''')
-		jdbcTemplate.execute('''
 			CREATE TABLE fba_table (c1 integer) FLASHBACK ARCHIVE fba1
 		''')
 		val dao = new TableDao(dataSource.connection)
