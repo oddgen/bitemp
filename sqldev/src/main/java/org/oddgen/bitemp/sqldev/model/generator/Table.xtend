@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.oddgen.bitemp.sqldev.model
+package org.oddgen.bitemp.sqldev.model.generator
 
+import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
+import org.oddgen.bitemp.sqldev.model.AbstractModel
 
 @Accessors
-class TemporalValidityPeriod extends AbstractModel {
-	String periodname
-	String periodstart
-	String periodend
-	Integer flags
+class Table extends AbstractModel {
+	String tableName
+	Boolean historyTable
+	FlashbackArchiveTable flashbackArchiveTable
+	List<TemporalValidityPeriod> temporalValidityPeriods
+	PrimaryKeyConstraint primaryKeyConstraint
+	List<ForeignKeyConstraint> foreignKeyConstraints
 }

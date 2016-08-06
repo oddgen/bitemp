@@ -17,11 +17,11 @@ package org.oddgen.bitemp.sqldev.dal
 
 import java.sql.Connection
 import java.util.ArrayList
-import org.oddgen.bitemp.sqldev.model.FlashbackArchiveTable
-import org.oddgen.bitemp.sqldev.model.ForeignKeyConstraint
-import org.oddgen.bitemp.sqldev.model.PrimaryKeyConstraint
-import org.oddgen.bitemp.sqldev.model.Table
-import org.oddgen.bitemp.sqldev.model.TemporalValidityPeriod
+import org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable
+import org.oddgen.bitemp.sqldev.model.generator.ForeignKeyConstraint
+import org.oddgen.bitemp.sqldev.model.generator.PrimaryKeyConstraint
+import org.oddgen.bitemp.sqldev.model.generator.Table
+import org.oddgen.bitemp.sqldev.model.generator.TemporalValidityPeriod
 import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource

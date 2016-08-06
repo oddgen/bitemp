@@ -24,7 +24,7 @@ import oracle.ide.panels.DefaultTraversablePanel
 import oracle.ide.panels.TraversableContext
 import oracle.ide.panels.TraversalException
 import oracle.javatools.ui.layout.FieldLayoutBuilder
-import org.oddgen.bitemp.sqldev.model.PreferenceModel
+import org.oddgen.bitemp.sqldev.model.preference.PreferenceModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.LoggableConstants
 

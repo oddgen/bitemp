@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassDiagram>
+    <Class
+        name="org.oddgen.bitemp.sqldev.model.generator.PrimaryKeyConstraint"
+        x="806" y="346">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
+            endpointName="referencingTables" kind="Simple">
+            <Point x="665" y="334"/>
+        </Association>
+    </Class>
+    <Class
+        name="org.oddgen.bitemp.sqldev.model.generator.GeneratorModel"
+        x="391" y="54">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
+            endpointName="latestContentTable" kind="Simple">
+            <Point x="369" y="165"/>
+            <Point x="372" y="214"/>
+        </Association>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
+            endpointName="historyTable" kind="Simple">
+            <Point x="645" y="77"/>
+            <Point x="648" y="188"/>
+        </Association>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.ApiType"
+            endpointName="targetModel" kind="Simple">
+            <Point x="315" y="67"/>
+        </Association>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
+            endpointName="inputTable" kind="Simple">
+            <Point x="524" y="161"/>
+        </Association>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.ApiType"
+            endpointName="originModel" kind="Simple">
+            <Point x="305" y="121"/>
+            <Point x="253" y="121"/>
+        </Association>
+    </Class>
+    <Class
+        name="org.oddgen.bitemp.sqldev.model.generator.ForeignKeyConstraint"
+        x="400" y="356">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class
+        name="org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable"
+        x="48" y="321">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class name="org.oddgen.bitemp.sqldev.model.generator.ApiType"
+        x="45" y="42">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class
+        name="org.oddgen.bitemp.sqldev.model.generator.TemporalValidityPeriod"
+        x="44" y="221">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class name="org.oddgen.bitemp.sqldev.model.generator.Table" x="429" y="230">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.PrimaryKeyConstraint"
+            endpointName="primaryKeyConstraint" kind="Simple">
+            <Point x="867" y="316"/>
+        </Association>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.TemporalValidityPeriod"
+            endpointName="temporalValidityPeriods" kind="Simple"/>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.ForeignKeyConstraint"
+            endpointName="foreignKeyConstraints" kind="Simple"/>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable"
+            endpointName="flashbackArchiveTable" kind="Simple"/>
+    </Class>
+</ClassDiagram>

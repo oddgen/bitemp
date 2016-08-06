@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.oddgen.bitemp.sqldev.model
+package org.oddgen.bitemp.sqldev.model.generator
 
-import java.util.LinkedHashMap
+import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
+import org.oddgen.bitemp.sqldev.model.AbstractModel
 
 @Accessors
-class GeneratorModel extends AbstractModel {
-	LinkedHashMap<String, String> params
-	ApiType originModel
-	ApiType targetModel
-	Table inputTable
-	Table latestContentTable
-	Table historyTable
+class ForeignKeyConstraint extends AbstractModel {
+	String constraintName
+	String referencedConstraintName
+	String referencedTableName 
+	List<String> columnNames
 }

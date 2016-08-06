@@ -19,7 +19,7 @@ import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.dal.TableDao
-import org.oddgen.bitemp.sqldev.model.TemporalValidityPeriod
+import org.oddgen.bitemp.sqldev.model.generator.TemporalValidityPeriod
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
 class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {

@@ -1,4 +1,4 @@
-package org.oddgen.bitemp.sqldev.model
+package org.oddgen.bitemp.sqldev.model.generator
 
 enum ApiType {
 	NON_TEMPORAL,

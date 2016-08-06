@@ -20,15 +20,15 @@ import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
 import oracle.ide.config.Preferences
+import oracle.javatools.dialogs.MessageDialog
 import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.dal.TableDao
-import org.oddgen.bitemp.sqldev.model.GeneratorModel
-import org.oddgen.bitemp.sqldev.model.PreferenceModel
+import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
+import org.oddgen.bitemp.sqldev.model.preference.PreferenceModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.generators.OddgenGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
-import oracle.javatools.dialogs.MessageDialog
 
 class BitempTapiGenerator implements OddgenGenerator {
 

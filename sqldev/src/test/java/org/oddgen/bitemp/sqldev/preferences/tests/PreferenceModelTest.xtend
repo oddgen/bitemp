@@ -17,7 +17,7 @@ package org.oddgen.bitemp.sqldev.preferences.tests
 
 import org.junit.Assert
 import org.junit.Test
-import org.oddgen.bitemp.sqldev.model.PreferenceModel
+import org.oddgen.bitemp.sqldev.model.preference.PreferenceModel
 
 class PreferenceModelTest {
 	@Test

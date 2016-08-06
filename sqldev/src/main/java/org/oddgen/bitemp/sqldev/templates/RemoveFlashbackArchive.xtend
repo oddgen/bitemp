@@ -15,7 +15,7 @@
  */
 package org.oddgen.bitemp.sqldev.templates
 
-import org.oddgen.bitemp.sqldev.model.Table
+import org.oddgen.bitemp.sqldev.model.generator.Table
 
 class RemoveFlashbackArchive {
 	def compile(Table table) {

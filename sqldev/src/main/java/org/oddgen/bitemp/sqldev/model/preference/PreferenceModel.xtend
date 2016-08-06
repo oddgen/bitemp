@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.oddgen.bitemp.sqldev.model
+package org.oddgen.bitemp.sqldev.model.preference
 
 import java.util.HashSet
 import oracle.javatools.data.HashStructure
