@@ -151,6 +151,7 @@ class TableDao {
 			#[tableName])
 		for (fk : result) {
 			fk.columnNames = getConstraintColumns(tableName, fk.constraintName)
+			fk.referencedTable = getTable(fk.referencedTableName, false)
 		}
 		return result
 	}

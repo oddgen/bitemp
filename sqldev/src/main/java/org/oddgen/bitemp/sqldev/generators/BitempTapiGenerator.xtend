@@ -23,11 +23,13 @@ import java.util.List
 import oracle.ide.config.Preferences
 import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.dal.TableDao
+import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.preference.PreferenceModel
 import org.oddgen.bitemp.sqldev.model.prerequisite.PrerequisiteModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.bitemp.sqldev.templates.MissingPrerequisiteSolution
+import org.oddgen.bitemp.sqldev.templates.RootTemplate
 import org.oddgen.sqldev.generators.OddgenGenerator
 
 class BitempTapiGenerator implements OddgenGenerator {
@@ -173,7 +175,8 @@ class BitempTapiGenerator implements OddgenGenerator {
 	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		if (objectType == "TABLE") {
 			populateGeneratorModel(conn, objectName, params)
-			return "-- TODO"
+			val template = new RootTemplate
+			return template.compile(conn, generatorModel, getParamStates(conn, "TABLE", null, params))
 		} else {
 			val template = new MissingPrerequisiteSolution
 			return template.compile(conn, objectName)
@@ -190,10 +193,32 @@ class BitempTapiGenerator implements OddgenGenerator {
 		generatorModel.params = params
 		val tableDao = new TableDao(conn)
 		generatorModel.inputTable = tableDao.getTable(tableName)
+		val historyTable = generatorModel.inputTable.foreignKeyConstraints?.findFirst[it.referencedTable.historyTable]?.referencedTable
+		if (historyTable == null) {
+			if (generatorModel.inputTable.flashbackArchiveTable != null) {
+				generatorModel.originModel = ApiType.UNI_TEMPORAL_TRANSACTION_TIME
+			} else {
+				generatorModel.originModel = ApiType.NON_TEMPORAL
+			}
+		} else {
+			if (historyTable.flashbackArchiveTable != null) {
+				generatorModel.originModel = ApiType.BI_TEMPORAL
+			} else {
+				generatorModel.originModel = ApiType.UNI_TEMPORAL_VALID_TIME				
+			}
+		}
+		if (params.get(GEN_TRANSACTION_TIME) == "1") {
+			if (params.get(GEN_VALID_TIME) == "1") {
+				generatorModel.targetModel = ApiType.BI_TEMPORAL
+			} else {
+				generatorModel.targetModel = ApiType.UNI_TEMPORAL_TRANSACTION_TIME
+			}
+		} else {
+			if (params.get(GEN_VALID_TIME) == "1") {
+				generatorModel.targetModel = ApiType.UNI_TEMPORAL_VALID_TIME
+			} else {
+				generatorModel.targetModel = ApiType.NON_TEMPORAL
+			}
+		}
 	}
-
-	def getModel() {
-		return generatorModel
-	}
-
 }

@@ -51,6 +51,12 @@
             private-accepted="false" protected-accepted="false"
             default-accepted="false" static-accepted="false"
             accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
+            endpointName="referencedTable" kind="Simple">
+            <Point x="529" y="339"/>
+            <Point x="541" y="315"/>
+        </Association>
     </Class>
     <Class
         name="org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable"
@@ -102,7 +108,9 @@
             endpointName="temporalValidityPeriods" kind="Simple"/>
         <Association
             destinationClassName="org.oddgen.bitemp.sqldev.model.generator.ForeignKeyConstraint"
-            endpointName="foreignKeyConstraints" kind="Simple"/>
+            endpointName="foreignKeyConstraints" kind="Simple">
+            <Point x="425" y="323"/>
+        </Association>
         <Association
             destinationClassName="org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable"
             endpointName="flashbackArchiveTable" kind="Simple"/>

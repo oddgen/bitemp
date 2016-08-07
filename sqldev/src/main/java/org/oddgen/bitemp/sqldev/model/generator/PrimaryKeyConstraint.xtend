@@ -23,5 +23,5 @@ import org.oddgen.bitemp.sqldev.model.AbstractModel
 class PrimaryKeyConstraint extends AbstractModel {
 	String constraintName
 	List<String> columnNames
-	List<Table> referencingTables
+	List<Table> referencingTables // children
 }

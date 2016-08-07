@@ -65,17 +65,43 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 		val params = gen.getParams(dataSource.connection, "TABLE", null)
 		var paramStates = gen.getParamStates(dataSource.connection, "TABLE", null, params)
 		Assert.assertEquals(16, paramStates.size)
-		Assert.assertEquals(false,paramStates.get(BitempTapiGenerator.FLASHBACK_ARCHIVE_NAME))
+		Assert.assertEquals(false, paramStates.get(BitempTapiGenerator.FLASHBACK_ARCHIVE_NAME))
 	}
 
 	@Test
 	def generateEmpDefaultTest() {
 		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
 		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
-		val expected = "-- TODO"
-		Assert.assertEquals(expected, result)
+		val expectedStart = '''
+			-- 
+			-- bi-temporal TAPI generator configuration
+			-- - Input table : EMP
+			-- - Origin model: non-temporal
+			-- - Target model: uni-temporal valid-time
+			-- - Parameters
+			--     - Generate table API?                   : Yes
+			--     - CRUD compatibility for original table?: Yes
+			--     - Suffix for table with latest content  : _lt
+			--     - Granularity                           : Day
+			--     - Column name for valid from            : valid_from
+			--     - Column name for valid to              : valid_to
+			--     - Column name for is deleted indicator  : is_deleted
+			--     - Suffix for history table              : _ht
+			--     - Suffix for history view               : _hv
+			--     - Suffix for full history view          : _fhv
+			--     - Suffix for object type                : _ot
+			--     - Suffix for collection type            : _ct
+			--     - Suffix for instead-of-trigger         : _trg
+			--     - Suffix for API PL/SQL package         : _api
+			--     - Suffix for hook PL/SQL package        : _hook
+			--
+		'''
+		Assert.assertEquals(expectedStart, result.substring(
+			0,
+			expectedStart.length
+		))
 	}
-	
+
 	@BeforeClass
 	static def void setup() {
 		gen = new BitempTapiGenerator

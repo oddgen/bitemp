@@ -23,6 +23,7 @@ import org.oddgen.bitemp.sqldev.model.AbstractModel
 class ForeignKeyConstraint extends AbstractModel {
 	String constraintName
 	String referencedConstraintName
-	String referencedTableName 
+	String referencedTableName
+	Table referencedTable // parent
 	List<String> columnNames
 }
