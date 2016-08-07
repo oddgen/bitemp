@@ -21,6 +21,13 @@ import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
 class SessionDaoTest extends AbstractJdbcTest {
+	
+	@Test
+	def void nonHistoryTables() {
+		val dao = new SessionDao(dataSource.connection)
+		val tables = dao.nonHistoryTables
+		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], tables)
+	}
 
 	@Test
 	def void selectCatalogRole() {

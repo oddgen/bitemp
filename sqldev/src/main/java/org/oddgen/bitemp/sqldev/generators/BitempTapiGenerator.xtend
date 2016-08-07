@@ -29,8 +29,6 @@ import org.oddgen.bitemp.sqldev.model.prerequisite.PrerequisiteModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.bitemp.sqldev.templates.MissingPrerequisiteSolution
 import org.oddgen.sqldev.generators.OddgenGenerator
-import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
 class BitempTapiGenerator implements OddgenGenerator {
 
@@ -83,19 +81,8 @@ class BitempTapiGenerator implements OddgenGenerator {
 
 	override getObjectNames(Connection conn, String objectType) {
 		if (objectType == "TABLE") {
-			val sql = '''
-				SELECT object_name
-				  FROM user_objects
-				 WHERE object_type = ?
-				   AND generated = 'N'
-				   AND object_name NOT IN (SELECT table_name 
-				                             FROM user_tab_columns 
-				                            WHERE column_name = '«org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator.HISTORY_ID_COL_NAME»')
-				 ORDER BY object_name
-			'''
-			val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-			val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
-			return objectNames
+			val sessionDao = new SessionDao(conn)
+			return sessionDao.nonHistoryTables
 		} else if (objectType == BitempResources.get("MISSING_INSTALL_PREREQUISITES_LABEL")) {
 			return prerequisiteModel.missingInstallPrerequisites
 		} else if (objectType == BitempResources.get("MISSING_GENERATE_PREREQUISITES_LABEL")) {
