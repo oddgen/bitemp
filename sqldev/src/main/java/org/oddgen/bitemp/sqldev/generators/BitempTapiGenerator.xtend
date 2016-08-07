@@ -155,19 +155,27 @@ class BitempTapiGenerator implements OddgenGenerator {
 		LinkedHashMap<String, String> params) {
 		val paramStates = new HashMap<String, Boolean>()
 		if (objectType == "TABLE") {
+			val isGenApi = params.get(GEN_API) == "1"
+			paramStates.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, isGenApi)
 			val isCrudCompatiblityOriginalTable = params.get(CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1"
-			paramStates.put(LATEST_TABLE_SUFFIX, isCrudCompatiblityOriginalTable)
-			paramStates.put(LATEST_VIEW_SUFFIX, !isCrudCompatiblityOriginalTable)
+			paramStates.put(LATEST_TABLE_SUFFIX, isCrudCompatiblityOriginalTable && isGenApi)
+			paramStates.put(LATEST_VIEW_SUFFIX, !isCrudCompatiblityOriginalTable && isGenApi)
 			val isTransactionTime = params.get(GEN_TRANSACTION_TIME) == "1"
 			paramStates.put(FLASHBACK_ARCHIVE_NAME, isTransactionTime)
 			val isValidTime = params.get(GEN_VALID_TIME) == "1"
-			paramStates.put(GRANULARITY, isValidTime)
+			paramStates.put(GRANULARITY, isValidTime && isGenApi)
 			paramStates.put(VALID_FROM_COL_NAME, isValidTime)
 			paramStates.put(VALID_TO_COL_NAME, isValidTime)
 			paramStates.put(IS_DELETED_COL_NAME, isValidTime)
 			paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
-			paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
-			paramStates.put(FULL_HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
+			paramStates.put(HISTORY_VIEW_SUFFIX, (isValidTime || isTransactionTime) && isGenApi)
+			paramStates.put(FULL_HISTORY_VIEW_SUFFIX, (isValidTime || isTransactionTime) && isGenApi)
+			paramStates.put(OBJECT_TYPE_SUFFIX, isGenApi)
+			paramStates.put(COLLECTION_TYPE_SUFFIX, isGenApi)
+			paramStates.put(IOT_SUFFIX, isGenApi)
+			paramStates.put(API_PACKAGE_SUFFIX, isGenApi)
+			paramStates.put(HOOK_PACKAGE_SUFFIX, isGenApi)
+
 		}
 		return paramStates
 	}
