@@ -36,7 +36,7 @@ class HistoryTableDaoTest extends AbstractJdbcTest {
 		try {
 		jdbcTemplate.execute('''
 			CREATE TABLE t1 (
-			   «BitempTapiGenerator.HIST_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+			   «BitempTapiGenerator.HISTORY_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
 			   c1 VARCHAR2(20)
 			)
 		''')

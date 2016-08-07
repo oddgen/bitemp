@@ -173,7 +173,7 @@ class TableDao {
 			SELECT COUNT(*) AS found
 			  FROM user_tab_columns
 			 WHERE table_name = ?
-			       AND column_name = '«BitempTapiGenerator.HIST_ID_COL_NAME»'
+			       AND column_name = '«BitempTapiGenerator.HISTORY_ID_COL_NAME»'
 			       AND identity_column = 'YES'
 		'''
 		val result = jdbcTemplate.queryForObject(sql, Integer, #[tableName])

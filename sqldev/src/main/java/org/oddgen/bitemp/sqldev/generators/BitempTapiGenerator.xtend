@@ -54,7 +54,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 	public static String IOT_SUFFIX = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
 	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
-	public static String HIST_ID_COL_NAME = "HIST_ID$"
+	public static String HISTORY_ID_COL_NAME = "HIST_ID$"
 
 	private PrerequisiteModel prerequisiteModel = new PrerequisiteModel
 	private GeneratorModel generatorModel = new GeneratorModel
@@ -90,7 +90,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 				   AND generated = 'N'
 				   AND object_name NOT IN (SELECT table_name 
 				                             FROM user_tab_columns 
-				                            WHERE column_name = '«HIST_ID_COL_NAME»')
+				                            WHERE column_name = '«org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator.HISTORY_ID_COL_NAME»')
 				 ORDER BY object_name
 			'''
 			val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
