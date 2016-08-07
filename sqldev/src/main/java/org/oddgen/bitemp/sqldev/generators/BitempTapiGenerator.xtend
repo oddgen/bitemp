@@ -34,6 +34,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
 class BitempTapiGenerator implements OddgenGenerator {
 
+	public static String GEN_API = BitempResources.get("PREF_GEN_API_LABEL")
 	public static String CRUD_COMPATIBILITY_ORIGINAL_TABLE = BitempResources.get(
 		"PREF_CRUD_COMPATIBILITY_ORIGINAL_TABLE_LABEL")
 	public static String LATEST_TABLE_SUFFIX = BitempResources.get("PREF_LATEST_TABLE_SUFFIX_LABEL")
@@ -48,7 +49,6 @@ class BitempTapiGenerator implements OddgenGenerator {
 	public static String OBJECT_TYPE_SUFFIX = BitempResources.get("PREF_OBJECT_TYPE_SUFFIX_LABEL")
 	public static String COLLECTION_TYPE_SUFFIX = BitempResources.get("PREF_COLLECTION_TYPE_SUFFIX_LABEL")
 	public static String HISTORY_TABLE_SUFFIX = BitempResources.get("PREF_HISTORY_TABLE_SUFFIX_LABEL")
-	public static String HISTORY_SEQUENCE_SUFFIX = BitempResources.get("PREF_HISTORY_SEQUENCE_SUFFIX_LABEL")
 	public static String HISTORY_VIEW_SUFFIX = BitempResources.get("PREF_HISTORY_VIEW_SUFFIX_LABEL")
 	public static String FULL_HISTORY_VIEW_SUFFIX = BitempResources.get("PREF_FULL_HISTORY_VIEW_SUFFIX_LABEL")
 	public static String IOT_SUFFIX = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
@@ -104,6 +104,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 		if (objectType == "TABLE") {
 			val preferences = Preferences.getPreferences();
 			val PreferenceModel pref = PreferenceModel.getInstance(preferences)
+			params.put(GEN_API, if(pref.genApi) "1" else "0")
 			params.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, if(pref.crudCompatiblityOriginalTable) "1" else "0")
 			params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
 			params.put(LATEST_VIEW_SUFFIX, pref.latestViewSuffix)
@@ -115,7 +116,6 @@ class BitempTapiGenerator implements OddgenGenerator {
 			params.put(VALID_TO_COL_NAME, pref.validToColName)
 			params.put(IS_DELETED_COL_NAME, pref.isDeletedColName)
 			params.put(HISTORY_TABLE_SUFFIX, pref.historyTableSuffix)
-			params.put(HISTORY_SEQUENCE_SUFFIX, pref.historySequenceSuffix)
 			params.put(HISTORY_VIEW_SUFFIX, pref.historyViewSuffix)
 			params.put(FULL_HISTORY_VIEW_SUFFIX, pref.fullHistoryViewSuffix)
 			params.put(OBJECT_TYPE_SUFFIX, pref.objectTypeSuffix)
@@ -131,6 +131,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 		val lov = new HashMap<String, List<String>>()
 		if (objectType == "TABLE") {
 			// true values have to be defined first for a check box to work properly in oddgen v0.2.3
+			lov.put(GEN_API, #["1", "0"])
 			lov.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, #["1", "0"])
 			lov.put(GEN_TRANSACTION_TIME, #["1", "0"])
 			val sessionDao = new SessionDao(conn)
@@ -165,7 +166,6 @@ class BitempTapiGenerator implements OddgenGenerator {
 			paramStates.put(VALID_TO_COL_NAME, isValidTime)
 			paramStates.put(IS_DELETED_COL_NAME, isValidTime)
 			paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
-			paramStates.put(HISTORY_SEQUENCE_SUFFIX, isValidTime)
 			paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
 			paramStates.put(FULL_HISTORY_VIEW_SUFFIX, isValidTime || isTransactionTime)
 		}

@@ -30,6 +30,7 @@ import org.oddgen.sqldev.LoggableConstants
 
 @Loggable(LoggableConstants.DEBUG)
 class PreferencePanel extends DefaultTraversablePanel {
+	val JCheckBox genApiCheckBox = new JCheckBox
 	val JCheckBox crudCompitiblityForOriginalTableCheckBox = new JCheckBox
 	val JTextField latestTableSuffix = new JTextField
 	val JTextField latestViewSuffix = new JTextField
@@ -43,7 +44,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 	val JTextField objectTypeSuffix = new JTextField
 	val JTextField collectionTypeSuffix = new JTextField
 	val JTextField historyTableSuffix = new JTextField
-	val JTextField historySequenceSuffix = new JTextField
 	val JTextField historyViewSuffix = new JTextField
 	val JTextField fullHistoryViewSuffix = new JTextField
 	val JTextField iotSuffix = new JTextField
@@ -58,11 +58,13 @@ class PreferencePanel extends DefaultTraversablePanel {
 		val FieldLayoutBuilder builder = new FieldLayoutBuilder(this)
 		builder.alignLabelsLeft = true
 		builder.add(
-			builder.field.label.withText(BitempResources.getString("PREF_CRUD_COMPATIBILITY_ORIGINAL_TABLE_LABEL")).component(
-				crudCompitiblityForOriginalTableCheckBox))
+			builder.field.label.withText(BitempResources.getString("PREF_GEN_API_LABEL")).component(genApiCheckBox))
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_CRUD_COMPATIBILITY_ORIGINAL_TABLE_LABEL")).
+				component(crudCompitiblityForOriginalTableCheckBox))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_LATEST_TABLE_SUFFIX_LABEL")).component(
-				latestTableSuffix))						
+				latestTableSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_LATEST_VIEW_SUFFIX_LABEL")).component(
 				latestViewSuffix))
@@ -88,51 +90,48 @@ class PreferencePanel extends DefaultTraversablePanel {
 		granularityComboBox = new JComboBox<String>(granularityModel)
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_GRANULARITY_LABEL")).component(
-				granularityComboBox))		
+				granularityComboBox))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_VALID_FROM_COL_NAME_LABEL")).component(
 				validFromColName))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_VALID_TO_COL_NAME_LABEL")).component(
-				validToColName))						
+				validToColName))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_IS_DELETED_COL_NAME_LABEL")).component(
 				isDeletedColName))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_HISTORY_TABLE_SUFFIX_LABEL")).component(
-				historyTableSuffix))						
-		builder.add(
-			builder.field.label.withText(BitempResources.getString("PREF_HISTORY_SEQUENCE_SUFFIX_LABEL")).component(
-				historySequenceSuffix))						
+				historyTableSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_HISTORY_VIEW_SUFFIX_LABEL")).component(
-				historyViewSuffix))						
+				historyViewSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_FULL_HISTORY_VIEW_SUFFIX_LABEL")).component(
-				fullHistoryViewSuffix))						
+				fullHistoryViewSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_OBJECT_TYPE_SUFFIX_LABEL")).component(
-				objectTypeSuffix))						
+				objectTypeSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_COLLECTION_TYPE_SUFFIX_LABEL")).component(
-				collectionTypeSuffix))						
+				collectionTypeSuffix))
 		builder.add(
-			builder.field.label.withText(BitempResources.getString("PREF_IOT_SUFFIX_LABEL")).component(
-				iotSuffix))						
+			builder.field.label.withText(BitempResources.getString("PREF_IOT_SUFFIX_LABEL")).component(iotSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_API_PACKAGE_SUFFIX_LABEL")).component(
-				apiPackageSuffix))						
+				apiPackageSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_HOOK_PACKAGE_SUFFIX_LABEL")).component(
-				hookPackageSuffix))						
+				hookPackageSuffix))
 		builder.addVerticalSpring
 	}
 
 	override onEntry(TraversableContext traversableContext) {
 		var PreferenceModel info = traversableContext.userInformation
+		genApiCheckBox.selected = info.genApi
 		crudCompitiblityForOriginalTableCheckBox.selected = info.crudCompatiblityOriginalTable
 		latestTableSuffix.text = info.latestTableSuffix
-		latestViewSuffix.text = info.latestViewSuffix		
+		latestViewSuffix.text = info.latestViewSuffix
 		transactionTimeDefaultCheckBox.selected = info.genTransactionTime
 		flashbackArchiveName.text = info.flashbackArchiveName
 		validTimeDefaultCheckBox.selected = info.isGenValidTime
@@ -142,7 +141,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 		isDeletedColName.text = info.isDeletedColName
 		latestTableSuffix.text = info.latestTableSuffix
 		historyTableSuffix.text = info.historyTableSuffix
-		historySequenceSuffix.text = info.historySequenceSuffix
 		historyViewSuffix.text = info.historyViewSuffix
 		fullHistoryViewSuffix.text = info.fullHistoryViewSuffix
 		objectTypeSuffix.text = info.objectTypeSuffix
@@ -155,6 +153,7 @@ class PreferencePanel extends DefaultTraversablePanel {
 
 	override onExit(TraversableContext traversableContext) throws TraversalException {
 		var PreferenceModel info = traversableContext.userInformation
+		info.genApi = genApiCheckBox.selected
 		info.crudCompatiblityOriginalTable = crudCompitiblityForOriginalTableCheckBox.selected
 		info.latestTableSuffix = latestTableSuffix.text
 		info.latestViewSuffix = latestViewSuffix.text
@@ -166,7 +165,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 		info.validToColName = validToColName.text
 		info.isDeletedColName = isDeletedColName.text
 		info.historyTableSuffix = historyTableSuffix.text
-		info.historySequenceSuffix = historySequenceSuffix.text
 		info.historyViewSuffix = historyViewSuffix.text
 		info.fullHistoryViewSuffix = fullHistoryViewSuffix.text
 		info.objectTypeSuffix = objectTypeSuffix.text

@@ -33,6 +33,7 @@ class PreferenceModel extends HashStructureAdapter {
 		return new PreferenceModel(findOrCreate(prefs, DATA_KEY))
 	}
 
+	static final String KEY_GEN_API = "genApi"
 	static final String KEY_CRUD_COMPATIBILITY_ORIGINAL_TABLE = "crudCompatiblityOriginalTable"
 	static final String KEY_LATEST_TABLE_SUFFIX = "latestTableSuffix"
 	static final String KEY_LATEST_VIEW_SUFFIX = "latestViewSuffix"
@@ -44,7 +45,6 @@ class PreferenceModel extends HashStructureAdapter {
 	static final String KEY_VALID_TO_COL_NAME = "validToColName"
 	static final String KEY_IS_DELETED_COL_NAME = "isDeletedColName"
 	static final String KEY_HISTORY_TABLE_SUFFIX = "historyTableSuffix"
-	static final String KEY_HISTORY_SEQUENCE_SUFFIX = "historySequenceSuffix"
 	static final String KEY_HISTORY_VIEW_SUFFIX = "historyViewSuffix"
 	static final String KEY_FULL_HISTORY_VIEW_SUFFIX = "fullHistoryViewSuffix"
 	static final String KEY_OBJECT_TYPE_SUFFIX = "objectTypeSuffix"
@@ -52,6 +52,14 @@ class PreferenceModel extends HashStructureAdapter {
 	static final String KEY_IOT_SUFFIX = "iotSuffix"
 	static final String KEY_API_PACKAGE_SUFFIX = "apiPackageSuffix"
 	static final String KEY_HOOK_PACKAGE_SUFFIX = "hookPackageSuffix"
+
+	def isGenApi() {
+		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_API, true)
+	}
+
+	def setGenApi(boolean genApi) {
+		getHashStructure.putBoolean(PreferenceModel.KEY_GEN_API, genApi)
+	}
 
 	def isCrudCompatiblityOriginalTable() {
 		return getHashStructure.getBoolean(PreferenceModel.KEY_CRUD_COMPATIBILITY_ORIGINAL_TABLE, true)
@@ -123,9 +131,9 @@ class PreferenceModel extends HashStructureAdapter {
 			return BitempResources.getString("PREF_GRANULARITY_DAY")
 		}
 	}
-	
+
 	def setGranularity(String granularity) {
-		getHashStructure.putString(PreferenceModel.KEY_GRANULARITY, granularity)		
+		getHashStructure.putString(PreferenceModel.KEY_GRANULARITY, granularity)
 	}
 
 	def getValidFromColName() {
@@ -161,15 +169,6 @@ class PreferenceModel extends HashStructureAdapter {
 
 	def setHistoryTableSuffix(String historyTableSuffix) {
 		getHashStructure.putString(PreferenceModel.KEY_HISTORY_TABLE_SUFFIX, historyTableSuffix)
-
-	}
-
-	def getHistorySequenceSuffix() {
-		return getHashStructure.getString(PreferenceModel.KEY_HISTORY_SEQUENCE_SUFFIX, "_seq")
-	}
-
-	def setHistorySequenceSuffix(String historySequenceSuffix) {
-		getHashStructure.putString(PreferenceModel.KEY_HISTORY_SEQUENCE_SUFFIX, historySequenceSuffix)
 
 	}
 

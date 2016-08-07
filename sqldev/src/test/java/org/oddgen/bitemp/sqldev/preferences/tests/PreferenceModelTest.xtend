@@ -23,6 +23,7 @@ class PreferenceModelTest {
 	@Test
 	def testDefaultValues() {
 		val PreferenceModel model = PreferenceModel.getInstance(null)
+		Assert.assertTrue(model.genApi)
 		Assert.assertTrue(model.crudCompatiblityOriginalTable)
 		Assert.assertEquals("_lt", model.latestTableSuffix)
 		Assert.assertEquals("_lv", model.latestViewSuffix)
@@ -34,7 +35,6 @@ class PreferenceModelTest {
 		Assert.assertEquals("valid_to", model.validToColName)
 		Assert.assertEquals("is_deleted", model.isDeletedColName)
 		Assert.assertEquals("_ht", model.historyTableSuffix)
-		Assert.assertEquals("_seq", model.historySequenceSuffix)
 		Assert.assertEquals("_hv", model.historyViewSuffix)
 		Assert.assertEquals("_fhv", model.fullHistoryViewSuffix)
 		Assert.assertEquals("_ot", model.objectTypeSuffix)
