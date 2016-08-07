@@ -57,7 +57,7 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 	@Test
 	def getLov() {
 		val lov = gen.getLov(dataSource.connection, "TABLE", null, null)
-		Assert.assertEquals(4, lov.size)
+		Assert.assertEquals(5, lov.size)
 	}
 
 	@Test

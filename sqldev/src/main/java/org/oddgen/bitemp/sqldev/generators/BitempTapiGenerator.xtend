@@ -132,8 +132,10 @@ class BitempTapiGenerator implements OddgenGenerator {
 		if (objectType == "TABLE") {
 			// true values have to be defined first for a check box to work properly in oddgen v0.2.3
 			lov.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, #["1", "0"])
-			lov.put(GEN_VALID_TIME, #["1", "0"])
 			lov.put(GEN_TRANSACTION_TIME, #["1", "0"])
+			val sessionDao = new SessionDao(conn)
+			lov.put(FLASHBACK_ARCHIVE_NAME, sessionDao.accessibleFlashbackArchives)
+			lov.put(GEN_VALID_TIME, #["1", "0"])
 			lov.put(GRANULARITY,
 				#[BitempResources.getString("PREF_GRANULARITY_YEAR"),
 					BitempResources.getString("PREF_GRANULARITY_MONTH"),
