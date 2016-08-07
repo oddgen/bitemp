@@ -27,27 +27,13 @@
             default-accepted="false" static-accepted="false"
             accessors-accepted="false" constructors-accepted="false"/>
         <Association
-            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
-            endpointName="latestContentTable" kind="Simple">
-            <Point x="369" y="165"/>
-            <Point x="372" y="214"/>
-        </Association>
-        <Association
-            destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
-            endpointName="historyTable" kind="Simple">
-            <Point x="645" y="77"/>
-            <Point x="648" y="188"/>
-        </Association>
-        <Association
             destinationClassName="org.oddgen.bitemp.sqldev.model.generator.ApiType"
             endpointName="targetModel" kind="Simple">
             <Point x="315" y="67"/>
         </Association>
         <Association
             destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
-            endpointName="inputTable" kind="Simple">
-            <Point x="524" y="161"/>
-        </Association>
+            endpointName="inputTable" kind="Simple"/>
         <Association
             destinationClassName="org.oddgen.bitemp.sqldev.model.generator.ApiType"
             endpointName="originModel" kind="Simple">
@@ -68,7 +54,7 @@
     </Class>
     <Class
         name="org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable"
-        x="48" y="321">
+        x="45" y="352">
         <AttributesDisplayFilter public-accepted="true"
             private-accepted="true" protected-accepted="true"
             default-accepted="true" static-accepted="false"/>

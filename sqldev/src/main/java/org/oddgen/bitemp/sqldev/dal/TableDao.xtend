@@ -17,6 +17,7 @@ package org.oddgen.bitemp.sqldev.dal
 
 import java.sql.Connection
 import java.util.ArrayList
+import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
 import org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable
 import org.oddgen.bitemp.sqldev.model.generator.ForeignKeyConstraint
 import org.oddgen.bitemp.sqldev.model.generator.PrimaryKeyConstraint
@@ -102,7 +103,7 @@ class TableDao {
 			return result.get(0)
 		}
 	}
-	
+
 	def getReferencingTables(String tableName) {
 		val sql = '''
 			WITH 
@@ -125,7 +126,7 @@ class TableDao {
 			finalResult.add(getTable(t, false))
 		}
 		return finalResult
-		
+
 	}
 
 	def getForeignKeyConstraints(String tableName) {
@@ -167,12 +168,12 @@ class TableDao {
 	}
 
 	def isHistoryTable(String tableName) {
-		// faster than querying constraint and cons_columns, good enough, HIST_ID$ must not be used for other purposes
+		// faster than querying constraint and cons_columns, good enough, BitempTapiGenerator.HIST_ID_COL_NAME must not be used for other purposes
 		val sql = '''
 			SELECT COUNT(*) AS found
 			  FROM user_tab_columns
 			 WHERE table_name = ?
-			       AND column_name = 'HIST_ID$'
+			       AND column_name = '«BitempTapiGenerator.HIST_ID_COL_NAME»'
 			       AND identity_column = 'YES'
 		'''
 		val result = jdbcTemplate.queryForObject(sql, Integer, #[tableName])

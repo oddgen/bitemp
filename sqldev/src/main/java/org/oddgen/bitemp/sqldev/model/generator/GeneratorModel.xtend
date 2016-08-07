@@ -25,6 +25,4 @@ class GeneratorModel extends AbstractModel {
 	ApiType originModel
 	ApiType targetModel
 	Table inputTable
-	Table latestContentTable
-	Table historyTable
 }
