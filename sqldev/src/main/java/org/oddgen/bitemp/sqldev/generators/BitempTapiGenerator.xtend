@@ -175,7 +175,6 @@ class BitempTapiGenerator implements OddgenGenerator {
 			paramStates.put(IOT_SUFFIX, isGenApi)
 			paramStates.put(API_PACKAGE_SUFFIX, isGenApi)
 			paramStates.put(HOOK_PACKAGE_SUFFIX, isGenApi)
-
 		}
 		return paramStates
 	}
