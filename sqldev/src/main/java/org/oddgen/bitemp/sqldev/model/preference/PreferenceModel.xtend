@@ -99,8 +99,7 @@ class PreferenceModel extends HashStructureAdapter {
 	}
 
 	def setFlashbackArchiveName(String flashbackArchiveName) {
-		getHashStructure.putString(PreferenceModel.KEY_VALID_TO_COL_NAME, flashbackArchiveName)
-
+		getHashStructure.putString(PreferenceModel.KEY_FLASHBACK_ARCHIVE_NAME, flashbackArchiveName)
 	}
 
 	def isGenValidTime() {

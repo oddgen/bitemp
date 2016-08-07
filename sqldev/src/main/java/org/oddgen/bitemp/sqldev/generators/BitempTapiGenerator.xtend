@@ -102,7 +102,13 @@ class BitempTapiGenerator implements OddgenGenerator {
 			params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
 			params.put(LATEST_VIEW_SUFFIX, pref.latestViewSuffix)
 			params.put(GEN_TRANSACTION_TIME, if(pref.genTransactionTime) "1" else "0")
-			params.put(FLASHBACK_ARCHIVE_NAME, pref.flashbackArchiveName)
+			val sessionDao = new SessionDao(conn)
+			val fbas = sessionDao.accessibleFlashbackArchives
+			if (fbas.contains(pref.flashbackArchiveName)) {
+				params.put(FLASHBACK_ARCHIVE_NAME, pref.flashbackArchiveName)
+			} else {
+				params.put(FLASHBACK_ARCHIVE_NAME, fbas.get(0))
+			}
 			params.put(GEN_VALID_TIME, if(pref.genValidTime) "1" else "0")
 			params.put(GRANULARITY, pref.granularity)
 			params.put(VALID_FROM_COL_NAME, pref.validFromColName)
