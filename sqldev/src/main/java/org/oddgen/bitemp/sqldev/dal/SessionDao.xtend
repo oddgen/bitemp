@@ -34,21 +34,31 @@ class SessionDao {
 				true))
 		}
 
-		def getNonHistoryTables() {
+		def getInputTableCandidates() {
 			val sql = '''
 				WITH 
-				   hist_tables AS (
+				  tabs AS (
+				     SELECT /*+ materialize */ object_name AS table_name
+				       FROM user_objects
+				      WHERE object_type = 'TABLE'
+				        AND generated = 'N'
+				   ),
+				   hist_tabs AS (
 				      SELECT /*+ materialize */ table_name
 				        FROM user_tab_columns
 				       WHERE column_name = '«BitempTapiGenerator.HISTORY_ID_COL_NAME»'
+				   ),
+				   pk_tabs AS (
+				      SELECT /*+ materialize */ table_name 
+				        FROM all_constraints
+				        WHERE constraint_type = 'P' AND owner = USER
 				   )
-				SELECT object_name
-				  FROM user_objects
-				 WHERE object_type = 'TABLE'
-				   AND generated = 'N'
-				   AND object_name NOT IN (SELECT table_name 
-				                             FROM hist_tables)
-				 ORDER BY object_name
+				SELECT /*+ordered use_hash(tabs) use_hash(hist_tabs) use_has(pk_tabs) */ tabs.table_name
+				  FROM tabs
+				  JOIN pk_tabs ON pk_tabs.table_name = tabs.table_name 
+				  LEFT JOIN hist_tabs ON hist_tabs.table_name = tabs.table_name
+				 WHERE hist_tabs.table_name is NULL
+				 ORDER BY tabs.table_name
 			'''
 			val tables = jdbcTemplate.queryForList(sql, String)
 			return tables

@@ -23,10 +23,10 @@ import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 class SessionDaoTest extends AbstractJdbcTest {
 	
 	@Test
-	def void nonHistoryTables() {
+	def void inputTableCandidates() {
 		val dao = new SessionDao(dataSource.connection)
-		val tables = dao.nonHistoryTables
-		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], tables)
+		val tables = dao.inputTableCandidates
+		Assert.assertEquals(#["DEPT", "EMP"], tables)
 	}
 
 	@Test

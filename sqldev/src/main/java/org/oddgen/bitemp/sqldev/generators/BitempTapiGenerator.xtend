@@ -84,7 +84,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 	override getObjectNames(Connection conn, String objectType) {
 		if (objectType == "TABLE") {
 			val sessionDao = new SessionDao(conn)
-			return sessionDao.nonHistoryTables
+			return sessionDao.inputTableCandidates
 		} else if (objectType == BitempResources.get("MISSING_INSTALL_PREREQUISITES_LABEL")) {
 			return prerequisiteModel.missingInstallPrerequisites
 		} else if (objectType == BitempResources.get("MISSING_GENERATE_PREREQUISITES_LABEL")) {
