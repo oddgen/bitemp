@@ -25,14 +25,14 @@ class ForeignKeyConstraintDaoTest extends AbstractJdbcTest {
 	@Test
 	def void notFound() {
 		val dao = new TableDao(dataSource.connection)
-		val fks = dao.getForeignKeyConstraints("DEPT")
+		val fks = dao.getForeignKeyConstraints("DEPT", true)
 		Assert.assertEquals(#[], fks)
 	}
 
 	@Test
 	def void found() {
 		val dao = new TableDao(dataSource.connection)
-		val fks = dao.getForeignKeyConstraints("EMP")
+		val fks = dao.getForeignKeyConstraints("EMP", true)
 		Assert.assertEquals(1, fks.size)
 		val fk = fks.get(0)
 		Assert.assertEquals("FK_DEPTNO", fk.constraintName)

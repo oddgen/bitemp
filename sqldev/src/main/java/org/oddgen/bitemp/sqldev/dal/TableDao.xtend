@@ -44,7 +44,7 @@ class TableDao {
 		val table = new Table
 		table.tableName = tableName
 		table.primaryKeyConstraint = getPrimaryKeyConstraint(tableName, deep)
-		table.foreignKeyConstraints = tableName.foreignKeyConstraints
+		table.foreignKeyConstraints = getForeignKeyConstraints(tableName, deep)
 		table.historyTable = tableName.historyTable
 		table.flashbackArchiveTable = tableName.archiveTable
 		table.temporalValidityPeriods = tableName.temporalValidityPeriods
@@ -129,7 +129,7 @@ class TableDao {
 
 	}
 
-	def getForeignKeyConstraints(String tableName) {
+	def getForeignKeyConstraints(String tableName, boolean deep) {
 		val sql = '''
 			WITH 
 			   cons AS (
@@ -151,7 +151,9 @@ class TableDao {
 			#[tableName])
 		for (fk : result) {
 			fk.columnNames = getConstraintColumns(tableName, fk.constraintName)
-			fk.referencedTable = getTable(fk.referencedTableName, false)
+			if (deep) {
+				fk.referencedTable = getTable(fk.referencedTableName, false)
+			}
 		}
 		return result
 	}
