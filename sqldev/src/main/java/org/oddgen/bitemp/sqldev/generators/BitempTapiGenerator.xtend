@@ -182,7 +182,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 		if (objectType == "TABLE") {
 			populateGeneratorModel(conn, objectName, params)
 			val template = new RootTemplate
-			return template.compile(conn, generatorModel, getParamStates(conn, "TABLE", null, params))
+			return template.compile(conn, generatorModel)
 		} else {
 			val template = new MissingPrerequisiteSolution
 			return template.compile(conn, objectName)
@@ -197,6 +197,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 
 	def private populateGeneratorModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {
 		generatorModel.params = params
+		generatorModel.paramStates = getParamStates(conn, "TABLE", null, params)
 		val tableDao = new TableDao(conn)
 		generatorModel.inputTable = tableDao.getTable(tableName)
 		val historyTable = generatorModel.inputTable.foreignKeyConstraints?.findFirst[it.referencedTable.historyTable]?.referencedTable

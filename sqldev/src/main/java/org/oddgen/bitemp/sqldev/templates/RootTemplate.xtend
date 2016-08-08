@@ -17,7 +17,6 @@ package org.oddgen.bitemp.sqldev.templates
 
 import java.sql.Connection
 import java.util.Collections
-import java.util.HashMap
 import java.util.List
 import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
 import org.oddgen.bitemp.sqldev.model.generator.ApiType
@@ -50,9 +49,9 @@ class RootTemplate {
 		return copy.last.length
 	}
 
-	def compile(Connection conn, GeneratorModel model, HashMap<String, Boolean> paramStates) {
+	def compile(Connection conn, GeneratorModel model) {
 		val relevantParams = model.params.keySet.filter [
-			(paramStates.get(it) == null || paramStates.get(it) == true) &&
+			(model.paramStates.get(it) == null || model.paramStates.get(it) == true) &&
 				it != BitempTapiGenerator.GEN_TRANSACTION_TIME && it != BitempTapiGenerator.GEN_VALID_TIME
 		]
 		val maxParamLen = maxLength(relevantParams.toList)

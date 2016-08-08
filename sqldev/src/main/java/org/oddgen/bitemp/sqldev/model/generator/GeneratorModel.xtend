@@ -15,6 +15,7 @@
  */
 package org.oddgen.bitemp.sqldev.model.generator
 
+import java.util.HashMap
 import java.util.LinkedHashMap
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.oddgen.bitemp.sqldev.model.AbstractModel
@@ -22,6 +23,7 @@ import org.oddgen.bitemp.sqldev.model.AbstractModel
 @Accessors
 class GeneratorModel extends AbstractModel {
 	LinkedHashMap<String, String> params
+	HashMap<String, Boolean> paramStates
 	ApiType originModel
 	ApiType targetModel
 	Table inputTable
