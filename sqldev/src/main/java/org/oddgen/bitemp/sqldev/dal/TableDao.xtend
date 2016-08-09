@@ -17,7 +17,9 @@ package org.oddgen.bitemp.sqldev.dal
 
 import java.sql.Connection
 import java.util.ArrayList
+import java.util.LinkedHashMap
 import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.model.generator.Column
 import org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable
 import org.oddgen.bitemp.sqldev.model.generator.ForeignKeyConstraint
 import org.oddgen.bitemp.sqldev.model.generator.PrimaryKeyConstraint
@@ -43,12 +45,35 @@ class TableDao {
 	def Table getTable(String tableName, boolean deep) {
 		val table = new Table
 		table.tableName = tableName
+		table.columns = tableName.columns
 		table.primaryKeyConstraint = getPrimaryKeyConstraint(tableName, deep)
 		table.foreignKeyConstraints = getForeignKeyConstraints(tableName, deep)
 		table.historyTable = tableName.historyTable
 		table.flashbackArchiveTable = tableName.archiveTable
 		table.temporalValidityPeriods = tableName.temporalValidityPeriods
 		return table
+	}
+	
+	def getColumns (String tableName) {
+		val sql = '''
+			SELECT column_name,
+			       data_type, 
+			       data_length, 
+			       data_precision, 
+			       data_scale, 
+			       nullable, 
+			       data_default 
+			  FROM user_tab_columns
+			 WHERE table_name = ?
+			 ORDER BY column_id
+		'''
+		val result = jdbcTemplate.query(sql, new BeanPropertyRowMapper<Column>(Column),
+			#[tableName])
+		val columns = new LinkedHashMap<String, Column>
+		for (col : result) {
+			columns.put(col.columnName, col)
+		}
+		return columns
 	}
 
 	def FlashbackArchiveTable getArchiveTable(String tableName) {

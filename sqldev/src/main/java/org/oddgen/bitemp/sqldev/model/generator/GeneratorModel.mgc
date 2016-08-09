@@ -12,9 +12,7 @@
             accessors-accepted="false" constructors-accepted="false"/>
         <Association
             destinationClassName="org.oddgen.bitemp.sqldev.model.generator.Table"
-            endpointName="referencingTables" kind="Simple">
-            <Point x="665" y="334"/>
-        </Association>
+            endpointName="referencingTables" kind="Simple"/>
     </Class>
     <Class
         name="org.oddgen.bitemp.sqldev.model.generator.GeneratorModel"
@@ -90,7 +88,7 @@
             default-accepted="false" static-accepted="false"
             accessors-accepted="false" constructors-accepted="false"/>
     </Class>
-    <Class name="org.oddgen.bitemp.sqldev.model.generator.Table" x="429" y="230">
+    <Class name="org.oddgen.bitemp.sqldev.model.generator.Table" x="383" y="199">
         <AttributesDisplayFilter public-accepted="true"
             private-accepted="true" protected-accepted="true"
             default-accepted="true" static-accepted="false"/>
@@ -114,5 +112,15 @@
         <Association
             destinationClassName="org.oddgen.bitemp.sqldev.model.generator.FlashbackArchiveTable"
             endpointName="flashbackArchiveTable" kind="Simple"/>
+    </Class>
+    <Class name="org.oddgen.bitemp.sqldev.model.generator.Column"
+        x="599" y="53">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
     </Class>
 </ClassDiagram>
