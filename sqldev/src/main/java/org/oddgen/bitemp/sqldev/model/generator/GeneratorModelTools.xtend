@@ -38,4 +38,40 @@ class GeneratorModelTools {
 		]
 		return relevantParams
 	}
+	
+	def exists(Table table) {
+		return table != null && !table.columns.empty
+	}
+
+	def getHistTable(Table table) {
+		val historyTable = table.foreignKeyConstraints?.findFirst[it.referencedTable.historyTable]?.referencedTable
+		return historyTable
+	}
+
+	def getNewTableName(Table table, GeneratorModel model) {
+		if (table.historyTable) {
+			if (table.tableName.endsWith(model.params.get(BitempTapiGenerator.HISTORY_TABLE_SUFFIX.toUpperCase))) {
+				return table.
+					tableName
+			} else {
+				return '''«model.inputTable.tableName»«model.params.get(BitempTapiGenerator.HISTORY_TABLE_SUFFIX).toUpperCase»'''
+			}
+		} else {
+			if (model.params.get(BitempTapiGenerator.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1") {
+				if (table.tableName.endsWith(model.params.get(BitempTapiGenerator.LATEST_TABLE_SUFFIX).toUpperCase)) {
+					return table.
+						tableName
+				} else {
+					return '''«model.inputTable.tableName»«model.params.get(BitempTapiGenerator.LATEST_TABLE_SUFFIX).toUpperCase»'''
+				}
+			} else {
+				if (table.tableName.endsWith(model.params.get(BitempTapiGenerator.LATEST_TABLE_SUFFIX).toUpperCase)) {
+					return table.tableName.substring(0,
+						table.tableName.length - model.params.get(BitempTapiGenerator.LATEST_TABLE_SUFFIX).length)
+				} else {
+					return '''«model.inputTable.tableName»'''
+				}
+			}
+		}
+	}
 }

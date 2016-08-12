@@ -15,20 +15,22 @@
  */
 package org.oddgen.bitemp.sqldev.templates
 
+import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.bitemp.sqldev.model.generator.Table
 
-class RemoveTemporalValidity {
+class RenameTable {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def compile(Table table) '''
+	def compile(Table table, GeneratorModel model) '''
 		«IF table.exists»
-			«FOR period : table.temporalValidityPeriods»
+			«val newTableName = getNewTableName(table, model)»
+			«IF table.tableName != newTableName»
 				--
-				-- Remove period «period.periodname» («period.periodstart», «period.periodend») from «table.tableName»
+				-- Rename«IF table.historyTable» history«ENDIF» table «table.tableName» to «newTableName»
 				--
-				ALTER TABLE «table.tableName» DROP (PERIOD FOR «period.periodname»);
-			«ENDFOR»
+				RENAME «table.tableName» TO «newTableName»;
+			«ENDIF»
 		«ENDIF»
 	'''
 }

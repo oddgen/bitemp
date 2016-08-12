@@ -15,11 +15,14 @@
  */
 package org.oddgen.bitemp.sqldev.templates
 
+import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.bitemp.sqldev.model.generator.Table
 
 class RemoveFlashbackArchive {
+	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
+	
 	def compile(Table table) '''
-		«IF table.flashbackArchiveTable != null»
+		«IF table.exists && table.flashbackArchiveTable != null»
 			--
 			-- Remove archive table «table.flashbackArchiveTable.archiveTableName» from archive «table.flashbackArchiveTable.flashbackArchiveName»
 			--

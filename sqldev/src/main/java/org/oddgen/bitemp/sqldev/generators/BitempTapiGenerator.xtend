@@ -188,6 +188,14 @@ class BitempTapiGenerator implements OddgenGenerator {
 			return template.compile(conn, objectName)
 		}
 	}
+	
+	/**
+	 * for testing purposes only
+	 */
+	def getModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {
+		populateGeneratorModel(conn, tableName, params)
+		return generatorModel		
+	}
 
 	def private populatePrerequisiteModel(Connection conn) {
 		val sessionDao = new SessionDao(conn)
