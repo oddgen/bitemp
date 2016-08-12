@@ -28,14 +28,26 @@ class CreateDataStructure {
 		«val removeTemporalValidity = new RemoveTemporalValidity»
 		«val removeTable = new RemoveTable»
 		«val renameTable = new RenameTable»
+		«val addFlashbackArchive = new AddFlashbackArchive»
 		«IF model.targetModel == ApiType.NON_TEMPORAL»
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
+			«renameTable.compile(model.inputTable, model)»
 			«IF model.originModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.originModel == ApiType.BI_TEMPORAL»
 				«removeFlashbackArchive.compile(model.inputTable.histTable)»
 				«removeTable.compile(model.inputTable.histTable)»
 			«ENDIF»
+		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
+			«addFlashbackArchive.compile(model.inputTable, model)»
+			«IF model.originModel == ApiType.UNI_TEMPORAL_VALID_TIME»
+				«removeTable.compile(model.inputTable.histTable)»
+			«ELSEIF model.originModel == ApiType.BI_TEMPORAL»
+				-- TODO migrate data
+				«removeFlashbackArchive.compile(model.inputTable.histTable)»
+				«removeTable.compile(model.inputTable.histTable)»
+			«ENDIF»
 		«ENDIF»
 	'''
 }
