@@ -17,13 +17,13 @@ package org.oddgen.bitemp.sqldev.templates
 
 import org.oddgen.bitemp.sqldev.model.generator.Table
 
-class RemoveFlashbackArchive {
+class RemoveTemporalValidity {
 	def compile(Table table) '''
-		«IF table.flashbackArchiveTable != null»
+		«FOR period : table.temporalValidityPeriods»
 			--
-			-- Remove archive table «table.flashbackArchiveTable.archiveTableName» from archive «table.flashbackArchiveTable.flashbackArchiveName»
+			-- Remove period «period.periodname» («period.periodstart», «period.periodend») from «table.tableName»
 			--
-			ALTER TABLE «table.tableName» NO FLASHBACK ARCHIVE;
-		«ENDIF»
+			ALTER TABLE «table.tableName» DROP (PERIOD FOR «period.periodname»);
+		«ENDFOR»
 	'''
 }

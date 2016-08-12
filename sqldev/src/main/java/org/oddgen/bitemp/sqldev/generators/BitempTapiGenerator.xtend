@@ -182,7 +182,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 		if (objectType == "TABLE") {
 			populateGeneratorModel(conn, objectName, params)
 			val template = new RootTemplate
-			return template.compile(conn, generatorModel)
+			return template.compile(conn, generatorModel).toString
 		} else {
 			val template = new MissingPrerequisiteSolution
 			return template.compile(conn, objectName)

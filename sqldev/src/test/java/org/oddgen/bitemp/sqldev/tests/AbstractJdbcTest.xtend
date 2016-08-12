@@ -46,6 +46,18 @@ class AbstractJdbcTest {
 		sysDataSource.password = p.getProperty("sys_password")
 		sysJdbcTemplate = new JdbcTemplate(AbstractJdbcTest.sysDataSource)
 	}
+	
+	def static getStatements(String sqlplusScript) {
+		// simple statement parsing appraoch, should be good enough for test cases
+		// works best if slash is used to terminate a SQL statements
+		val PLSQL_SEP = '''«System.lineSeparator»/«System.lineSeparator»'''
+		val SQL_SEP = ''';«System.lineSeparator»'''
+		if (sqlplusScript.endsWith(PLSQL_SEP)) {
+			return sqlplusScript.split(PLSQL_SEP)
+		} else {
+			return sqlplusScript.split(SQL_SEP)
+		}
+	}
 
 	@BeforeClass
 	def static void setup() {
