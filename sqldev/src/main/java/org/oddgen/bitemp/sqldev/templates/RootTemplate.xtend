@@ -35,5 +35,6 @@ class RootTemplate {
 			--     - «String.format("%1$-" + maxParamLen + "s", key)»: «model.params.get(key).booleanParamToString»
 		«ENDFOR»
 		--
+		«(new CreateDataStructure).compile(conn, model)»
 	'''
 }
