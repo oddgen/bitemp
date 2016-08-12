@@ -49,4 +49,23 @@ class ColumnDaoTest extends AbstractJdbcTest {
 		Assert.assertEquals("'this is a default'", c1.dataDefault)
 	}
 
+	@Test
+	def void hiddenAndVirtualColumns() {
+		jdbcTemplate.execute('''
+			CREATE TABLE t1 (
+			   c1 INTEGER,
+			   PERIOD FOR vt
+			)
+		''')
+		val dao = new TableDao(dataSource.connection)
+		val table = dao.getTable("T1")
+		jdbcTemplate.execute('''
+			DROP TABLE t1 PURGE 
+		''')
+		Assert.assertEquals(4, table.columns.size)
+		Assert.assertEquals("NO", table.columns.get("C1").virtualColumn)
+		Assert.assertEquals("NO", table.columns.get("C1").hiddenColumn)
+		Assert.assertEquals("YES", table.columns.get("VT").virtualColumn)
+		Assert.assertEquals("YES", table.columns.get("VT_START").hiddenColumn)
+	}
 }

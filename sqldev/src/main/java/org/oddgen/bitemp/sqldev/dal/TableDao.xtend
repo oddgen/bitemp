@@ -62,10 +62,12 @@ class TableDao {
 			       data_precision, 
 			       data_scale, 
 			       nullable, 
-			       data_default 
-			  FROM user_tab_columns
+			       data_default, 
+			       hidden_column,
+			       virtual_column
+			  FROM user_tab_cols
 			 WHERE table_name = ?
-			 ORDER BY column_id
+			 ORDER BY internal_column_id
 		'''
 		val result = jdbcTemplate.query(sql, new BeanPropertyRowMapper<Column>(Column),
 			#[tableName])

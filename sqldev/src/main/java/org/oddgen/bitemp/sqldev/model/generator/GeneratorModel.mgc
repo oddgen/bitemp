@@ -114,7 +114,7 @@
             endpointName="flashbackArchiveTable" kind="Simple"/>
     </Class>
     <Class name="org.oddgen.bitemp.sqldev.model.generator.Column"
-        x="599" y="53">
+        x="732" y="55">
         <AttributesDisplayFilter public-accepted="true"
             private-accepted="true" protected-accepted="true"
             default-accepted="true" static-accepted="false"/>

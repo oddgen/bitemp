@@ -27,4 +27,6 @@ class Column extends AbstractModel {
 	Integer dataScale
 	String nullable
 	String dataDefault
+	String hiddenColumn
+	String virtualColumn
 }
