@@ -24,7 +24,7 @@ class RemoveTable {
 	def compile(Table table) '''
 		«IF table.exists»
 			--
-			-- Remove«IF table.historyTable» history«ENDIF» table «table.tableName»
+			-- Remove«IF table.historyTable» history«ENDIF» table
 			--
 			DROP TABLE «table.tableName»;
 		«ENDIF»

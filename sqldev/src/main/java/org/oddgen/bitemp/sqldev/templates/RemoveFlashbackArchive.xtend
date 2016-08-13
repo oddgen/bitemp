@@ -24,7 +24,7 @@ class RemoveFlashbackArchive {
 	def compile(Table table) '''
 		«IF table.exists && table.flashbackArchiveTable != null»
 			--
-			-- Remove archive table «table.flashbackArchiveTable.archiveTableName» from archive «table.flashbackArchiveTable.flashbackArchiveName»
+			-- Remove archive table (remove historical data)
 			--
 			ALTER TABLE «table.tableName» NO FLASHBACK ARCHIVE;
 		«ENDIF»

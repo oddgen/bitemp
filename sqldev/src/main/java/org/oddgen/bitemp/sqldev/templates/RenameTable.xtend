@@ -27,7 +27,7 @@ class RenameTable {
 			«val newTableName = getNewTableName(table, model)»
 			«IF table.tableName != newTableName»
 				--
-				-- Rename«IF table.historyTable» history«ENDIF» table «table.tableName» to «newTableName»
+				-- Rename«IF table.historyTable» history«ENDIF» table
 				--
 				RENAME «table.tableName» TO «newTableName»;
 			«ENDIF»
