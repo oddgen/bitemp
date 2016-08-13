@@ -24,7 +24,7 @@ class RenameTable {
 
 	def compile(Table table, GeneratorModel model) '''
 		«IF table.exists»
-			«val newTableName = getNewTableName(table, model)»
+			«val newTableName = getNewLatestTableName(table, model)»
 			«IF table.tableName != newTableName»
 				--
 				-- Rename«IF table.historyTable» history«ENDIF» table

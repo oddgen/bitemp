@@ -72,7 +72,7 @@ class GeneratorModelTools {
 		}
 	}
 
-	def getNewTableName(Table table, GeneratorModel model) {
+	def getNewLatestTableName(Table table, GeneratorModel model) {
 		if (table.historyTable) {
 			if (table.tableName.endsWith(model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase)) {
 				return table.
