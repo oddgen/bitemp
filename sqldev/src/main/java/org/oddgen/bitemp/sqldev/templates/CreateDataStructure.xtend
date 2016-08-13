@@ -30,15 +30,19 @@ class CreateDataStructure {
 		«val renameTable = new RenameTable»
 		«val addFlashbackArchive = new AddFlashbackArchive»
 		«val createHistoryTable = new CreateHistoryTable»
+		«val addDeletedIndicatorColumn = new AddDeletedIndicatorColumn»
+		«val removeDeletedIndicatorColumn = new RemoveDeletedIndicatorColumn»
 		«IF model.targetModel == ApiType.NON_TEMPORAL»
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
 			«removeFlashbackArchive.compile(model.inputTable.histTable)»
 			«removeTable.compile(model.inputTable.histTable)»
+			«removeDeletedIndicatorColumn.compile(model)»
 		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
+			«removeDeletedIndicatorColumn.compile(model)»
 			«addFlashbackArchive.compile(model.inputTable, model)»
 			«IF model.originModel == ApiType.BI_TEMPORAL»
 				-- TODO migrate data
@@ -50,6 +54,7 @@ class CreateDataStructure {
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
 			«removeFlashbackArchive.compile(model.inputTable.histTable)»
+			«addDeletedIndicatorColumn.compile(model)»
 			«createHistoryTable.compile(model)»
 			«IF model.originModel == ApiType.NON_TEMPORAL || model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 				-- TODO populate hist table
@@ -58,6 +63,7 @@ class CreateDataStructure {
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
+			«addDeletedIndicatorColumn.compile(model)»
 			«createHistoryTable.compile(model)»
 			«addFlashbackArchive.compile(model.newHistTable, model)»
 			«IF model.originModel == ApiType.NON_TEMPORAL»
