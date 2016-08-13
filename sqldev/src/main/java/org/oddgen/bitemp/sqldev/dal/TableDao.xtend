@@ -58,9 +58,10 @@ class TableDao {
 		val sql = '''
 			SELECT column_name,
 			       data_type, 
-			       data_length, 
 			       data_precision, 
 			       data_scale, 
+			       char_length,
+			       char_used, 
 			       nullable, 
 			       data_default, 
 			       hidden_column,

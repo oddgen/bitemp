@@ -22,9 +22,10 @@ import org.oddgen.bitemp.sqldev.model.AbstractModel
 class Column extends AbstractModel {
 	String columnName
 	String dataType
-	Integer dataLength
 	Integer dataPrecision
 	Integer dataScale
+	Integer charLength
+	String charUsed
 	String nullable
 	String dataDefault
 	String hiddenColumn

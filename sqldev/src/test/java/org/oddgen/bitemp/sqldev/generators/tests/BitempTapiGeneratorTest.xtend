@@ -101,6 +101,15 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 			expectedStart.length
 		))
 	}
+	
+	@Test
+	def genEmpBitemp() {
+		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
+		params.put(BitempTapiGenerator.GEN_TRANSACTION_TIME, "1")
+		params.put(BitempTapiGenerator.GEN_VALID_TIME, "1")
+		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
+		Assert.assertTrue(result != null)
+	}
 
 	@BeforeClass
 	static def void setup() {

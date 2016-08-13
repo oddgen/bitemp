@@ -29,7 +29,6 @@ class ColumnDaoTest extends AbstractJdbcTest {
 		Assert.assertEquals(3, cols.size)
 		val deptno = cols.get("DEPTNO")
 		Assert.assertEquals("NUMBER", deptno.dataType)
-		Assert.assertEquals(22, deptno.dataLength)
 		Assert.assertEquals(2, deptno.dataPrecision)
 		Assert.assertEquals(0, deptno.dataScale)
 		Assert.assertEquals(null, deptno.dataDefault)

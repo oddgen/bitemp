@@ -29,14 +29,13 @@ class CreateDataStructure {
 		«val removeTable = new RemoveTable»
 		«val renameTable = new RenameTable»
 		«val addFlashbackArchive = new AddFlashbackArchive»
+		«val createHistoryTable = new CreateHistoryTable»
 		«IF model.targetModel == ApiType.NON_TEMPORAL»
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
-			«IF model.originModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.originModel == ApiType.BI_TEMPORAL»
-				«removeFlashbackArchive.compile(model.inputTable.histTable)»
-				«removeTable.compile(model.inputTable.histTable)»
-			«ENDIF»
+			«removeFlashbackArchive.compile(model.inputTable.histTable)»
+			«removeTable.compile(model.inputTable.histTable)»
 		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
@@ -47,6 +46,26 @@ class CreateDataStructure {
 				-- TODO migrate data
 				«removeFlashbackArchive.compile(model.inputTable.histTable)»
 				«removeTable.compile(model.inputTable.histTable)»
+			«ENDIF»
+		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
+			«removeFlashbackArchive.compile(model.inputTable)»
+			«removeTemporalValidity.compile(model.inputTable)»
+			«renameTable.compile(model.inputTable, model)»
+			«removeFlashbackArchive.compile(model.inputTable.histTable)»
+			«createHistoryTable.compile(model)»
+			«IF model.originModel == ApiType.NON_TEMPORAL || model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+				-- TODO populate hist table
+			«ENDIF»
+		«ELSEIF model.targetModel == ApiType.BI_TEMPORAL»
+			«removeFlashbackArchive.compile(model.inputTable)»
+			«removeTemporalValidity.compile(model.inputTable)»
+			«renameTable.compile(model.inputTable, model)»
+			«createHistoryTable.compile(model)»
+			«addFlashbackArchive.compile(model.newHistTable, model)»
+			«IF model.originModel == ApiType.NON_TEMPORAL»
+				-- TODO populate hist table
+			«ELSEIF model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+				-- TODO migrate data
 			«ENDIF»
 		«ENDIF»
 	'''

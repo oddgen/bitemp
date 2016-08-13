@@ -3,6 +3,7 @@ package org.oddgen.bitemp.sqldev.model.generator
 import java.util.Collections
 import java.util.List
 import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.resources.BitempResources
 
 class GeneratorModelTools {
 	def apiTypeToString(ApiType apiType) {
@@ -38,9 +39,9 @@ class GeneratorModelTools {
 		]
 		return relevantParams
 	}
-	
+
 	def exists(Table table) {
-		return table != null && !table.columns.empty
+		return table != null && table.columns != null && !table.columns.empty
 	}
 
 	def getHistTable(Table table) {
@@ -48,9 +49,17 @@ class GeneratorModelTools {
 		return historyTable
 	}
 
+	def getNewHistTable(GeneratorModel model) {
+		val historyTable = new Table()
+		historyTable.tableName = '''«model.inputTable.tableName»«model.params.get(BitempTapiGenerator.HISTORY_TABLE_SUFFIX).toUpperCase»'''
+		historyTable.historyTable = true
+		historyTable.columns = model.inputTable.columns
+		return historyTable
+	}
+
 	def getNewTableName(Table table, GeneratorModel model) {
 		if (table.historyTable) {
-			if (table.tableName.endsWith(model.params.get(BitempTapiGenerator.HISTORY_TABLE_SUFFIX.toUpperCase))) {
+			if (table.tableName.endsWith(model.params.get(BitempTapiGenerator.HISTORY_TABLE_SUFFIX).toUpperCase)) {
 				return table.
 					tableName
 			} else {
@@ -72,6 +81,38 @@ class GeneratorModelTools {
 					return '''«model.inputTable.tableName»'''
 				}
 			}
+		}
+	}
+
+	def getFullDataType(Column column) {
+		val result = '''
+			«IF #["NUMBER", "NUMERIC", "DEC"].contains(column.dataType)»
+				«column.dataType»«IF column.dataPrecision != null»(«column.dataPrecision»«IF column.dataScale != null», «column.dataScale»«ENDIF»)«ENDIF»
+			«ELSEIF #["FLOAT", "INTEGER"].contains(column.dataType)»
+				«column.dataType»«IF column.dataPrecision != null»(«column.dataPrecision»)«ENDIF»
+			«ELSEIF #["CHAR", "VARCHAR2", "NCHAR", "NVARCHAR2", "VARCHAR"].contains(column.dataType)»
+				«column.dataType»(«column.charLength»«IF column.charUsed == "C"» CHAR«ENDIF»)
+			«ELSE»
+				«column.dataType»
+			«ENDIF»
+		'''
+		return result.toString.trim
+	}
+
+	def getNotNull(Column column) {
+		val result = '''
+			«IF column.nullable == "N"»NOT «ENDIF»NULL
+		'''
+		return result.toString.trim
+	}
+
+	def getValidTimeDataType(GeneratorModel model) {
+		return switch (model.params.get(BitempTapiGenerator.GRANULARITY)) {
+			case BitempResources.getString("PREF_GRANULARITY_CENTISECOND"): "TIMESTAMP(2)"
+			case BitempResources.getString("PREF_GRANULARITY_MILLISECOND"): "TIMESTAMP(3)"
+			case BitempResources.getString("PREF_GRANULARITY_MICROSECOND"): "TIMESTAMP(6)"
+			case BitempResources.getString("PREF_GRANULARITY_NANOSECOND"): "TIMESTAMP(9)"
+			default: "DATE"
 		}
 	}
 }
