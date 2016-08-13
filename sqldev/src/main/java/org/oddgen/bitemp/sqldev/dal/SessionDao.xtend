@@ -15,14 +15,17 @@
  */
 package org.oddgen.bitemp.sqldev.dal
 
+import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import java.util.ArrayList
 import java.util.List
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.resources.BitempResources
+import org.oddgen.sqldev.LoggableConstants
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
+@Loggable(LoggableConstants.DEBUG)
 class SessionDao {
 	private Connection conn
 	private JdbcTemplate jdbcTemplate

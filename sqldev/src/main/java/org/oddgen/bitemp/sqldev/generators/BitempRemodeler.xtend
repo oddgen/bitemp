@@ -15,6 +15,7 @@
  */
 package org.oddgen.bitemp.sqldev.generators
 
+import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import java.util.ArrayList
 import java.util.HashMap
@@ -31,8 +32,10 @@ import org.oddgen.bitemp.sqldev.model.prerequisite.PrerequisiteModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.bitemp.sqldev.templates.MissingPrerequisiteSolution
 import org.oddgen.bitemp.sqldev.templates.RootTemplate
+import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.OddgenGenerator
 
+@Loggable(LoggableConstants.DEBUG)
 class BitempRemodeler implements OddgenGenerator {
 
 	public static String GEN_API = BitempResources.get("PREF_GEN_API_LABEL")

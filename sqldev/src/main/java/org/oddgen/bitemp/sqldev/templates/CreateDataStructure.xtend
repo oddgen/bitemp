@@ -15,11 +15,14 @@
  */
 package org.oddgen.bitemp.sqldev.templates
 
+import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
+import org.oddgen.sqldev.LoggableConstants
 
+@Loggable(LoggableConstants.DEBUG)
 class CreateDataStructure {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 

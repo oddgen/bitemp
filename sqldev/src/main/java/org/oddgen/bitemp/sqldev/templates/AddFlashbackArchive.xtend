@@ -15,11 +15,14 @@
  */
 package org.oddgen.bitemp.sqldev.templates
 
+import com.jcabi.aspects.Loggable
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.bitemp.sqldev.model.generator.Table
-import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
+import org.oddgen.sqldev.LoggableConstants
 
+@Loggable(LoggableConstants.DEBUG)
 class AddFlashbackArchive {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 

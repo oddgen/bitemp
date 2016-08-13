@@ -15,6 +15,7 @@
  */
 package org.oddgen.bitemp.sqldev.dal
 
+import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import java.util.ArrayList
 import java.util.LinkedHashMap
@@ -25,10 +26,12 @@ import org.oddgen.bitemp.sqldev.model.generator.ForeignKeyConstraint
 import org.oddgen.bitemp.sqldev.model.generator.PrimaryKeyConstraint
 import org.oddgen.bitemp.sqldev.model.generator.Table
 import org.oddgen.bitemp.sqldev.model.generator.TemporalValidityPeriod
+import org.oddgen.sqldev.LoggableConstants
 import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
+@Loggable(LoggableConstants.DEBUG)
 class TableDao {
 	private Connection conn
 	private JdbcTemplate jdbcTemplate

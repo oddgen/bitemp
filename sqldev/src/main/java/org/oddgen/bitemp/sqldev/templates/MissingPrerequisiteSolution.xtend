@@ -15,10 +15,13 @@
  */
 package org.oddgen.bitemp.sqldev.templates
 
+import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.resources.BitempResources
+import org.oddgen.sqldev.LoggableConstants
 
+@Loggable(LoggableConstants.DEBUG)
 class MissingPrerequisiteSolution {
 	def compile(Connection conn, String missingPrerequisite) {
 		return switch missingPrerequisite {
