@@ -2,7 +2,7 @@ package org.oddgen.bitemp.sqldev.model.generator
 
 import java.util.Collections
 import java.util.List
-import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 
 class GeneratorModelTools {
@@ -35,7 +35,7 @@ class GeneratorModelTools {
 	def relevantParams(GeneratorModel model) {
 		val relevantParams = model.params.keySet.filter [
 			(model.paramStates.get(it) == null || model.paramStates.get(it) == true) &&
-				it != BitempTapiGenerator.GEN_TRANSACTION_TIME && it != BitempTapiGenerator.GEN_VALID_TIME
+				it != BitempRemodeler.GEN_TRANSACTION_TIME && it != BitempRemodeler.GEN_VALID_TIME
 		]
 		return relevantParams
 	}
@@ -51,7 +51,7 @@ class GeneratorModelTools {
 
 	def getNewHistTable(GeneratorModel model) {
 		val historyTable = new Table()
-		historyTable.tableName = '''«model.inputTable.tableName»«model.params.get(BitempTapiGenerator.HISTORY_TABLE_SUFFIX).toUpperCase»'''
+		historyTable.tableName = '''«model.inputTable.tableName»«model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase»'''
 		historyTable.historyTable = true
 		historyTable.columns = model.inputTable.columns
 		return historyTable
@@ -59,24 +59,24 @@ class GeneratorModelTools {
 
 	def getNewTableName(Table table, GeneratorModel model) {
 		if (table.historyTable) {
-			if (table.tableName.endsWith(model.params.get(BitempTapiGenerator.HISTORY_TABLE_SUFFIX).toUpperCase)) {
+			if (table.tableName.endsWith(model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase)) {
 				return table.
 					tableName
 			} else {
-				return '''«model.inputTable.tableName»«model.params.get(BitempTapiGenerator.HISTORY_TABLE_SUFFIX).toUpperCase»'''
+				return '''«model.inputTable.tableName»«model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase»'''
 			}
 		} else {
-			if (model.params.get(BitempTapiGenerator.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1") {
-				if (table.tableName.endsWith(model.params.get(BitempTapiGenerator.LATEST_TABLE_SUFFIX).toUpperCase)) {
+			if (model.params.get(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1") {
+				if (table.tableName.endsWith(model.params.get(BitempRemodeler.LATEST_TABLE_SUFFIX).toUpperCase)) {
 					return table.
 						tableName
 				} else {
-					return '''«model.inputTable.tableName»«model.params.get(BitempTapiGenerator.LATEST_TABLE_SUFFIX).toUpperCase»'''
+					return '''«model.inputTable.tableName»«model.params.get(BitempRemodeler.LATEST_TABLE_SUFFIX).toUpperCase»'''
 				}
 			} else {
-				if (table.tableName.endsWith(model.params.get(BitempTapiGenerator.LATEST_TABLE_SUFFIX).toUpperCase)) {
+				if (table.tableName.endsWith(model.params.get(BitempRemodeler.LATEST_TABLE_SUFFIX).toUpperCase)) {
 					return table.tableName.substring(0,
-						table.tableName.length - model.params.get(BitempTapiGenerator.LATEST_TABLE_SUFFIX).length)
+						table.tableName.length - model.params.get(BitempRemodeler.LATEST_TABLE_SUFFIX).length)
 				} else {
 					return '''«model.inputTable.tableName»'''
 				}
@@ -107,7 +107,7 @@ class GeneratorModelTools {
 	}
 
 	def getValidTimeDataType(GeneratorModel model) {
-		return switch (model.params.get(BitempTapiGenerator.GRANULARITY)) {
+		return switch (model.params.get(BitempRemodeler.GRANULARITY)) {
 			case BitempResources.getString("PREF_GRANULARITY_CENTISECOND"): "TIMESTAMP(2)"
 			case BitempResources.getString("PREF_GRANULARITY_MILLISECOND"): "TIMESTAMP(3)"
 			case BitempResources.getString("PREF_GRANULARITY_MICROSECOND"): "TIMESTAMP(6)"

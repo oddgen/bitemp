@@ -19,7 +19,7 @@ import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.dal.TableDao
-import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
 class HistoryTableDaoTest extends AbstractJdbcTest {
@@ -36,7 +36,7 @@ class HistoryTableDaoTest extends AbstractJdbcTest {
 		try {
 		jdbcTemplate.execute('''
 			CREATE TABLE t1 (
-			   «BitempTapiGenerator.HISTORY_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
+			   «BitempRemodeler.HISTORY_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
 			   c1 VARCHAR2(20)
 			)
 		''')

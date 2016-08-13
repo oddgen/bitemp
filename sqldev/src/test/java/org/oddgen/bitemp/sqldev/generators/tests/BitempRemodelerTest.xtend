@@ -18,22 +18,22 @@ package org.oddgen.bitemp.sqldev.generators.tests
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
-import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 import org.oddgen.sqldev.generators.OddgenGenerator
 
-class BitempTapiGeneratorTest extends AbstractJdbcTest {
+class BitempRemodelerTest extends AbstractJdbcTest {
 	static var OddgenGenerator gen
 
 	@Test
 	def getName() {
-		Assert.assertEquals(BitempResources.get("GEN_TAPI_NAME"), gen.getName(dataSource.connection))
+		Assert.assertEquals(BitempResources.get("GEN_BITEMP_NAME"), gen.getName(dataSource.connection))
 	}
 
 	@Test
 	def getDescription() {
-		Assert.assertEquals(BitempResources.get("GEN_TAPI_DESCRIPTION"), gen.getDescription(dataSource.connection))
+		Assert.assertEquals(BitempResources.get("GEN_BITEMP_DESCRIPTION"), gen.getDescription(dataSource.connection))
 	}
 
 	@Test
@@ -65,7 +65,7 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 		val params = gen.getParams(dataSource.connection, "TABLE", null)
 		var paramStates = gen.getParamStates(dataSource.connection, "TABLE", null, params)
 		Assert.assertEquals(16, paramStates.size)
-		Assert.assertEquals(false, paramStates.get(BitempTapiGenerator.FLASHBACK_ARCHIVE_NAME))
+		Assert.assertEquals(false, paramStates.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME))
 	}
 
 	@Test
@@ -74,7 +74,7 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
 		val expectedStart = '''
 			-- 
-			-- bi-temporal TAPI generator configuration
+			-- Bitemp Remodeler configuration
 			-- - Input table : EMP
 			-- - Origin model: non-temporal
 			-- - Target model: uni-temporal valid-time
@@ -105,14 +105,14 @@ class BitempTapiGeneratorTest extends AbstractJdbcTest {
 	@Test
 	def genEmpBitemp() {
 		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
-		params.put(BitempTapiGenerator.GEN_TRANSACTION_TIME, "1")
-		params.put(BitempTapiGenerator.GEN_VALID_TIME, "1")
+		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "1")
+		params.put(BitempRemodeler.GEN_VALID_TIME, "1")
 		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
 		Assert.assertTrue(result != null)
 	}
 
 	@BeforeClass
 	static def void setup() {
-		gen = new BitempTapiGenerator
+		gen = new BitempRemodeler
 	}
 }

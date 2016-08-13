@@ -18,7 +18,7 @@ package org.oddgen.bitemp.sqldev.templates
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.bitemp.sqldev.model.generator.Table
-import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 
 class AddFlashbackArchive {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
@@ -30,7 +30,7 @@ class AddFlashbackArchive {
 				--
 				-- Add flashback archive
 				--
-				ALTER TABLE «newTableName» FLASHBACK ARCHIVE «model.params.get(BitempTapiGenerator.FLASHBACK_ARCHIVE_NAME)»;
+				ALTER TABLE «newTableName» FLASHBACK ARCHIVE «model.params.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME)»;
 			«ENDIF»
 		«ENDIF»
 	'''

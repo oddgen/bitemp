@@ -18,7 +18,7 @@ package org.oddgen.bitemp.sqldev.dal
 import java.sql.Connection
 import java.util.ArrayList
 import java.util.List
-import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
@@ -46,7 +46,7 @@ class SessionDao {
 				   hist_tabs AS (
 				      SELECT /*+ materialize */ table_name
 				        FROM user_tab_columns
-				       WHERE column_name = '«BitempTapiGenerator.HISTORY_ID_COL_NAME»'
+				       WHERE column_name = '«BitempRemodeler.HISTORY_ID_COL_NAME»'
 				   ),
 				   pk_tabs AS (
 				      SELECT /*+ materialize */ table_name 

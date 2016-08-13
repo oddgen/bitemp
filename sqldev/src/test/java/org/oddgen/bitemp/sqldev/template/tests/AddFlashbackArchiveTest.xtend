@@ -19,7 +19,7 @@ import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.dal.TableDao
-import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.templates.AddFlashbackArchive
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
@@ -35,11 +35,11 @@ class AddFlashbackArchiveTest extends AbstractJdbcTest {
 		val dao = new TableDao(dataSource.connection)
 		val table = dao.getTable("T1")
 		Assert.assertTrue(table.flashbackArchiveTable == null)
-		val gen = new BitempTapiGenerator
+		val gen = new BitempRemodeler
 		val params = gen.getParams(dataSource.connection, "TABLE", "T1")
-		params.put(BitempTapiGenerator.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
-		params.put(BitempTapiGenerator.GEN_TRANSACTION_TIME, "1")
-		params.put(BitempTapiGenerator.GEN_VALID_TIME, "0")
+		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
+		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "1")
+		params.put(BitempRemodeler.GEN_VALID_TIME, "0")
 		val model = gen.getModel(dataSource.connection, "T1", params)
 		val script = template.compile(table, model).toString
 		for (stmt : script.statements) {

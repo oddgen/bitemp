@@ -32,7 +32,7 @@ import org.oddgen.bitemp.sqldev.templates.MissingPrerequisiteSolution
 import org.oddgen.bitemp.sqldev.templates.RootTemplate
 import org.oddgen.sqldev.generators.OddgenGenerator
 
-class BitempTapiGenerator implements OddgenGenerator {
+class BitempRemodeler implements OddgenGenerator {
 
 	public static String GEN_API = BitempResources.get("PREF_GEN_API_LABEL")
 	public static String CRUD_COMPATIBILITY_ORIGINAL_TABLE = BitempResources.get(
@@ -60,11 +60,11 @@ class BitempTapiGenerator implements OddgenGenerator {
 	private GeneratorModel generatorModel = new GeneratorModel
 
 	override getName(Connection conn) {
-		return BitempResources.get("GEN_TAPI_NAME")
+		return BitempResources.get("GEN_BITEMP_NAME")
 	}
 
 	override getDescription(Connection conn) {
-		return BitempResources.get("GEN_TAPI_DESCRIPTION")
+		return BitempResources.get("GEN_BITEMP_DESCRIPTION")
 	}
 
 	override getObjectTypes(Connection conn) {
@@ -121,7 +121,7 @@ class BitempTapiGenerator implements OddgenGenerator {
 			params.put(COLLECTION_TYPE_SUFFIX, pref.collectionTypeSuffix)
 			params.put(IOT_SUFFIX, pref.iotSuffix)
 			params.put(API_PACKAGE_SUFFIX, pref.apiPackageSuffix)
-			params.put(BitempTapiGenerator.HOOK_PACKAGE_SUFFIX, pref.hookPackageSuffix)
+			params.put(BitempRemodeler.HOOK_PACKAGE_SUFFIX, pref.hookPackageSuffix)
 		}
 		return params
 	}

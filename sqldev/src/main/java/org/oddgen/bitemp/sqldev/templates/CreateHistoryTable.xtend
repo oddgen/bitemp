@@ -15,7 +15,7 @@
  */
 package org.oddgen.bitemp.sqldev.templates
 
-import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 
@@ -33,10 +33,10 @@ class CreateHistoryTable {
 				-- Create history table
 				--
 				CREATE TABLE «historyTableName» (
-					«BitempTapiGenerator.HISTORY_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL,
-					«model.params.get(BitempTapiGenerator.VALID_FROM_COL_NAME)» «model.validTimeDataType» NULL,
-					«model.params.get(BitempTapiGenerator.VALID_TO_COL_NAME)» «model.validTimeDataType» NULL,
-					PERIOD FOR vt («model.params.get(BitempTapiGenerator.VALID_FROM_COL_NAME)», «model.params.get(BitempTapiGenerator.VALID_TO_COL_NAME)»),
+					«BitempRemodeler.HISTORY_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL,
+					«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)» «model.validTimeDataType» NULL,
+					«model.params.get(BitempRemodeler.VALID_TO_COL_NAME)» «model.validTimeDataType» NULL,
+					PERIOD FOR vt («model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)», «model.params.get(BitempRemodeler.VALID_TO_COL_NAME)»),
 					«FOR col : model.inputTable.columns.values.filter[it.hiddenColumn == "NO" && it.virtualColumn == "NO"] SEPARATOR ","»
 						«col.columnName» «col.fullDataType» «col.notNull»
 					«ENDFOR»

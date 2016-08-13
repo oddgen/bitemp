@@ -24,7 +24,7 @@ class RootTemplate {
 
 	def compile(Connection conn, GeneratorModel model) '''
 		-- 
-		-- bi-temporal TAPI generator configuration
+		-- Bitemp Remodeler configuration
 		-- - Input table : «model.inputTable.tableName»
 		-- - Origin model: «model.originModel.apiTypeToString»
 		-- - Target model: «model.targetModel.apiTypeToString»

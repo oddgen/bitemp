@@ -19,7 +19,7 @@ import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.dal.TableDao
-import org.oddgen.bitemp.sqldev.generators.BitempTapiGenerator
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.templates.RenameTable
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
@@ -27,9 +27,9 @@ class RenameTableTest extends AbstractJdbcTest {
 
 	@Test
 	def noRename() {
-		val gen = new BitempTapiGenerator
+		val gen = new BitempRemodeler
 		val params = gen.getParams(dataSource.connection, "TABLE", "DEPT")
-		params.put(BitempTapiGenerator.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
+		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
 		val model = gen.getModel(dataSource.connection, "DEPT", params)
 		val template = new RenameTable
 		Assert.assertEquals("", template.compile(model.inputTable, model).toString)
@@ -42,7 +42,7 @@ class RenameTableTest extends AbstractJdbcTest {
 			   c1 INTEGER
 			)
 		''')
-		val gen = new BitempTapiGenerator
+		val gen = new BitempRemodeler
 		val params = gen.getParams(dataSource.connection, "TABLE", "T1")
 		val model = gen.getModel(dataSource.connection, "T1", params)
 		val template = new RenameTable
