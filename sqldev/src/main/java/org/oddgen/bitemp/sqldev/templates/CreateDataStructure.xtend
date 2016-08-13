@@ -40,13 +40,11 @@ class CreateDataStructure {
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
 			«addFlashbackArchive.compile(model.inputTable, model)»
-			«IF model.originModel == ApiType.UNI_TEMPORAL_VALID_TIME»
-				«removeTable.compile(model.inputTable.histTable)»
-			«ELSEIF model.originModel == ApiType.BI_TEMPORAL»
+			«IF model.originModel == ApiType.BI_TEMPORAL»
 				-- TODO migrate data
-				«removeFlashbackArchive.compile(model.inputTable.histTable)»
-				«removeTable.compile(model.inputTable.histTable)»
 			«ENDIF»
+			«removeFlashbackArchive.compile(model.inputTable.histTable)»
+			«removeTable.compile(model.inputTable.histTable)»
 		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
