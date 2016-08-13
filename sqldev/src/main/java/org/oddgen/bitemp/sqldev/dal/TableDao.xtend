@@ -57,13 +57,14 @@ class TableDao {
 	def getColumns (String tableName) {
 		val sql = '''
 			SELECT column_name,
-			       data_type, 
-			       data_precision, 
-			       data_scale, 
+			       data_type,
+			       data_precision,
+			       data_scale,
 			       char_length,
-			       char_used, 
-			       nullable, 
-			       data_default, 
+			       char_used,
+			       nullable,
+			       data_default,
+			       default_on_null,
 			       hidden_column,
 			       virtual_column
 			  FROM user_tab_cols

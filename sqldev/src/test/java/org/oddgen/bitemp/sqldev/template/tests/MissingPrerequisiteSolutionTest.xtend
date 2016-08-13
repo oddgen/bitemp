@@ -57,6 +57,18 @@ class MissingPrerequisiteSolutionTest extends AbstractJdbcTest {
 	}
 
 	@Test
+	def flashbackArchiveAdministerRequired() {
+		val template = new MissingPrerequisiteSolution
+		val expected = '''
+			-- to solve "«BitempResources.get("ERROR_FLASHBACK_ARCHIVE_ADMINISTER_REQUIRED")»" run the following statement as SYS:
+			GRANT FLASHBACK ARCHIVE ADMINISTER TO SCOTT;
+		'''
+		val actual = template.compile(dataSource.connection, BitempResources.get("ERROR_FLASHBACK_ARCHIVE_ADMINISTER_REQUIRED"))
+		Assert.assertEquals(expected, actual)
+	}
+
+
+	@Test
 	def dbmsFlashbackArchiveRequired() {
 		val template = new MissingPrerequisiteSolution
 		val expected = '''

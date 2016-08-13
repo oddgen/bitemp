@@ -45,16 +45,31 @@ class GeneratorModelTools {
 	}
 
 	def getHistTable(Table table) {
-		val historyTable = table.foreignKeyConstraints?.findFirst[it.referencedTable.historyTable]?.referencedTable
+		val historyTable = table.primaryKeyConstraint?.referencingTables?.findFirst[it.historyTable]
 		return historyTable
 	}
 
 	def getNewHistTable(GeneratorModel model) {
-		val historyTable = new Table()
-		historyTable.tableName = '''«model.inputTable.tableName»«model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase»'''
-		historyTable.historyTable = true
-		historyTable.columns = model.inputTable.columns
-		return historyTable
+		val histTable = model.inputTable.histTable
+		if (histTable !=
+			null) {
+			return histTable
+		} else {
+			val newHistTable = new Table()
+			newHistTable.tableName = '''«model.baseTableName»«model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase»'''
+			newHistTable.historyTable = true
+			newHistTable.columns = model.inputTable.columns
+			return newHistTable
+		}
+	}
+
+	def getBaseTableName(GeneratorModel model) {
+		if (model.inputTable.tableName.endsWith(model.params.get(BitempRemodeler.LATEST_TABLE_SUFFIX).toUpperCase)) {
+			return model.inputTable.tableName.substring(0,
+				model.inputTable.tableName.length - model.params.get(BitempRemodeler.LATEST_TABLE_SUFFIX).length)
+		} else {
+			return '''«model.inputTable.tableName»'''
+		}
 	}
 
 	def getNewTableName(Table table, GeneratorModel model) {
@@ -86,11 +101,11 @@ class GeneratorModelTools {
 
 	def getFullDataType(Column column) {
 		val result = '''
-			«IF #["NUMBER", "NUMERIC", "DEC"].contains(column.dataType)»
-				«column.dataType»«IF column.dataPrecision != null»(«column.dataPrecision»«IF column.dataScale != null», «column.dataScale»«ENDIF»)«ENDIF»
-			«ELSEIF #["FLOAT", "INTEGER"].contains(column.dataType)»
+			«IF column.dataType == "NUMBER"»
+				«column.dataType»(«IF column.dataPrecision != null»«column.dataPrecision»«ELSE»*«ENDIF»«IF column.dataScale != null», «column.dataScale»«ENDIF»)
+			«ELSEIF column.dataType == "FLOAT"»
 				«column.dataType»«IF column.dataPrecision != null»(«column.dataPrecision»)«ENDIF»
-			«ELSEIF #["CHAR", "VARCHAR2", "NCHAR", "NVARCHAR2", "VARCHAR"].contains(column.dataType)»
+			«ELSEIF #["CHAR", "VARCHAR2", "NCHAR", "NVARCHAR2"].contains(column.dataType)»
 				«column.dataType»(«column.charLength»«IF column.charUsed == "C"» CHAR«ENDIF»)
 			«ELSE»
 				«column.dataType»
@@ -106,6 +121,14 @@ class GeneratorModelTools {
 		return result.toString.trim
 	}
 
+	def getDefaultClause(
+		Column column) {
+		val result = '''
+			«IF column.dataDefault != null»DEFAULT«IF column.defaultOnNull == "YES"» ON NULL«ENDIF» «column.dataDefault»«ENDIF»
+		'''
+		return result.toString.trim
+	}
+
 	def getValidTimeDataType(GeneratorModel model) {
 		return switch (model.params.get(BitempRemodeler.GRANULARITY)) {
 			case BitempResources.getString("PREF_GRANULARITY_CENTISECOND"): "TIMESTAMP(2)"
@@ -114,5 +137,15 @@ class GeneratorModelTools {
 			case BitempResources.getString("PREF_GRANULARITY_NANOSECOND"): "TIMESTAMP(9)"
 			default: "DATE"
 		}
+	}
+
+	def isTemporalValidityColumn(Column column, GeneratorModel model) {
+		for (period : model.inputTable.temporalValidityPeriods) {
+			if (column.columnName == period.periodstart || column.columnName == period.periodend ||
+				column.columnName == period.periodname) {
+				return true
+			}
+		}
+		return false
 	}
 }

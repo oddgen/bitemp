@@ -45,6 +45,11 @@ class MissingPrerequisiteSolution {
 						GRANT FLASHBACK ARCHIVE ON fba TO «conn.metaData.userName»;
 					«ENDIF»
 				'''
+			case BitempResources.get("ERROR_FLASHBACK_ARCHIVE_ADMINISTER_REQUIRED"):
+				'''
+					-- to solve "«BitempResources.get("ERROR_FLASHBACK_ARCHIVE_ADMINISTER_REQUIRED")»" run the following statement as SYS:
+					GRANT FLASHBACK ARCHIVE ADMINISTER TO «conn.metaData.userName»;
+				'''
 			case BitempResources.get("ERROR_DBMS_FLASHBACK_ARCHIVE_REQUIRED"):
 				'''
 					-- to solve "«BitempResources.get("ERROR_DBMS_FLASHBACK_ARCHIVE_REQUIRED")»" run the following statement as SYS:

@@ -25,6 +25,7 @@ import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
+import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.bitemp.sqldev.model.preference.PreferenceModel
 import org.oddgen.bitemp.sqldev.model.prerequisite.PrerequisiteModel
 import org.oddgen.bitemp.sqldev.resources.BitempResources
@@ -56,6 +57,7 @@ class BitempRemodeler implements OddgenGenerator {
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
 	public static String HISTORY_ID_COL_NAME = "HIST_ID$"
 
+	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 	private PrerequisiteModel prerequisiteModel = new PrerequisiteModel
 	private GeneratorModel generatorModel = new GeneratorModel
 
@@ -189,9 +191,6 @@ class BitempRemodeler implements OddgenGenerator {
 		}
 	}
 	
-	/**
-	 * for testing purposes only
-	 */
 	def getModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {
 		populateGeneratorModel(conn, tableName, params)
 		return generatorModel		
@@ -208,7 +207,7 @@ class BitempRemodeler implements OddgenGenerator {
 		generatorModel.paramStates = getParamStates(conn, "TABLE", null, params)
 		val tableDao = new TableDao(conn)
 		generatorModel.inputTable = tableDao.getTable(tableName)
-		val historyTable = generatorModel.inputTable.foreignKeyConstraints?.findFirst[it.referencedTable.historyTable]?.referencedTable
+		val historyTable = generatorModel.inputTable.histTable
 		if (historyTable == null) {
 			if (generatorModel.inputTable.flashbackArchiveTable != null) {
 				generatorModel.originModel = ApiType.UNI_TEMPORAL_TRANSACTION_TIME

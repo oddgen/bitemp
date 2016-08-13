@@ -208,6 +208,9 @@ class SessionDao {
 
 		def getMissingInstallPrerequisites() {
 			val result = new ArrayList<String>
+			if (! "FLASHBACK ARCHIVE ADMINISTER".hasPrivilege) {
+				result.add(BitempResources.get("ERROR_FLASHBACK_ARCHIVE_ADMINISTER_REQUIRED"))
+			}
 			if (! "DBMS_FLASHBACK_ARCHIVE".hasExecuteRights) {
 				result.add(BitempResources.get("ERROR_DBMS_FLASHBACK_ARCHIVE_REQUIRED"))
 			}

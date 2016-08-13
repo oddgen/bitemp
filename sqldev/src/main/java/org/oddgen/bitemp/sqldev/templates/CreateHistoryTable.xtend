@@ -25,7 +25,7 @@ class CreateHistoryTable {
 	def compile(
 		GeneratorModel model) '''
 		«IF model.inputTable.exists»
-			«val histTable = getHistTable(model.inputTable) »
+			«val histTable = getHistTable(model.inputTable)»
 			«IF histTable == null»
 				«val latestTableName = getNewTableName(model.inputTable, model)»
 				«val historyTableName = getNewTableName(model.newHistTable, model)»
@@ -36,9 +36,14 @@ class CreateHistoryTable {
 					«BitempRemodeler.HISTORY_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL,
 					«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)» «model.validTimeDataType» NULL,
 					«model.params.get(BitempRemodeler.VALID_TO_COL_NAME)» «model.validTimeDataType» NULL,
+					«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME)» NUMBER(1,0) NULL,
+					CHECK («model.params.get(BitempRemodeler.IS_DELETED_COL_NAME)» IN (0,1)),
 					PERIOD FOR vt («model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)», «model.params.get(BitempRemodeler.VALID_TO_COL_NAME)»),
-					«FOR col : model.inputTable.columns.values.filter[it.hiddenColumn == "NO" && it.virtualColumn == "NO"] SEPARATOR ","»
-						«col.columnName» «col.fullDataType» «col.notNull»
+					«FOR col : model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && it.columnName != BitempRemodeler.IS_DELETED_COL_NAME] SEPARATOR ","»
+						«col.columnName» «col.fullDataType»«IF col.hiddenColumn == "YES"» INVISIBLE«ENDIF»«
+						»«IF col.virtualColumn == "YES"» GENERATED ALWAYS AS («col.dataDefault») VIRTUAL«
+						»«ELSE» «col.defaultClause» «col.notNull»«
+						»«ENDIF»
 					«ENDFOR»
 				);
 				«val latestPkCols = model.inputTable.primaryKeyConstraint.columnNames»
