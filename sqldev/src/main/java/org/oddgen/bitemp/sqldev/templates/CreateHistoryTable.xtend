@@ -35,26 +35,26 @@ class CreateHistoryTable {
 				--
 				-- Create history table
 				--
-				CREATE TABLE «historyTableName» (
-					«BitempRemodeler.HISTORY_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
-					«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)» «model.validTimeDataType» NULL,
-					«model.params.get(BitempRemodeler.VALID_TO_COL_NAME)» «model.validTimeDataType» NULL,
-					«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME)» NUMBER(1,0) NULL,
+				CREATE TABLE «historyTableName.toLowerCase» (
+					«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
+					«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
+					«model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
+					«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» NUMBER(1,0) NULL,
 					CHECK («model.params.get(BitempRemodeler.IS_DELETED_COL_NAME)» IN (0,1)),
-					PERIOD FOR vt («model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)», «model.params.get(BitempRemodeler.VALID_TO_COL_NAME)»),
+					PERIOD FOR vt («model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase», «model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»),
 					«FOR col : model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && it.columnName != BitempRemodeler.IS_DELETED_COL_NAME] SEPARATOR ","»
-						«col.columnName» «col.fullDataType»«IF col.hiddenColumn == "YES"» INVISIBLE«ENDIF»«
+						«col.columnName.toLowerCase» «col.fullDataType»«IF col.hiddenColumn == "YES"» INVISIBLE«ENDIF»«
 						»«IF col.virtualColumn == "YES"» GENERATED ALWAYS AS («col.dataDefault») VIRTUAL«
 						»«ELSE»«IF !col.defaultClause.empty» «col.defaultClause»«ENDIF» «col.notNull»«
 						»«ENDIF»
 					«ENDFOR»
 				);
 				«val latestPkCols = model.inputTable.primaryKeyConstraint.columnNames»
-				ALTER TABLE «historyTableName» ADD FOREIGN KEY («FOR col : latestPkCols SEPARATOR ", "»«col»«ENDFOR») REFERENCES «latestTableName»;
-				CREATE INDEX «historyTableName»_I0$ ON «historyTableName» («FOR col : latestPkCols SEPARATOR ", "»«col»«ENDFOR»);
+				ALTER TABLE «historyTableName.toLowerCase» ADD FOREIGN KEY («FOR col : latestPkCols SEPARATOR ", "»«col.toLowerCase»«ENDFOR») REFERENCES «latestTableName.toLowerCase»;
+				CREATE INDEX «historyTableName.toLowerCase»_i0$ ON «historyTableName» («FOR col : latestPkCols SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
 				«var int index = 1»
 				«FOR fk : model.inputTable.foreignKeyConstraints»
-					CREATE INDEX «historyTableName»_I«index++»$ ON «historyTableName» («FOR col : fk.columnNames SEPARATOR ", "»«col»«ENDFOR»);
+					CREATE INDEX «historyTableName.toLowerCase»_i«index++»$ ON «historyTableName.toLowerCase» («FOR col : fk.columnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
 				«ENDFOR»
 			«ENDIF»
 		«ENDIF»

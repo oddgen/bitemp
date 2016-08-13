@@ -30,7 +30,7 @@ class RemoveTemporalValidity {
 				--
 				-- Remove period «period.periodname» («period.periodstart», «period.periodend») from «table.tableName»
 				--
-				ALTER TABLE «table.tableName» DROP (PERIOD FOR «period.periodname»);
+				ALTER TABLE «table.tableName.toLowerCase» DROP (PERIOD FOR «period.periodname.toLowerCase»);
 			«ENDFOR»
 		«ENDIF»
 	'''

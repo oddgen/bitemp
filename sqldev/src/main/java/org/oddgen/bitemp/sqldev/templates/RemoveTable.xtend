@@ -29,7 +29,7 @@ class RemoveTable {
 			--
 			-- Remove«IF table.historyTable» history«ENDIF» table
 			--
-			DROP TABLE «table.tableName»;
+			DROP TABLE «table.tableName.toLowerCase»;
 		«ENDIF»
 	'''
 }

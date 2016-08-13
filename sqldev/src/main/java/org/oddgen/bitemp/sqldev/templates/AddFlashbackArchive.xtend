@@ -33,7 +33,7 @@ class AddFlashbackArchive {
 				--
 				-- Add flashback archive
 				--
-				ALTER TABLE «newTableName» FLASHBACK ARCHIVE «model.params.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME)»;
+				ALTER TABLE «newTableName.toLowerCase» FLASHBACK ARCHIVE «model.params.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME).toLowerCase»;
 			«ENDIF»
 		«ENDIF»
 	'''

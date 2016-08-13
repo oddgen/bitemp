@@ -29,7 +29,7 @@ class RemoveFlashbackArchive {
 			--
 			-- Remove archive table (remove historical data)
 			--
-			ALTER TABLE «table.tableName» NO FLASHBACK ARCHIVE;
+			ALTER TABLE «table.tableName.toLowerCase» NO FLASHBACK ARCHIVE;
 		«ENDIF»
 	'''
 }

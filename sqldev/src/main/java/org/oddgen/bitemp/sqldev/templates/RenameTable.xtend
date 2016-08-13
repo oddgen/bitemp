@@ -32,7 +32,7 @@ class RenameTable {
 				--
 				-- Rename«IF table.historyTable» history«ENDIF» table
 				--
-				RENAME «table.tableName» TO «newTableName»;
+				RENAME «table.tableName.toLowerCase» TO «newTableName.toLowerCase»;
 			«ENDIF»
 		«ENDIF»
 	'''
