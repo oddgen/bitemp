@@ -36,6 +36,7 @@ class CreateDataStructure {
 		«val addDeletedIndicatorColumn = new AddDeletedIndicatorColumn»
 		«val removeDeletedIndicatorColumn = new RemoveDeletedIndicatorColumn»
 		«val initializeHistory = new InitializeHistory»
+		«val populateFlashbackArchive = new PopulateFlashbackArchive»
 		«IF model.targetModel == ApiType.NON_TEMPORAL»
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
@@ -49,7 +50,7 @@ class CreateDataStructure {
 			«removeDeletedIndicatorColumn.compile(model)»
 			«addFlashbackArchive.compile(model.inputTable, model)»
 			«IF model.originModel == ApiType.BI_TEMPORAL»
-				-- TODO migrate data to latest archive
+				«populateFlashbackArchive.compile(conn, model)»
 			«ENDIF»
 			«removeFlashbackArchive.compile(model.inputTable.histTable)»
 			«removeTable.compile(model.inputTable.histTable)»
@@ -64,7 +65,6 @@ class CreateDataStructure {
 				«initializeHistory.compile(model)»
 			«ENDIF»
 		«ELSEIF model.targetModel == ApiType.BI_TEMPORAL»
-			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
 			«addDeletedIndicatorColumn.compile(model)»
@@ -74,8 +74,9 @@ class CreateDataStructure {
 				«initializeHistory.compile(model)»
 			«ELSEIF model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 				«initializeHistory.compile(model)»
-				-- TODO migrate data to history archive
+				«populateFlashbackArchive.compile(conn, model)»
 			«ENDIF»
+			«removeFlashbackArchive.compile(model.inputTable)»
 		«ENDIF»
 	'''
 }
