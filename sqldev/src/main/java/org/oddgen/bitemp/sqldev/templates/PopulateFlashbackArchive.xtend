@@ -29,8 +29,9 @@ class PopulateFlashbackArchive {
 
 	def compile(Connection conn, GeneratorModel model) '''
 		«IF model.inputTable.exists»
-			«val histTable = getHistTable(model.inputTable)»
-			«IF histTable == null»
+			«IF (model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME || model.originModel == ApiType.BI_TEMPORAL) 
+				&& (model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME || model.targetModel == ApiType.BI_TEMPORAL)
+				&& model.originModel != model.targetModel»
 				«val fromTableName = 
 					if (model.targetModel == ApiType.BI_TEMPORAL) 
 				 		getNewLatestTableName(model.inputTable, model).toLowerCase 
@@ -42,7 +43,7 @@ class PopulateFlashbackArchive {
 					else
 						getNewLatestTableName(model.inputTable, model).toLowerCase»
 				«val columns = model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && 
-					it.columnName != BitempRemodeler.IS_DELETED_COL_NAME && it.virtualColumn == "NO"
+					it.columnName != model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toUpperCase && it.virtualColumn == "NO"
 				]»
 				--
 				-- Enforce visibility of source flashback archive tables
@@ -147,15 +148,15 @@ class PopulateFlashbackArchive {
 				       «FOR col : columns SEPARATOR ","»
 				       	t.«col.columnName.toLowerCase»
 				       «ENDFOR»
-				  FROM «fromTableName» s
-				  JOIN source$tcrv stcrv
-				    ON stcrv.rid = s.rowid
-				  JOIN «toTableName» t
-				    ON «FOR col : model.inputTable.primaryKeyConstraint.columnNames SEPARATOR " AND "»t.«col» = s.«col»«ENDFOR»
-				  JOIN target$tcrv ttcrv
-				    ON ttcrv.rid = t.rowid
-				 WHERE stcrv.endscn IS NULL
-				   AND ttcrv.endscn IS NULL;
+				FROM «fromTableName» s
+				JOIN source$tcrv stcrv
+				  ON stcrv.rid = s.rowid
+				JOIN «toTableName» t
+				  ON «FOR col : model.inputTable.primaryKeyConstraint.columnNames SEPARATOR " AND "»t.«col» = s.«col»«ENDFOR»
+				JOIN target$tcrv ttcrv
+				  ON ttcrv.rid = t.rowid
+				WHERE stcrv.endscn IS NULL
+				  AND ttcrv.endscn IS NULL;
 				--
 				-- Populate flashback archive (part 2)
 				--
@@ -178,12 +179,12 @@ class PopulateFlashbackArchive {
 				       «FOR col : columns SEPARATOR ","»
 				       	t.«col.columnName.toLowerCase»
 				       «ENDFOR»
-				  FROM «toTableName» t
-				  JOIN target$tcrv ttcrv
-				    ON ttcrv.rid = t.rowid
-				  LEFT JOIN target$hist thist
-				    ON «FOR col : model.inputTable.primaryKeyConstraint.columnNames SEPARATOR " AND "»thist.«col» = t.«col»«ENDFOR»
-				 WHERE thist.rid IS NULL;
+				FROM «toTableName» t
+				JOIN target$tcrv ttcrv
+				  ON ttcrv.rid = t.rowid
+				LEFT JOIN target$hist thist
+				  ON «FOR col : model.inputTable.primaryKeyConstraint.columnNames SEPARATOR " AND "»thist.«col» = t.«col»«ENDFOR»
+				WHERE thist.rid IS NULL;
 				COMMIT;
 				--
 				-- Disable flashback archive table for DML operations

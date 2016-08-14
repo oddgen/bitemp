@@ -22,7 +22,7 @@ import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.sqldev.LoggableConstants
 
 @Loggable(LoggableConstants.DEBUG)
-class InitializeHistory {
+class InitializeHistoryTable {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
 	def compile(GeneratorModel model) '''

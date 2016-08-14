@@ -19,10 +19,10 @@ import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
-import org.oddgen.bitemp.sqldev.templates.InitializeHistory
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
+import org.oddgen.bitemp.sqldev.templates.InitializeHistoryTable
 
-class InitializeHistoryTest extends AbstractJdbcTest {
+class InitializeHistoryTableTest extends AbstractJdbcTest {
 
 	@Test
 	def validTime() {
@@ -42,7 +42,7 @@ class InitializeHistoryTest extends AbstractJdbcTest {
 				COMMIT;
 			END;
 		''')
-		val template = new InitializeHistory
+		val template = new InitializeHistoryTable
 		val gen = new BitempRemodeler
 		val params = gen.getParams(dataSource.connection, "TABLE", "T1_LT")
 		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "1")

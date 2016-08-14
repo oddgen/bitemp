@@ -35,7 +35,7 @@ class CreateDataStructure {
 		«val createHistoryTable = new CreateHistoryTable»
 		«val addDeletedIndicatorColumn = new AddDeletedIndicatorColumn»
 		«val removeDeletedIndicatorColumn = new RemoveDeletedIndicatorColumn»
-		«val initializeHistory = new InitializeHistory»
+		«val initializeHistory = new InitializeHistoryTable»
 		«val populateFlashbackArchive = new PopulateFlashbackArchive»
 		«IF model.targetModel == ApiType.NON_TEMPORAL»
 			«removeFlashbackArchive.compile(model.inputTable)»
