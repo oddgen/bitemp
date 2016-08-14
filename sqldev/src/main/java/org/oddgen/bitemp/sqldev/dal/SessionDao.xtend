@@ -211,6 +211,9 @@ class SessionDao {
 
 		def getMissingInstallPrerequisites() {
 			val result = new ArrayList<String>
+			if (! "CREATE VIEW".hasPrivilege) {
+				result.add(BitempResources.get("ERROR_CREATE_VIEW_REQUIRED"))
+			}
 			if (! "FLASHBACK ARCHIVE ADMINISTER".hasPrivilege) {
 				result.add(BitempResources.get("ERROR_FLASHBACK_ARCHIVE_ADMINISTER_REQUIRED"))
 			}
