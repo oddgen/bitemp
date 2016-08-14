@@ -165,11 +165,12 @@ class TableDao {
 		val sql = '''
 			WITH 
 			   cons AS (
-			      SELECT constraint_name, constraint_type, table_name, r_constraint_name
+			      SELECT constraint_name, constraint_type, table_name, r_constraint_name, status
 			        FROM all_constraints
 			       WHERE owner = USER
 			   )
 			SELECT fk.constraint_name AS constraint_name,
+			       fk.status          AS status,
 			       pk.constraint_name AS referenced_constraint_name,
 			       pk.table_name      AS referenced_table_name
 			  FROM cons fk

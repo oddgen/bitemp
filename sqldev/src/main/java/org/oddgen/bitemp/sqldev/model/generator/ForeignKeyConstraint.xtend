@@ -22,6 +22,7 @@ import org.oddgen.bitemp.sqldev.model.AbstractModel
 @Accessors
 class ForeignKeyConstraint extends AbstractModel {
 	String constraintName
+	String status
 	String referencedConstraintName
 	String referencedTableName
 	Table referencedTable // parent

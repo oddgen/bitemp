@@ -41,7 +41,7 @@ class InitializeHistoryTable {
 				          «FOR col : columns SEPARATOR ","»
 				          	«col.columnName.toLowerCase»
 				          «ENDFOR»
-				)
+				       )
 				SELECT «FOR col : columns SEPARATOR ',' + System.lineSeparator + '       '»«
 				       	»«col.columnName.toLowerCase»«
 				       »«ENDFOR»

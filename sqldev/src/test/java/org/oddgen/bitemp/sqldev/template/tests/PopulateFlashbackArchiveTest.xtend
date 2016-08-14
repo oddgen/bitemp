@@ -17,6 +17,7 @@ package org.oddgen.bitemp.sqldev.template.tests
 
 import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.templates.PopulateFlashbackArchive
@@ -96,6 +97,107 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		// TODO: proper test using script parser, interactive testing via debugger... (breakpoint on Assert)
 		Assert.assertTrue(script != null)
 	}
+	
+	@Test
+	def toUnitempTT() {
+		jdbcTemplate.execute('''
+			CREATE TABLE t2_text (
+			   c0 VARCHAR2(20) PRIMARY KEY
+			)
+		''')
+		jdbcTemplate.execute('''
+			BEGIN
+				INSERT INTO t2_text (c0) VALUES ('one');
+				INSERT INTO t2_text (c0) VALUES ('two');
+				INSERT INTO t2_text (c0) VALUES ('three');
+				INSERT INTO t2_text (c0) VALUES ('three changed');
+				INSERT INTO t2_text (c0) VALUES ('four');
+				INSERT INTO t2_text (c0) VALUES ('five');
+				INSERT INTO t2_text (c0) VALUES ('six');
+				INSERT INTO t2_text (c0) VALUES ('seven');
+				COMMIT;
+			END;
+		''')
+		jdbcTemplate.execute('''
+			CREATE TABLE t2_lt (
+				c1         INTEGER PRIMARY KEY,
+				c2         VARCHAR2(20), FOREIGN KEY (c2) REFERENCES t2_text,
+				is_deleted NUMBER(1,0)
+			)
+		''')
+		jdbcTemplate.execute('''
+			BEGIN
+				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (1, 'one', 1);
+				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (2, 'two', 1);
+				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (3, 'three changed', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (4, 'four', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (5, 'five', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (6, 'six', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (7, 'seven', null);
+				COMMIT;
+			END;
+		''')
+
+		jdbcTemplate.execute('''
+			CREATE TABLE t2_ht (
+			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
+			   valid_from DATE NULL,
+			   valid_to DATE NULL,
+			   is_deleted NUMBER(1,0) NULL,
+			   CHECK (is_deleted IN (0,1)),
+			   PERIOD FOR vt (valid_from, valid_to),
+			   c1 INTEGER, FOREIGN KEY (c1) REFERENCES t2_lt,
+			   c2 VARCHAR2(20)
+			) FLASHBACK ARCHIVE fba1
+		''')
+		jdbcTemplate.execute('''
+			BEGIN
+				INSERT INTO t2_ht (c1, c2) VALUES (1, 'one');
+				INSERT INTO t2_ht (c1, c2) VALUES (2, 'two');
+				INSERT INTO t2_ht (c1, c2) VALUES (3, 'three');
+				INSERT INTO t2_ht (c1, c2) VALUES (4, 'four');
+				INSERT INTO t2_ht (c1, c2) VALUES (5, 'five');
+				COMMIT;
+				SYS.DBMS_LOCK.SLEEP(1);
+			END;
+		''')
+		jdbcTemplate.execute('''
+			BEGIN
+				UPDATE t2_ht
+				   SET is_deleted = 1
+				 WHERE c1 IN (1, 2);
+				COMMIT;
+				SYS.DBMS_LOCK.SLEEP(1);
+				UPDATE t2_ht 
+				   SET c2 = 'three changed'
+				  WHERE c1 = 3;
+				COMMIT;
+				SYS.DBMS_LOCK.SLEEP(1);
+				INSERT INTO t2_ht (c1, c2) VALUES (6, 'six');
+				INSERT INTO t2_ht (c1, c2) VALUES (7, 'seven');
+				COMMIT;
+				SYS.DBMS_LOCK.SLEEP(1);
+			END;
+		''')
+		val template = new PopulateFlashbackArchive
+		val gen = new BitempRemodeler
+		val params = gen.getParams(dataSource.connection, "TABLE", "T2_LT")
+		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "1")
+		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "1")
+		params.put(BitempRemodeler.GEN_VALID_TIME, "0")
+		val model = gen.getModel(dataSource.connection, "T2_LT", params)
+		jdbcTemplate.execute('''
+			ALTER TABLE t2_lt FLASHBACK ARCHIVE fba1
+		''')
+		val script = template.compile(dataSource.connection, model).toString
+		// TODO: proper test using script parser, interactive testing via debugger... (breakpoint on Assert)
+		Assert.assertTrue(script != null)		
+	}
+	
+	@BeforeClass
+	def static void setup() {
+		tearDown();
+	}	
 
 	@AfterClass
 	def static void tearDown() {
@@ -113,6 +215,26 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		}
 		try {
 			jdbcTemplate.execute("DROP TABLE t1_lt PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("ALTER TABLE t2_ht NO FLASHBACK ARCHIVE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("ALTER TABLE t2_lt NO FLASHBACK ARCHIVE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TABLE t2_ht PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TABLE t2_lt PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TABLE t2_text PURGE")
 		} catch (Exception e) {
 		}
 	}

@@ -62,6 +62,8 @@ class AbstractJdbcTest {
 	@BeforeClass
 	def static void setup() {
 		// setup for all test to ensure irrelevance of execution order
+		// for testing purposes only
+		sysJdbcTemplate.execute("GRANT EXECUTE ON dbms_lock TO scott")		
 		// for table API generation
 		sysJdbcTemplate.execute("GRANT CREATE VIEW TO scott")		
 		// for FBDA

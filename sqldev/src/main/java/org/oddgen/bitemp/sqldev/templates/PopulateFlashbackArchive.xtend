@@ -45,6 +45,14 @@ class PopulateFlashbackArchive {
 				«val columns = model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && 
 					it.columnName != model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toUpperCase && it.virtualColumn == "NO"
 				]»
+				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+					--
+					-- Enforce update in SYS_FBA_TCRV_...
+					--
+					UPDATE «toTableName»
+					   SET «columns.get(0).columnName.toLowerCase» = «columns.get(0).columnName.toLowerCase»;
+					COMMIT;
+				«ENDIF»
 				--
 				-- Enforce visibility of source flashback archive tables
 				--
@@ -58,7 +66,7 @@ class PopulateFlashbackArchive {
 				       table_name => '«fromTableName.toUpperCase»'
 				   );
 				END;
-				/				
+				/
 				--
 				-- Enable flashback archive table for DML operations
 				--
@@ -115,6 +123,15 @@ class PopulateFlashbackArchive {
 				   );
 				END;
 				/
+				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+					--
+					-- Update history to avoid duplicate results
+					--
+					UPDATE target$hist
+					   SET startscn = endscn
+					 WHERE startscn IS NULL;
+					COMMIT;
+				«ENDIF»				
 				--
 				-- Populate flashback archive (part 1)
 				--
@@ -127,7 +144,7 @@ class PopulateFlashbackArchive {
 				          «FOR col : columns SEPARATOR ","»
 				          	«col.columnName.toLowerCase»
 				          «ENDFOR»
-				)
+				«'       '»)
 				-- outdated rows in history table
 				SELECT rid,
 				       startscn,
@@ -169,7 +186,7 @@ class PopulateFlashbackArchive {
 				          «FOR col : columns SEPARATOR ","»
 				          	«col.columnName.toLowerCase»
 				          «ENDFOR»
-				)
+				«'       '»)
 				-- rows in actual/lastest table without history (workaround for missing DML capabilty on TCRV table in 12.1.0.2)
 				SELECT ttcrv.rid,
 				       NULL AS startscn,
