@@ -47,13 +47,13 @@ class CreateDataStructure {
 		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model.inputTable, model)»
-			«removeDeletedIndicatorColumn.compile(model)»
 			«addFlashbackArchive.compile(model.inputTable, model)»
 			«IF model.originModel == ApiType.BI_TEMPORAL»
 				«populateFlashbackArchive.compile(conn, model)»
 			«ENDIF»
 			«removeFlashbackArchive.compile(model.inputTable.histTable)»
 			«removeTable.compile(model.inputTable.histTable)»
+			«removeDeletedIndicatorColumn.compile(model)»
 		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»

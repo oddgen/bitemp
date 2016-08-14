@@ -97,7 +97,7 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		// TODO: proper test using script parser, interactive testing via debugger... (breakpoint on Assert)
 		Assert.assertTrue(script != null)
 	}
-	
+
 	@Test
 	def toUnitempTT() {
 		jdbcTemplate.execute('''
@@ -189,18 +189,53 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		jdbcTemplate.execute('''
 			ALTER TABLE t2_lt FLASHBACK ARCHIVE fba1
 		''')
+		// workaround to avoid ORA-1466
+		jdbcTemplate.execute('''
+			BEGIN
+			   dbms_flashback_archive.disassociate_fba(
+			      owner_name => USER,
+			      table_name => 'T2_HT'
+			   );
+			   dbms_flashback_archive.reassociate_fba(
+			      owner_name => USER,
+			      table_name => 'T2_HT'
+			   );
+			END;
+		''')
+		jdbcTemplate.execute('''
+			CREATE TABLE populate_fba_test$ AS
+			SELECT versions_startscn,
+			       versions_endscn,
+			       versions_starttime,
+			       versions_endtime,
+			       versions_xid,
+			       versions_operation,
+			       hist_id$,
+			       valid_from,
+			       valid_to,
+			       is_deleted,
+			       c1,
+			       c2
+			  FROM t2_ht VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' MINUTE AND SYSTIMESTAMP
+			 ORDER BY c1, versions_startscn
+		''')
 		val script = template.compile(dataSource.connection, model).toString
 		// TODO: proper test using script parser, interactive testing via debugger... (breakpoint on Assert)
-		Assert.assertTrue(script != null)		
+		// TODO: use populate_fba_test$ for automated tests
+		Assert.assertTrue(script != null)
 	}
-	
+
 	@BeforeClass
 	def static void setup() {
 		tearDown();
-	}	
+	}
 
 	@AfterClass
 	def static void tearDown() {
+		try {
+			jdbcTemplate.execute("DROP TABLE populate_fba_test$")
+		} catch (Exception e) {
+		}
 		try {
 			jdbcTemplate.execute("ALTER TABLE t1_ht NO FLASHBACK ARCHIVE")
 		} catch (Exception e) {

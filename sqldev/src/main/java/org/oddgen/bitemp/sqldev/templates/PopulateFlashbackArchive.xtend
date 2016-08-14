@@ -154,7 +154,10 @@ class PopulateFlashbackArchive {
 				       «FOR col : columns SEPARATOR ","»
 				       	«col.columnName.toLowerCase»
 				       «ENDFOR»
-				FROM source$hist
+				  FROM source$hist
+				  «IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+				  	WHERE («model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» IS NULL OR «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 0)
+				  «ENDIF»
 				-- updated rows in actual/latest table (workaround for missing DML capabilty on TCRV table in 12.1.0.2)
 				UNION ALL
 				SELECT stcrv.rid,
@@ -173,7 +176,10 @@ class PopulateFlashbackArchive {
 				JOIN target$tcrv ttcrv
 				  ON ttcrv.rid = t.rowid
 				WHERE stcrv.endscn IS NULL
-				  AND ttcrv.endscn IS NULL;
+				  AND ttcrv.endscn IS NULL«
+				  »«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+				  	AND (s.«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» IS NULL OR s.«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 0)«
+				  »«ENDIF»;
 				--
 				-- Populate flashback archive (part 2)
 				--
