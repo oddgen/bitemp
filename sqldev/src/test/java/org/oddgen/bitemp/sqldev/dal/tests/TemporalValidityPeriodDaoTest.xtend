@@ -80,8 +80,8 @@ class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {
 			   PERIOD FOR vt (valid_from, valid_to)
 			)
 		''')
-		// avoid ORA-54015: Duplicate column expression was specified 
-		Thread.sleep(200) 
+		// try to avoid ORA-54015: Duplicate column expression was specified 
+		Thread.sleep(500) 
 		jdbcTemplate.execute('''
 			alter TABLE tv_table3 ADD (
 			   decision_from TIMESTAMP,
