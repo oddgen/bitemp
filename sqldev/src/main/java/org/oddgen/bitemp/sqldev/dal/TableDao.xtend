@@ -59,20 +59,26 @@ class TableDao {
 	
 	def getColumns (String tableName) {
 		val sql = '''
-			SELECT column_name,
-			       data_type,
-			       data_precision,
-			       data_scale,
-			       char_length,
-			       char_used,
-			       nullable,
-			       data_default,
-			       default_on_null,
-			       hidden_column,
-			       virtual_column
-			  FROM user_tab_cols
-			 WHERE table_name = ?
-			 ORDER BY internal_column_id
+			SELECT col.column_name,
+			       col.data_type,
+			       col.data_precision,
+			       col.data_scale,
+			       col.char_length,
+			       col.char_used,
+			       col.nullable,
+			       col.data_default,
+			       col.default_on_null,
+			       col.hidden_column,
+			       col.virtual_column,
+			       col.identity_column,
+			       icol.generation_type,
+			       icol.sequence_name
+			  FROM user_tab_cols col
+			  LEFT JOIN user_tab_identity_cols icol
+			    ON col.table_name = icol.table_name
+			       AND col.column_name = icol.column_name
+			 WHERE col.table_name = ?
+			 ORDER BY col.internal_column_id
 		'''
 		val result = jdbcTemplate.query(sql, new BeanPropertyRowMapper<Column>(Column),
 			#[tableName])
