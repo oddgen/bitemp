@@ -52,6 +52,8 @@ class TemporalValidityPeriodDaoTest extends AbstractJdbcTest {
 
 	@Test
 	def void table2() {
+		// try to avoid ORA-02264: name alread used by an existing constraint
+		Thread.sleep(500)
 		jdbcTemplate.execute('''
 			CREATE TABLE tv_table2 (
 			   c1         INTEGER, 
