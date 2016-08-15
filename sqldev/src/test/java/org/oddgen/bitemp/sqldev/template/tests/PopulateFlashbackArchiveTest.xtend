@@ -40,7 +40,7 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 				INSERT INTO t1_lt VALUES (3, 'three');
 				INSERT INTO t1_lt VALUES (4, 'four');
 				INSERT INTO t1_lt VALUES (5, 'five');
-				COMMIT;
+				COMMIT; -- SCN does not count, FBA not enabled
 			END;
 		''')
 		jdbcTemplate.execute('''
@@ -50,14 +50,14 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			BEGIN
 				DELETE FROM t1_lt 
 				 WHERE c1 IN (1, 2);
-				COMMIT;
+				COMMIT; -- 1st SCN
 				UPDATE t1_lt 
 				   SET C2 = 'three changed'
 				  WHERE c1 = 3;
-				COMMIT;
+				COMMIT; -- 2nd SCN
 				INSERT INTO t1_lt VALUES (6, 'six');
 				INSERT INTO t1_lt VALUES (7, 'seven');
-				COMMIT;
+				COMMIT; -- 3rd SCN
 			END;
 		''')
 		val template = new PopulateFlashbackArchive
@@ -94,8 +94,48 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			  FROM t1_lt
 		''')
 		val script = template.compile(dataSource.connection, model).toString
-		// TODO: proper test using script parser, interactive testing via debugger... (breakpoint on Assert)
-		Assert.assertTrue(script != null)
+		val stmts = getStatements(script)
+		for (stmt : stmts) {
+			jdbcTemplate.execute(stmt)
+		}
+		val scns = jdbcTemplate.queryForList('''
+			SELECT versions_startscn
+			 FROM t1_lt VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP
+			WHERE versions_startscn IS NOT NULL
+			UNION 
+			SELECT versions_endscn
+			 FROM t1_lt VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP
+			WHERE versions_endscn IS NOT NULL
+		''', Integer)
+		Assert.assertEquals(3, scns.size)
+		for (scn : scns) {
+			val count = jdbcTemplate.queryForObject('''
+				SELECT COUNT(*) 
+				  FROM (
+				           SELECT c1, c2
+				             FROM t1_ht AS OF SCN ?
+				            WHERE is_deleted IS NULL or is_deleted = 0
+				            MINUS
+				           SELECT c1, c2
+				             FROM t1_lt AS OF SCN ?
+				       )
+			''', Integer, #[scn, scn])
+			Assert.assertEquals(0, count)
+		}
+		for (scn : scns) {
+			val count = jdbcTemplate.queryForObject('''
+				SELECT COUNT(*) 
+				  FROM (
+				           SELECT c1, c2
+				             FROM t1_lt AS OF SCN ?
+				            MINUS
+				           SELECT c1, c2
+				             FROM t1_ht AS OF SCN ?
+				            WHERE is_deleted IS NULL or is_deleted = 0
+				       )
+			''', Integer, #[scn, scn])
+			Assert.assertEquals(0, count)
+		}
 	}
 
 	@Test
@@ -157,8 +197,7 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 				INSERT INTO t2_ht (c1, c2) VALUES (3, 'three');
 				INSERT INTO t2_ht (c1, c2) VALUES (4, 'four');
 				INSERT INTO t2_ht (c1, c2) VALUES (5, 'five');
-				COMMIT;
-				SYS.DBMS_LOCK.SLEEP(1);
+				COMMIT; -- 1st SCN
 			END;
 		''')
 		jdbcTemplate.execute('''
@@ -166,17 +205,14 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 				UPDATE t2_ht
 				   SET is_deleted = 1
 				 WHERE c1 IN (1, 2);
-				COMMIT;
-				SYS.DBMS_LOCK.SLEEP(1);
+				COMMIT; -- 2nd SCN
 				UPDATE t2_ht 
 				   SET c2 = 'three changed'
 				  WHERE c1 = 3;
-				COMMIT;
-				SYS.DBMS_LOCK.SLEEP(1);
+				COMMIT; -- 3rd SCN
 				INSERT INTO t2_ht (c1, c2) VALUES (6, 'six');
 				INSERT INTO t2_ht (c1, c2) VALUES (7, 'seven');
-				COMMIT;
-				SYS.DBMS_LOCK.SLEEP(1);
+				COMMIT; -- 4th SCN
 			END;
 		''')
 		val template = new PopulateFlashbackArchive
@@ -202,27 +238,49 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			   );
 			END;
 		''')
-		jdbcTemplate.execute('''
-			CREATE TABLE populate_fba_test$ AS
-			SELECT versions_startscn,
-			       versions_endscn,
-			       versions_starttime,
-			       versions_endtime,
-			       versions_xid,
-			       versions_operation,
-			       hist_id$,
-			       valid_from,
-			       valid_to,
-			       is_deleted,
-			       c1,
-			       c2
-			  FROM t2_ht VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' MINUTE AND SYSTIMESTAMP
-			 ORDER BY c1, versions_startscn
-		''')
 		val script = template.compile(dataSource.connection, model).toString
-		// TODO: proper test using script parser, interactive testing via debugger... (breakpoint on Assert)
-		// TODO: use populate_fba_test$ for automated tests
-		Assert.assertTrue(script != null)
+		val stmts = getStatements(script)
+		for (stmt : stmts) {
+			jdbcTemplate.execute(stmt)
+		} 
+		val scns = jdbcTemplate.queryForList('''
+			SELECT versions_startscn
+			 FROM t2_ht VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP
+			WHERE versions_startscn IS NOT NULL
+			UNION 
+			SELECT versions_endscn
+			 FROM t2_ht VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP
+			WHERE versions_endscn IS NOT NULL
+		''', Integer)
+		Assert.assertEquals(4, scns.size)
+		for (scn : scns) {
+			val count = jdbcTemplate.queryForObject('''
+				SELECT COUNT(*) 
+				  FROM (
+				           SELECT c1, c2
+				             FROM t2_ht AS OF SCN ?
+				            WHERE is_deleted IS NULL or is_deleted = 0
+				            MINUS
+				           SELECT c1, c2
+				             FROM t2_lt AS OF SCN ?
+				       )
+			''', Integer, #[scn, scn])
+			Assert.assertEquals(0, count)
+		}
+		for (scn : scns) {
+			val count = jdbcTemplate.queryForObject('''
+				SELECT COUNT(*) 
+				  FROM (
+				           SELECT c1, c2
+				             FROM t2_lt AS OF SCN ?
+				            MINUS
+				           SELECT c1, c2
+				             FROM t2_ht AS OF SCN ?
+				            WHERE is_deleted IS NULL or is_deleted = 0
+				       )
+			''', Integer, #[scn, scn])
+			Assert.assertEquals(0, count)
+		}
 	}
 
 	@BeforeClass
@@ -232,10 +290,6 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 
 	@AfterClass
 	def static void tearDown() {
-		try {
-			jdbcTemplate.execute("DROP TABLE populate_fba_test$")
-		} catch (Exception e) {
-		}
 		try {
 			jdbcTemplate.execute("ALTER TABLE t1_ht NO FLASHBACK ARCHIVE")
 		} catch (Exception e) {
