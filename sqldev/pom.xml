@@ -30,6 +30,13 @@
 			<scope>system</scope>
 			<systemPath>${sqldev.basedir}/modules/oracle.xdk/xmlparserv2.jar</systemPath>
 		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>oracle.sqldeveloper.worksheet</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/sqldeveloper/extensions/oracle.sqldeveloper.worksheet.jar</systemPath>
+		</dependency>
 		<!-- ordinary dependencies -->
 		<dependency>
 			<groupId>org.oddgen</groupId>

@@ -15,7 +15,10 @@
  */
 package org.oddgen.bitemp.sqldev.tests
 
+import java.io.StringReader
+import java.util.ArrayList
 import java.util.Properties
+import oracle.dbtools.worksheet.scriptparser.sqlplus.SQLPlusScriptParser
 import org.junit.BeforeClass
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
@@ -48,15 +51,15 @@ class AbstractJdbcTest {
 	}
 	
 	def static getStatements(String sqlplusScript) {
-		// simple statement parsing appraoch, should be good enough for test cases
-		// works best if slash is used to terminate a SQL statements
-		val PLSQL_SEP = '''«System.lineSeparator»/«System.lineSeparator»'''
-		val SQL_SEP = ''';«System.lineSeparator»'''
-		if (sqlplusScript.endsWith(PLSQL_SEP)) {
-			return sqlplusScript.split(PLSQL_SEP)
-		} else {
-			return sqlplusScript.split(SQL_SEP)
+		var SQLPlusScriptParser p = new SQLPlusScriptParser(new StringReader(sqlplusScript))
+		val stmts = new ArrayList<String>
+		while (p.hasNext) {
+			val stmt = p.next
+			if (stmt.executable) {
+				stmts.add(stmt.sql)
+			}
 		}
+		return stmts;
 	}
 
 	@BeforeClass
