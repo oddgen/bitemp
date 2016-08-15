@@ -37,23 +37,23 @@ class RemoveTemporalValidityTest extends AbstractJdbcTest {
 	@Test
 	def withTemporalValidity() {
 		jdbcTemplate.execute('''
-			CREATE TABLE t1 (
+			CREATE TABLE t3 (
 			   c1 INTEGER,
 			   PERIOD FOR vt
 			)
 		''')
 		jdbcTemplate.execute('''
-			ALTER TABLE t1 add (PERIOD FOR dt)
+			ALTER TABLE t3 add (PERIOD FOR dt)
 		''')
 		val template = new RemoveTemporalValidity
 		val dao = new TableDao(dataSource.connection)
-		val table = dao.getTable("T1")
+		val table = dao.getTable("T3")
 		Assert.assertEquals(2, table.temporalValidityPeriods.size)
 		val script = template.compile(table).toString
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
 		}
-		val tableAfter = dao.getTable("T1")
+		val tableAfter = dao.getTable("T3")
 		Assert.assertEquals(0, tableAfter.temporalValidityPeriods.size)
 	}
 
@@ -65,15 +65,15 @@ class RemoveTemporalValidityTest extends AbstractJdbcTest {
 	@AfterClass
 	def static void tearDown() {
 		try {
-		jdbcTemplate.execute("ALTER TABLE t1 DROP (PERIOD FOR vt)")
+		jdbcTemplate.execute("ALTER TABLE t3 DROP (PERIOD FOR vt)")
 		} catch (Exception e) {
 		}
 		try {
-		jdbcTemplate.execute("ALTER TABLE t1 DROP (PERIOD FOR dt)")
+		jdbcTemplate.execute("ALTER TABLE t3 DROP (PERIOD FOR dt)")
 		} catch (Exception e) {
 		}
 		try {
-		jdbcTemplate.execute("DROP TABLE t1 PURGE")
+		jdbcTemplate.execute("DROP TABLE t3 PURGE")
 		} catch (Exception e) {
 		}
 	}
