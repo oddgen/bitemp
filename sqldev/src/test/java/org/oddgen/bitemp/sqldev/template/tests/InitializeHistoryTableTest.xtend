@@ -17,10 +17,11 @@ package org.oddgen.bitemp.sqldev.template.tests
 
 import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
-import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 import org.oddgen.bitemp.sqldev.templates.InitializeHistoryTable
+import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
 class InitializeHistoryTableTest extends AbstractJdbcTest {
 
@@ -73,6 +74,11 @@ class InitializeHistoryTableTest extends AbstractJdbcTest {
 		}
 		val rows = jdbcTemplate.queryForObject('''SELECT COUNT(*) FROM t1_ht''', Integer)
 		Assert.assertEquals(5, rows)
+	}
+
+	@BeforeClass
+	def static void setup() {
+		tearDown();
 	}
 
 	@AfterClass

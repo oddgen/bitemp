@@ -15,12 +15,13 @@
  */
 package org.oddgen.bitemp.sqldev.template.tests
 
+import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.templates.RemoveFlashbackArchive
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
-import org.junit.AfterClass
 
 class RemoveFlashbackArchiveTest extends AbstractJdbcTest {
 
@@ -48,6 +49,11 @@ class RemoveFlashbackArchiveTest extends AbstractJdbcTest {
 		}
 		val tableAfter = dao.getTable("T1")
 		Assert.assertTrue(tableAfter.flashbackArchiveTable == null)
+	}
+
+	@BeforeClass
+	def static void setup() {
+		tearDown();
 	}
 	
 	@AfterClass

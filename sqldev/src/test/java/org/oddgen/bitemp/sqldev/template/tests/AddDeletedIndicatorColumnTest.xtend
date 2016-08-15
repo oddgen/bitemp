@@ -17,6 +17,7 @@ package org.oddgen.bitemp.sqldev.template.tests
 
 import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
@@ -49,6 +50,11 @@ class AddDeletedIndicatorColumnTest extends AbstractJdbcTest {
 		val modelAfter = gen.getModel(dataSource.connection, "T1", params)
 		val scriptAfter = template.compile(modelAfter).toString.trim
 		Assert.assertEquals("", scriptAfter)
+	}
+	
+	@BeforeClass
+	def static void setup() {
+		tearDown();
 	}
 
 	@AfterClass

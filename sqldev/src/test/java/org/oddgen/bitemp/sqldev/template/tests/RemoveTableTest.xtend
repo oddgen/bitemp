@@ -15,7 +15,9 @@
  */
 package org.oddgen.bitemp.sqldev.template.tests
 
+import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.templates.RemoveTable
@@ -56,4 +58,19 @@ class RemoveTableTest extends AbstractJdbcTest {
 		val tableAfter = dao.getTable("T1")
 		Assert.assertEquals(0, tableAfter.columns.size)
 	}
+
+	@BeforeClass
+	def static void setup() {
+		tearDown();
+	}
+
+	@AfterClass
+	def static void tearDown() {
+		try {
+			jdbcTemplate.execute("DROP TABLE t1 PURGE")
+		} catch (Exception e) {
+		}
+
+	}
+
 }
