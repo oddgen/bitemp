@@ -27,7 +27,6 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 
 	@Test
 	def toBitemp() {
-		Thread.sleep(1000)
 		jdbcTemplate.execute('''
 			CREATE TABLE t1_lt (
 				c1 INTEGER PRIMARY KEY,
@@ -141,7 +140,6 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 
 	@Test
 	def toUnitempTT() {
-		Thread.sleep(1000)
 		jdbcTemplate.execute('''
 			CREATE TABLE t2_text (
 			   c0 VARCHAR2(20) PRIMARY KEY
