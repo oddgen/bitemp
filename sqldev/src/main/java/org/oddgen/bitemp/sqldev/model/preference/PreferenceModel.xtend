@@ -62,7 +62,7 @@ class PreferenceModel extends HashStructureAdapter {
 	}
 
 	def isCrudCompatiblityOriginalTable() {
-		return getHashStructure.getBoolean(PreferenceModel.KEY_CRUD_COMPATIBILITY_ORIGINAL_TABLE, true)
+		return getHashStructure.getBoolean(PreferenceModel.KEY_CRUD_COMPATIBILITY_ORIGINAL_TABLE, false)
 	}
 
 	def setCrudCompatiblityOriginalTable(boolean crudCompatiblityOriginalTable) {
@@ -87,7 +87,7 @@ class PreferenceModel extends HashStructureAdapter {
 	}
 
 	def isGenTransactionTime() {
-		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_TRANSACTION_TIME, false)
+		return getHashStructure.getBoolean(PreferenceModel.KEY_GEN_TRANSACTION_TIME, true)
 	}
 
 	def setGenTransactionTime(boolean transactionTimeDefault) {

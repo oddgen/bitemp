@@ -44,6 +44,7 @@ class RenameTableTest extends AbstractJdbcTest {
 		''')
 		val gen = new BitempRemodeler
 		val params = gen.getParams(dataSource.connection, "TABLE", "T1")
+		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE,"1")
 		val model = gen.getModel(dataSource.connection, "T1", params)
 		val template = new RenameTable
 		val script = template.compile(model.inputTable, model).toString

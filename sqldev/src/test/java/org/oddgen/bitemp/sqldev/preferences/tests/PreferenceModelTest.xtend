@@ -24,10 +24,10 @@ class PreferenceModelTest {
 	def testDefaultValues() {
 		val PreferenceModel model = PreferenceModel.getInstance(null)
 		Assert.assertTrue(model.genApi)
-		Assert.assertTrue(model.crudCompatiblityOriginalTable)
+		Assert.assertFalse(model.crudCompatiblityOriginalTable)
 		Assert.assertEquals("_lt", model.latestTableSuffix)
 		Assert.assertEquals("_lv", model.latestViewSuffix)
-		Assert.assertFalse(model.genTransactionTime)
+		Assert.assertTrue(model.genTransactionTime)
 		Assert.assertEquals("", model.flashbackArchiveName)
 		Assert.assertTrue(model.genValidTime)
 		Assert.assertEquals("Day", model.granularity)

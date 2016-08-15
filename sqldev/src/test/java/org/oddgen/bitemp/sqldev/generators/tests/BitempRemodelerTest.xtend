@@ -65,7 +65,7 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 		val params = gen.getParams(dataSource.connection, "TABLE", null)
 		var paramStates = gen.getParamStates(dataSource.connection, "TABLE", null, params)
 		Assert.assertEquals(16, paramStates.size)
-		Assert.assertEquals(false, paramStates.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME))
+		Assert.assertEquals(true, paramStates.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME))
 	}
 
 	@Test
@@ -77,11 +77,12 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 			-- Bitemp Remodeler configuration
 			-- - Input table : EMP
 			-- - Origin model: non-temporal
-			-- - Target model: uni-temporal valid-time
+			-- - Target model: bi-temporal
 			-- - Parameters
 			--     - Generate table API?                   : Yes
-			--     - CRUD compatibility for original table?: Yes
-			--     - Suffix for table with latest content  : _lt
+			--     - CRUD compatibility for original table?: No
+			--     - Suffix for view with latest content   : _lv
+			--     - Flashback data archive name           : FBA1
 			--     - Granularity                           : Day
 			--     - Column name for valid from            : valid_from
 			--     - Column name for valid to              : valid_to
