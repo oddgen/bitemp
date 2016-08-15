@@ -243,6 +243,8 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		for (stmt : stmts) {
 			jdbcTemplate.execute(stmt)
 		} 
+		// try to avoid wrong query result (0 rows instead of 4)
+		Thread.sleep(1000)
 		val scns = jdbcTemplate.queryForList('''
 			SELECT versions_startscn
 			 FROM t2_ht VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP
