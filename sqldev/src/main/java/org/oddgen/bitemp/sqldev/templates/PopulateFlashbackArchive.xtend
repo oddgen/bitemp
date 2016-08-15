@@ -50,7 +50,7 @@ class PopulateFlashbackArchive {
 					-- Enforce update in SYS_FBA_TCRV_...
 					--
 					UPDATE «toTableName»
-					   SET «columns.get(0).columnName.toLowerCase» = «columns.get(0).columnName.toLowerCase»;
+					   SET «columns.findFirst[it.identityColumn == "NO"].columnName.toLowerCase» = «columns.get(0).columnName.toLowerCase»;
 					COMMIT;
 				«ENDIF»
 				--
