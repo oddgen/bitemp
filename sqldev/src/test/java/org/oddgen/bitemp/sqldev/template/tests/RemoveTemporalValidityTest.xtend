@@ -42,6 +42,8 @@ class RemoveTemporalValidityTest extends AbstractJdbcTest {
 			   PERIOD FOR vt
 			)
 		''')
+		// try to avoid ORA-54015: Duplicate column expression was specified 
+		Thread.sleep(500)
 		jdbcTemplate.execute('''
 			ALTER TABLE t3 add (PERIOD FOR dt)
 		''')
