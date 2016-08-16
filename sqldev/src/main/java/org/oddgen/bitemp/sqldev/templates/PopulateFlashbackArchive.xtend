@@ -47,7 +47,7 @@ class PopulateFlashbackArchive {
 				]»
 				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 					--
-					-- Delete rows marked as deleted
+					-- Delete rows marked as deleted and enforce update in SYS_FBA_TCRV_...
 					--
 					DELETE FROM «fromTableName»
 					 WHERE «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 1;
@@ -58,6 +58,9 @@ class PopulateFlashbackArchive {
 					--
 					UPDATE «toTableName»
 					   SET «columns.findFirst[it.identityColumn == "NO"].columnName.toLowerCase» = «columns.get(0).columnName.toLowerCase»;
+					--
+					-- Commit pending changes
+					--
 					COMMIT;
 				«ENDIF»
 				--
@@ -137,7 +140,6 @@ class PopulateFlashbackArchive {
 					UPDATE target$hist
 					   SET startscn = endscn
 					 WHERE startscn IS NULL;
-					COMMIT;
 				«ENDIF»				
 				--
 				-- Populate flashback archive (part 1)
@@ -215,6 +217,9 @@ class PopulateFlashbackArchive {
 				LEFT JOIN target$hist thist
 				  ON «FOR col : model.inputTable.primaryKeyConstraint.columnNames SEPARATOR " AND "»thist.«col» = t.«col»«ENDFOR»
 				WHERE thist.rid IS NULL;
+				--
+				-- Commit all changes on archive table
+				--
 				COMMIT;
 				--
 				-- Disable flashback archive table for DML operations
