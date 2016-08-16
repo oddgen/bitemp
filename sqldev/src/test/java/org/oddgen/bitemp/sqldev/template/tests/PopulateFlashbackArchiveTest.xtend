@@ -106,15 +106,20 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			SELECT versions_endscn
 			 FROM t1_lt VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP
 			WHERE versions_endscn IS NOT NULL
+			UNION 
+			SELECT 0 
+			  FROM DUAL
+			UNION
+			SELECT dbms_flashback.get_system_change_number
+			  FROM DUAL
 		''', Integer)
-		Assert.assertEquals(3, scns.size)
+		Assert.assertEquals(5, scns.size)
 		for (scn : scns) {
 			val count = jdbcTemplate.queryForObject('''
 				SELECT COUNT(*) 
 				  FROM (
 				           SELECT c1, c2
 				             FROM t1_ht AS OF SCN ?
-				            WHERE is_deleted IS NULL or is_deleted = 0
 				            MINUS
 				           SELECT c1, c2
 				             FROM t1_lt AS OF SCN ?
@@ -131,7 +136,6 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 				            MINUS
 				           SELECT c1, c2
 				             FROM t1_ht AS OF SCN ?
-				            WHERE is_deleted IS NULL or is_deleted = 0
 				       )
 			''', Integer, #[scn, scn])
 			Assert.assertEquals(0, count)
@@ -244,7 +248,7 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			jdbcTemplate.execute(stmt)
 		} 
 		// try to avoid wrong query result (0 rows instead of 4)
-		Thread.sleep(1000)
+		Thread.sleep(3000)
 		val scns = jdbcTemplate.queryForList('''
 			SELECT versions_startscn
 			 FROM t2_ht VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP
@@ -253,17 +257,23 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			SELECT versions_endscn
 			 FROM t2_ht VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP
 			WHERE versions_endscn IS NOT NULL
+			UNION 
+			SELECT 0 
+			  FROM DUAL
+			UNION
+			SELECT dbms_flashback.get_system_change_number
+			  FROM DUAL
 		''', Integer)
-		Assert.assertEquals(4, scns.size)
+		Assert.assertEquals(7, scns.size)
 		for (scn : scns) {
 			val count = jdbcTemplate.queryForObject('''
 				SELECT COUNT(*) 
 				  FROM (
-				           SELECT c1, c2
+				           SELECT c1, c2, is_deleted
 				             FROM t2_ht AS OF SCN ?
-				            WHERE is_deleted IS NULL or is_deleted = 0
+				            WHERE is_deleted = 0 OR is_deleted IS NULL
 				            MINUS
-				           SELECT c1, c2
+				           SELECT c1, c2, is_deleted
 				             FROM t2_lt AS OF SCN ?
 				       )
 			''', Integer, #[scn, scn])
@@ -273,12 +283,11 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			val count = jdbcTemplate.queryForObject('''
 				SELECT COUNT(*) 
 				  FROM (
-				           SELECT c1, c2
+				           SELECT c1, c2, is_deleted
 				             FROM t2_lt AS OF SCN ?
 				            MINUS
-				           SELECT c1, c2
+				           SELECT c1, c2, is_deleted
 				             FROM t2_ht AS OF SCN ?
-				            WHERE is_deleted IS NULL or is_deleted = 0
 				       )
 			''', Integer, #[scn, scn])
 			Assert.assertEquals(0, count)

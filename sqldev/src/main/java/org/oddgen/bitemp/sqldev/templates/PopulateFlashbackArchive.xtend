@@ -47,7 +47,14 @@ class PopulateFlashbackArchive {
 				]»
 				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 					--
-					-- Enforce update in SYS_FBA_TCRV_...
+					-- Delete rows marked as deleted
+					--
+					DELETE FROM «fromTableName»
+					 WHERE «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 1;
+					DELETE FROM «toTableName»
+					 WHERE «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 1;
+					--
+					-- Enforce update for remaining rows in SYS_FBA_TCRV_...
 					--
 					UPDATE «toTableName»
 					   SET «columns.findFirst[it.identityColumn == "NO"].columnName.toLowerCase» = «columns.get(0).columnName.toLowerCase»;

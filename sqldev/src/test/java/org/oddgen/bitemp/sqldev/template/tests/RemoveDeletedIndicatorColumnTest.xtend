@@ -27,39 +27,37 @@ import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 class RemoveDeletedIndicatorColumnTest extends AbstractJdbcTest {
 
 	@Test
-	def delRowsAndRemoveCol() {
+	def removeCol() {
 		jdbcTemplate.execute('''
-			CREATE TABLE t1 (
+			CREATE TABLE t4 (
 			   c1 INTEGER PRIMARY KEY,
 			   IS_DELETED INTEGER
 			)
 		''')
 		jdbcTemplate.execute('''
 			BEGIN
-			   INSERT INTO t1 VALUES (1, NULL);
-			   INSERT INTO t1 VALUES (2, 1);
-			   INSERT INTO t1 VALUES (3, 0);
+			   INSERT INTO t4 VALUES (1, NULL);
+			   INSERT INTO t4 VALUES (2, NULL);
+			   INSERT INTO t4 VALUES (3, 0);
 			END;
 		''')
 		val dao = new TableDao(dataSource.connection)
-		val table = dao.getTable("T1")
+		val table = dao.getTable("T4")
 		Assert.assertEquals(2, table.columns.size)
 		val template = new RemoveDeletedIndicatorColumn
 		val gen = new BitempRemodeler
-		val params = gen.getParams(dataSource.connection, "TABLE", "T1")
+		val params = gen.getParams(dataSource.connection, "TABLE", "T4")
 		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
 		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "0")
 		params.put(BitempRemodeler.GEN_VALID_TIME, "0")
-		val model = gen.getModel(dataSource.connection, "T1", params)
+		val model = gen.getModel(dataSource.connection, "T4", params)
 		val script = template.compile(model).toString
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
 		}
-		val rows = jdbcTemplate.queryForObject('''SELECT COUNT(*) FROM t1''', Integer)
-		Assert.assertEquals(2, rows)
-		val tableAfter = dao.getTable("T1")
+		val tableAfter = dao.getTable("T4")
 		Assert.assertEquals(1, tableAfter.columns.size)
-		val modelAfter = gen.getModel(dataSource.connection, "T1", params)
+		val modelAfter = gen.getModel(dataSource.connection, "T4", params)
 		val scriptAfter = template.compile(modelAfter).toString.trim
 		Assert.assertEquals("", scriptAfter)
 	}
@@ -72,7 +70,7 @@ class RemoveDeletedIndicatorColumnTest extends AbstractJdbcTest {
 	@AfterClass
 	def static void tearDown() {
 		try {
-			jdbcTemplate.execute("DROP TABLE t1 PURGE")
+			jdbcTemplate.execute("DROP TABLE t4 PURGE")
 		} catch (Exception e) {
 		}
 
