@@ -69,11 +69,10 @@ class CreateDataStructure {
 			«renameTable.compile(model.inputTable, model)»
 			«addDeletedIndicatorColumn.compile(model)»
 			«createHistoryTable.compile(model)»
+			«addFlashbackArchive.compile(model.newHistTable, model)»
 			«IF model.originModel == ApiType.NON_TEMPORAL»
 				«initializeHistory.compile(model)»
-				«addFlashbackArchive.compile(model.newHistTable, model)»
 			«ELSEIF model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-				«addFlashbackArchive.compile(model.newHistTable, model)»
 				«initializeHistory.compile(model)»
 				«populateFlashbackArchive.compile(conn, model)»
 			«ENDIF»
