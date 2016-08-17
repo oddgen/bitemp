@@ -30,8 +30,8 @@ class CreateHistoryTable {
 		«IF model.inputTable.exists»
 			«val histTable = getHistTable(model.inputTable)»
 			«IF histTable == null»
-				«val latestTableName = getNewLatestTableName(model.inputTable, model)»
-				«val historyTableName = getNewLatestTableName(model.newHistTable, model)»
+				«val latestTableName = getNewTableName(model.inputTable, model)»
+				«val historyTableName = getNewTableName(model.newHistTable, model)»
 				--
 				-- Create history table
 				--

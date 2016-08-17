@@ -29,8 +29,8 @@ class InitializeHistoryTable {
 		«IF model.inputTable.exists»
 			«val histTable = getHistTable(model.inputTable)»
 			«IF histTable == null»
-				«val latestTableName = getNewLatestTableName(model.inputTable, model).toLowerCase»
-				«val historyTableName = getNewLatestTableName(model.newHistTable, model).toLowerCase»
+				«val latestTableName = getNewTableName(model.inputTable, model).toLowerCase»
+				«val historyTableName = getNewTableName(model.newHistTable, model).toLowerCase»
 				«val columns = model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && 
 					it.columnName != BitempRemodeler.IS_DELETED_COL_NAME && it.virtualColumn == "NO"
 				]»

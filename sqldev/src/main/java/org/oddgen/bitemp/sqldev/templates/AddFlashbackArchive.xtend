@@ -30,7 +30,7 @@ class AddFlashbackArchive {
 		GeneratorModel model) '''
 		«IF table.exists»
 			«IF table.flashbackArchiveTable == null»
-				«val newTableName = getNewLatestTableName(table, model)»
+				«val newTableName = getNewTableName(table, model)»
 				--
 				-- Add flashback archive
 				--

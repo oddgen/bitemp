@@ -34,14 +34,14 @@ class PopulateFlashbackArchive {
 				&& model.originModel != model.targetModel»
 				«val fromTableName = 
 					if (model.targetModel == ApiType.BI_TEMPORAL) 
-				 		getNewLatestTableName(model.inputTable, model).toLowerCase 
+				 		getNewTableName(model.inputTable, model).toLowerCase 
 				 	else 
-				 		getNewLatestTableName(model.newHistTable, model).toLowerCase»
+				 		getNewTableName(model.newHistTable, model).toLowerCase»
 				«val toTableName = 
 					if (model.targetModel == ApiType.BI_TEMPORAL)
-						getNewLatestTableName(model.newHistTable, model).toLowerCase
+						getNewTableName(model.newHistTable, model).toLowerCase
 					else
-						getNewLatestTableName(model.inputTable, model).toLowerCase»
+						getNewTableName(model.inputTable, model).toLowerCase»
 				«val columns = model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && 
 					it.columnName != model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toUpperCase && it.virtualColumn == "NO"
 				]»

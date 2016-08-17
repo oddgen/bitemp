@@ -33,7 +33,7 @@ class RenameTableTest extends AbstractJdbcTest {
 		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
 		val model = gen.getModel(dataSource.connection, "DEPT", params)
 		val template = new RenameTable
-		Assert.assertEquals("", template.compile(model.inputTable, model).toString)
+		Assert.assertEquals("", template.compile(model).toString)
 	}
 
 	@Test
@@ -48,7 +48,7 @@ class RenameTableTest extends AbstractJdbcTest {
 		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE,"1")
 		val model = gen.getModel(dataSource.connection, "T1", params)
 		val template = new RenameTable
-		val script = template.compile(model.inputTable, model).toString
+		val script = template.compile(model).toString
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
 		}
