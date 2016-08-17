@@ -27,7 +27,7 @@ class RenameTable {
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
 			«val newTableName = getNewTableName(model.inputTable, model)»
-			«IF model.inputTable != newTableName»
+			«IF model.inputTable.tableName.toLowerCase != newTableName.toLowerCase»
 				--
 				-- Rename table
 				--
