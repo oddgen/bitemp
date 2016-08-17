@@ -40,13 +40,13 @@ class CreateDataStructure {
 		«IF model.targetModel == ApiType.NON_TEMPORAL»
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
-			«renameTable.compile(model.inputTable, model)»
+			«renameTable.compile(model)»
 			«removeFlashbackArchive.compile(model.inputTable.histTable)»
 			«removeTable.compile(model.inputTable.histTable)»
 			«removeDeletedIndicatorColumn.compile(model)»
 		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 			«removeTemporalValidity.compile(model.inputTable)»
-			«renameTable.compile(model.inputTable, model)»
+			«renameTable.compile(model)»
 			«addFlashbackArchive.compile(model.inputTable, model)»
 			«IF model.originModel == ApiType.BI_TEMPORAL»
 				«populateFlashbackArchive.compile(conn, model)»
@@ -57,7 +57,7 @@ class CreateDataStructure {
 		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			«removeFlashbackArchive.compile(model.inputTable)»
 			«removeTemporalValidity.compile(model.inputTable)»
-			«renameTable.compile(model.inputTable, model)»
+			«renameTable.compile(model)»
 			«removeFlashbackArchive.compile(model.inputTable.histTable)»
 			«addDeletedIndicatorColumn.compile(model)»
 			«createHistoryTable.compile(model)»
@@ -66,7 +66,7 @@ class CreateDataStructure {
 			«ENDIF»
 		«ELSEIF model.targetModel == ApiType.BI_TEMPORAL»
 			«removeTemporalValidity.compile(model.inputTable)»
-			«renameTable.compile(model.inputTable, model)»
+			«renameTable.compile(model)»
 			«addDeletedIndicatorColumn.compile(model)»
 			«createHistoryTable.compile(model)»
 			«addFlashbackArchive.compile(model.newHistTable, model)»

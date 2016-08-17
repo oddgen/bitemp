@@ -18,21 +18,20 @@ package org.oddgen.bitemp.sqldev.templates
 import com.jcabi.aspects.Loggable
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
-import org.oddgen.bitemp.sqldev.model.generator.Table
 import org.oddgen.sqldev.LoggableConstants
 
 @Loggable(LoggableConstants.DEBUG)
 class RenameTable {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def compile(Table table, GeneratorModel model) '''
-		«IF table.exists»
-			«val newTableName = getNewLatestTableName(table, model)»
-			«IF table.tableName != newTableName»
+	def compile(GeneratorModel model) '''
+		«IF model.inputTable.exists»
+			«val newTableName = getNewTableName(model.inputTable, model)»
+			«IF model.inputTable != newTableName»
 				--
-				-- Rename«IF table.historyTable» history«ENDIF» table
+				-- Rename table
 				--
-				RENAME «table.tableName.toLowerCase» TO «newTableName.toLowerCase»;
+				RENAME «model.inputTable.tableName.toLowerCase» TO «newTableName.toLowerCase»;
 			«ENDIF»
 		«ENDIF»
 	'''
