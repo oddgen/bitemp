@@ -161,6 +161,10 @@
 					<includes>
 						<include>**/*.java</include>
 					</includes>
+					<!-- exclude slow running tests, run in IDE only -->
+					<excludes>
+						<exclude>**/PopulateFlashbackArchiveTest.java</exclude>
+					</excludes>
 				</configuration>
 			</plugin>
 			<plugin>
