@@ -55,7 +55,7 @@ class AbstractJdbcTest {
 		val stmts = new ArrayList<String>
 		while (p.hasNext) {
 			val stmt = p.next
-			if (stmt.executable) {
+			if (stmt.executable || stmt.sql.endsWith(";")) {
 				stmts.add(stmt.sql)
 			}
 		}

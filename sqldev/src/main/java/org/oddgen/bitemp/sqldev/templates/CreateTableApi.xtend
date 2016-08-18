@@ -17,28 +17,32 @@ package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
 import java.sql.Connection
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
-import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.sqldev.LoggableConstants
 
 @Loggable(LoggableConstants.DEBUG)
-class RootTemplate {
-	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
+class CreateTableApi {
 
 	def compile(Connection conn, GeneratorModel model) '''
-		-- 
-		-- Bitemp Remodeler configuration
-		-- - Input table : «model.inputTable.tableName»
-		-- - Origin model: «model.originModel.apiTypeToString»
-		-- - Target model: «model.targetModel.apiTypeToString»
-		-- - Parameters
-		«val relevantParams = model.relevantParams»
-		«val maxParamLen = maxLength(relevantParams.toList)»
-		«FOR key : relevantParams»
-			--     - «String.format("%1$-" + maxParamLen + "s", key)»: «model.params.get(key).booleanParamToString»
-		«ENDFOR»
-		--
-		«(new CreateDataStructure).compile(conn, model)»
-		«(new CreateTableApi).compile(conn, model)»
+		«/*
+		 * Table API
+		 * - Object type
+		 * - Collection type
+		 * - API Package Spec
+		 * - API Package Body
+		 * - Hook Package Spec (do not generate Body, dedicated Generator)
+		 * - Latest view
+		 * - History view (using context)
+		 * - Full history view
+		 * - Instead-of-Trigger on latest view
+		 * - Instead-of-Trigger on history view
+		 * - Instead-of-Trigger on full history view
+		 * 
+		 */»
+		«IF model.params.get(BitempRemodeler.GEN_API) == 1»
+			«val createObjectType= new CreateObjectType»
+			«createObjectType.compile(model)»
+		«ENDIF»
 	'''
 }
