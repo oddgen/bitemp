@@ -40,7 +40,7 @@ class CreateTableApi {
 		 * - Instead-of-Trigger on full history view
 		 * 
 		 */»
-		«IF model.params.get(BitempRemodeler.GEN_API) == 1»
+		«IF model.params.get(BitempRemodeler.GEN_API) == "1"»
 			«val createObjectType= new CreateObjectType»
 			«createObjectType.compile(model)»
 		«ENDIF»
