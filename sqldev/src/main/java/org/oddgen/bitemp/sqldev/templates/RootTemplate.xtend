@@ -16,7 +16,6 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
-import java.sql.Connection
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.sqldev.LoggableConstants
@@ -25,7 +24,7 @@ import org.oddgen.sqldev.LoggableConstants
 class RootTemplate {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def compile(Connection conn, GeneratorModel model) '''
+	def compile(GeneratorModel model) '''
 		-- 
 		-- Bitemp Remodeler configuration
 		-- - Input table : «model.inputTable.tableName»
@@ -38,7 +37,7 @@ class RootTemplate {
 			--     - «String.format("%1$-" + maxParamLen + "s", key)»: «model.params.get(key).booleanParamToString»
 		«ENDFOR»
 		--
-		«(new CreateDataStructure).compile(conn, model)»
-		«(new CreateApi).compile(conn, model)»
+		«(new CreateDataStructure).compile(model)»
+		«(new CreateApi).compile(model)»
 	'''
 }

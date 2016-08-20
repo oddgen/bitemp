@@ -16,7 +16,6 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
-import java.sql.Connection
 import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
@@ -26,7 +25,7 @@ import org.oddgen.sqldev.LoggableConstants
 class CreateDataStructure {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def compile(Connection conn, GeneratorModel model) '''
+	def compile(GeneratorModel model) '''
 		«val removeFlashbackArchive = new RemoveFlashbackArchive»
 		«val removeTemporalValidity = new RemoveTemporalValidity»
 		«val removeTable = new RemoveTable»
@@ -49,7 +48,7 @@ class CreateDataStructure {
 			«renameTable.compile(model)»
 			«addFlashbackArchive.compile(model.inputTable, model)»
 			«IF model.originModel == ApiType.BI_TEMPORAL»
-				«populateFlashbackArchive.compile(conn, model)»
+				«populateFlashbackArchive.compile(model)»
 			«ENDIF»
 			«removeFlashbackArchive.compile(model.inputTable.histTable)»
 			«removeTable.compile(model.inputTable.histTable)»
@@ -74,7 +73,7 @@ class CreateDataStructure {
 				«initializeHistory.compile(model)»
 			«ELSEIF model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 				«initializeHistory.compile(model)»
-				«populateFlashbackArchive.compile(conn, model)»
+				«populateFlashbackArchive.compile(model)»
 			«ENDIF»
 			«removeFlashbackArchive.compile(model.inputTable)»
 		«ENDIF»

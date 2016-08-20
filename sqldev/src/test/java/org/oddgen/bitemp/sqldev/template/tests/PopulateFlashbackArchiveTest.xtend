@@ -93,7 +93,7 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			SELECT c1, c2
 			  FROM t1_lt
 		''')
-		val script = template.compile(dataSource.connection, model).toString
+		val script = template.compile(model).toString
 		val stmts = getStatements(script)
 		for (stmt : stmts) {
 			jdbcTemplate.execute(stmt)
@@ -242,7 +242,7 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			   );
 			END;
 		''')
-		val script = template.compile(dataSource.connection, model).toString
+		val script = template.compile(model).toString
 		val stmts = getStatements(script)
 		for (stmt : stmts) {
 			jdbcTemplate.execute(stmt)

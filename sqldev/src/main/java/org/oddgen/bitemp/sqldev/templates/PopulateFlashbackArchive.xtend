@@ -16,7 +16,6 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
-import java.sql.Connection
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
@@ -27,7 +26,7 @@ import org.oddgen.sqldev.LoggableConstants
 class PopulateFlashbackArchive {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def compile(Connection conn, GeneratorModel model) '''
+	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
 			«IF (model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME || model.originModel == ApiType.BI_TEMPORAL) 
 				&& (model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME || model.targetModel == ApiType.BI_TEMPORAL)
@@ -68,11 +67,11 @@ class PopulateFlashbackArchive {
 				--
 				BEGIN
 				   dbms_flashback_archive.disassociate_fba(
-				      owner_name => '«conn.metaData.userName»',
+				      owner_name => '«model.conn.metaData.userName»',
 				      table_name => '«fromTableName.toUpperCase»'
 				   );
 				   dbms_flashback_archive.reassociate_fba(
-				       owner_name => '«conn.metaData.userName»',
+				       owner_name => '«model.conn.metaData.userName»',
 				       table_name => '«fromTableName.toUpperCase»'
 				   );
 				END;
@@ -82,7 +81,7 @@ class PopulateFlashbackArchive {
 				--
 				BEGIN
 				   dbms_flashback_archive.disassociate_fba(
-				      owner_name => '«conn.metaData.userName»', 
+				      owner_name => '«model.conn.metaData.userName»', 
 				      table_name => '«toTableName.toUpperCase»'
 				   );
 				END;
@@ -226,7 +225,7 @@ class PopulateFlashbackArchive {
 				--
 				BEGIN
 				   dbms_flashback_archive.reassociate_fba(
-				      owner_name => '«conn.metaData.userName»', 
+				      owner_name => '«model.conn.metaData.userName»', 
 				      table_name => '«toTableName.toUpperCase»'
 				   );
 				END;

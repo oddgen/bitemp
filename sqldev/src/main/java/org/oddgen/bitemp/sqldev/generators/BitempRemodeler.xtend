@@ -187,7 +187,7 @@ class BitempRemodeler implements OddgenGenerator {
 		if (objectType == "TABLE") {
 			populateGeneratorModel(conn, objectName, params)
 			val template = new RootTemplate
-			return template.compile(conn, generatorModel).toString
+			return template.compile(generatorModel).toString
 		} else {
 			val template = new MissingPrerequisiteSolution
 			return template.compile(conn, objectName)

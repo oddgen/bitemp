@@ -16,7 +16,6 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
-import java.sql.Connection
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.sqldev.LoggableConstants
@@ -24,7 +23,7 @@ import org.oddgen.sqldev.LoggableConstants
 @Loggable(LoggableConstants.DEBUG)
 class CreateApi {
 
-	def compile(Connection conn, GeneratorModel model) '''
+	def compile(GeneratorModel model) '''
 		«/*
 		 * Table API
 		 * - Object type
