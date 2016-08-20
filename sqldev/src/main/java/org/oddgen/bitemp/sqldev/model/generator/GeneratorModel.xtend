@@ -15,7 +15,7 @@
  */
 package org.oddgen.bitemp.sqldev.model.generator
 
-import java.sql.DatabaseMetaData
+import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
 import org.eclipse.xtend.lib.annotations.Accessors
@@ -28,5 +28,5 @@ class GeneratorModel extends AbstractModel {
 	ApiType originModel
 	ApiType targetModel
 	Table inputTable
-	DatabaseMetaData metaData
+	Connection conn
 }
