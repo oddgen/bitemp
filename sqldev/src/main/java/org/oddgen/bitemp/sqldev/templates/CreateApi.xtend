@@ -40,14 +40,11 @@ class CreateApi {
 		 * 
 		 */»
 		«IF model.params.get(BitempRemodeler.GEN_API) == "1"»
-			«val createObjectType = new CreateObjectType»
-			«val createApiPackageSpecification = new CreateApiPackageSpecification»
-			«val createHookPackageSpecification = new CreateHookPackageSpecification»
-			«val createApiPackageBody = new CreateApiPackageBody»
-			«createObjectType.compile(model)»
-			«createApiPackageSpecification.compile(model)»
-			«createHookPackageSpecification.compile(model)»
-			«createApiPackageBody.compile(model)»
+			«(new CreateObjectType).compile(model)»
+			«(new CreateApiPackageSpecification).compile(model)»
+			«(new CreateHookPackageSpecification).compile(model)»
+			«(new CreateApiPackageBody).compile(model)»
+			«(new CreateLatestView).compile(model)»
 		«ENDIF»
 	'''
 }
