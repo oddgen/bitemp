@@ -29,7 +29,7 @@ class CreateLatestView {
 		if (model.params.get(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1") {
 			return model.getBaseTableName.toLowerCase
 		} else {
-			return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.LATEST_VIEW_SUFFIX)»'''
+			return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.LATEST_VIEW_SUFFIX).toLowerCase»'''
 		}
 	}
 
@@ -55,10 +55,12 @@ class CreateLatestView {
 			SELECT «FOR col : model.columns SEPARATOR ',' + System.lineSeparator + '       '»«
 			       	»«col.columnName.toLowerCase»«
 			       »«ENDFOR»
-			  FROM «model.inputTable.getNewTableName(model)»
-			«IF model.isTemporalValidity»
-			WHERE «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» IS NULL«
-			  » OR «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 0«ENDIF»;
+			«'  '»«
+			»FROM «model.inputTable.getNewTableName(model).toLowerCase»«
+			»«IF model.isTemporalValidity»«System.lineSeparator
+			» WHERE «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» IS NULL«
+			» OR «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 0«
+			»«ENDIF»;
 		«ENDIF»
 	'''
 }
