@@ -39,6 +39,6 @@ class RootTemplate {
 		«ENDFOR»
 		--
 		«(new CreateDataStructure).compile(conn, model)»
-		«(new CreateTableApi).compile(conn, model)»
+		«(new CreateApi).compile(conn, model)»
 	'''
 }
