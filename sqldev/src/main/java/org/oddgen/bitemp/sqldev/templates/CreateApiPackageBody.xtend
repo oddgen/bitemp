@@ -36,7 +36,7 @@ class CreateApiPackageBody {
 			CREATE OR REPLACE PACKAGE BODY «apiName» AS
 			
 			   --
-			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«hookName»"'
+			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«model.conn.metaData.userName».«hookName.toUpperCase»"'
 			   --
 			   e_hook_body_missing EXCEPTION;
 			   PRAGMA exception_init(e_hook_body_missing, -6508);
