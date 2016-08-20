@@ -20,17 +20,18 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
+import org.oddgen.bitemp.sqldev.templates.CreateApiPackageBody
 import org.oddgen.bitemp.sqldev.templates.CreateApiPackageSpecification
 import org.oddgen.bitemp.sqldev.templates.CreateObjectType
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
-class CreatePackageSpecificationTest extends AbstractJdbcTest {
+class CreateApiPackageBodyTest extends AbstractJdbcTest {
 
 	def getStatus(String objectName) {
 		val status = jdbcTemplate.queryForObject('''
 			SELECT status 
 			  FROM user_objects
-			 WHERE object_type = 'PACKAGE'
+			 WHERE object_type = 'PACKAGE BODY'
 			   AND object_name = ? 
 		''', String, #[objectName])
 		return status
@@ -47,10 +48,13 @@ class CreatePackageSpecificationTest extends AbstractJdbcTest {
 		for (stmt : (new CreateObjectType).compile(model).toString.statements) {
 			jdbcTemplate.execute(stmt)
 		}
-		val script = (new CreateApiPackageSpecification).compile(model).toString
+		for (stmt : (new CreateApiPackageSpecification).compile(model).toString.statements) {
+			jdbcTemplate.execute(stmt)
+		}
+		val script = (new CreateApiPackageBody).compile(model).toString
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
-		}	
+		}
 		Assert.assertEquals("VALID", getStatus("DEPT_API"))
 	}
 
