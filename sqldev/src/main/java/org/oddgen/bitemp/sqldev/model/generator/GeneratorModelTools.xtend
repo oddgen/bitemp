@@ -15,6 +15,7 @@
  */
 package org.oddgen.bitemp.sqldev.model.generator
 
+import java.util.ArrayList
 import java.util.Collections
 import java.util.List
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
@@ -153,6 +154,16 @@ class GeneratorModelTools {
 			default: "DATE"
 		}
 	}
+	
+	def getValidTimeDataScale(GeneratorModel model) {
+		return switch (model.params.get(BitempRemodeler.GRANULARITY)) {
+			case BitempResources.getString("PREF_GRANULARITY_CENTISECOND"): 2
+			case BitempResources.getString("PREF_GRANULARITY_MILLISECOND"): 3
+			case BitempResources.getString("PREF_GRANULARITY_MICROSECOND"): 6
+			case BitempResources.getString("PREF_GRANULARITY_NANOSECOND"): 9
+			default: null
+		}
+	}
 
 	def isTemporalValidityColumn(Column column, GeneratorModel model) {
 		for (period : model.inputTable.temporalValidityPeriods) {
@@ -162,5 +173,40 @@ class GeneratorModelTools {
 			}
 		}
 		return false
+	}
+	
+	def createValidTimeColumn(GeneratorModel model, String columnName) {
+		val col = new Column
+		col.columnName = columnName
+		col.dataType = model.getValidTimeDataType
+		col.dataPrecision = null
+		col.dataScale = model.getValidTimeDataScale
+		col.charLength = 0
+		col.charUsed = null
+		col.nullable = "Y"
+		col.dataDefault = null
+		col.defaultOnNull = "NO"
+		col.hiddenColumn = "NO"
+		col.virtualColumn = "NO"
+		col.identityColumn = "NO"
+		col.generationType = null
+		col.sequenceName = null
+		return col
+	}
+	
+	def isTemporalValidity(GeneratorModel model) {
+		return model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL
+	}
+	
+	def getDelColumns (GeneratorModel model) {
+		val cols = new ArrayList<Column>
+		for (col : model.inputTable.primaryKeyConstraint.columnNames) {
+			cols.add(model.inputTable.columns.get(col))
+		}
+		if (model.isTemporalValidity) {
+			cols.add(model.createValidTimeColumn(BitempRemodeler.VALID_FROM_COL_NAME))
+			cols.add(model.createValidTimeColumn(BitempRemodeler.VALID_TO_COL_NAME))
+		}
+		return cols
 	}
 }
