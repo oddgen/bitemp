@@ -210,6 +210,7 @@ class BitempRemodeler implements OddgenGenerator {
 		generatorModel.paramStates = getParamStates(conn, "TABLE", null, params)
 		val tableDao = new TableDao(conn)
 		generatorModel.inputTable = tableDao.getTable(tableName)
+		generatorModel.metaData = conn.metaData
 		val historyTable = generatorModel.inputTable.histTable
 		if (historyTable == null) {
 			if (generatorModel.inputTable.flashbackArchiveTable != null) {
