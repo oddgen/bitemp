@@ -39,7 +39,7 @@ class CreateObjectType {
 			   	«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» INTEGER,
 			   	«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType»,
 			   	«model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType»,
-			   	«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» NUMBER(1,0),
+			   	«BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» NUMBER(1,0),
 			   «ENDIF»
 			   «FOR col : columns»
 			   	«col.columnName.toLowerCase» «col.fullDataType»,

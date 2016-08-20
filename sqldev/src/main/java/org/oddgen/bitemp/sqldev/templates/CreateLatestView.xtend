@@ -36,7 +36,7 @@ class CreateLatestView {
 	def getColumns(GeneratorModel model) {
 		val columns = model.inputTable.columns.values.filter [
 			!it.isTemporalValidityColumn(model) && it.virtualColumn == "NO" &&
-				it.columnName != model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toUpperCase
+				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
 		]
 		return columns
 	}
@@ -58,8 +58,8 @@ class CreateLatestView {
 			«'  '»«
 			»FROM «model.inputTable.getNewTableName(model).toLowerCase»«
 			»«IF model.isTemporalValidity»«System.lineSeparator
-			» WHERE «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» IS NULL«
-			» OR «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 0«
+			» WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL«
+			» OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0«
 			»«ENDIF»;
 		«ENDIF»
 	'''

@@ -26,12 +26,12 @@ class RemoveDeletedIndicatorColumn {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
 	def compile(GeneratorModel model) '''
-		«val isDeletedColumName = model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toUpperCase»
+		«val isDeletedColumName = BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase»
 		«IF model.inputTable.columns.get(isDeletedColumName) != null»
 			--
 			-- Remove indicator for deleted rows
 			--
-			ALTER TABLE «model.inputTable.getNewTableName(model).toLowerCase» DROP COLUMN «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase»;
+			ALTER TABLE «model.inputTable.getNewTableName(model).toLowerCase» DROP COLUMN «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»;
 		«ENDIF»
 	'''
 }

@@ -42,13 +42,13 @@ class CreateLatestViewTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def deptBiTemporal() {
+	def existingBiTemporal() {
 		jdbcTemplate.execute('''
 			CREATE TABLE t1 (
 				c1 INTEGER PRIMARY KEY,
 				c2 VARCHAR2(20),
-				is_deleted NUMBER(1,0) NULL,
-				CHECK (is_deleted IN (0,1))
+				is_deleted$ NUMBER(1,0) NULL,
+				CHECK (is_deleted$ IN (0,1))
 			)
 		''')
 		jdbcTemplate.execute('''
@@ -56,9 +56,9 @@ class CreateLatestViewTest extends AbstractJdbcTest {
 			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
 			   valid_from DATE NULL,
 			   valid_to DATE NULL,
-			   is_deleted NUMBER(1,0) NULL,
-			   CHECK (is_deleted IN (0,1)),
-			   PERIOD FOR vt (valid_from, valid_to),
+			   is_deleted$ NUMBER(1,0) NULL,
+			   CHECK (is_deleted$ IN (0,1)),
+			   PERIOD FOR vt$ (valid_from, valid_to),
 			   c1 INTEGER,
 			   c2 VARCHAR2(20)
 			)

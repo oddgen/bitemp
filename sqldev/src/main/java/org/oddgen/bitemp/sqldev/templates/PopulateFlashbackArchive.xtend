@@ -42,16 +42,16 @@ class PopulateFlashbackArchive {
 					else
 						getNewTableName(model.inputTable, model).toLowerCase»
 				«val columns = model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && 
-					it.columnName != model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toUpperCase && it.virtualColumn == "NO"
+					it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase && it.virtualColumn == "NO"
 				]»
 				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 					--
 					-- Delete rows marked as deleted and enforce update in SYS_FBA_TCRV_...
 					--
 					DELETE FROM «fromTableName»
-					 WHERE «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 1;
+					 WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 1;
 					DELETE FROM «toTableName»
-					 WHERE «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 1;
+					 WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 1;
 					--
 					-- Enforce update for remaining rows in SYS_FBA_TCRV_...
 					--
@@ -164,7 +164,7 @@ class PopulateFlashbackArchive {
 				       «ENDFOR»
 				  FROM source$hist
 				  «IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-				  	WHERE («model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» IS NULL OR «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 0)
+				  	WHERE («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0)
 				  «ENDIF»
 				-- updated rows in actual/latest table (workaround for missing DML capabilty on TCRV table in 12.1.0.2)
 				UNION ALL
@@ -186,7 +186,7 @@ class PopulateFlashbackArchive {
 				WHERE stcrv.endscn IS NULL
 				  AND ttcrv.endscn IS NULL«
 				  »«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-				  	AND (s.«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» IS NULL OR s.«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» = 0)«
+				  	AND (s.«BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR s.«BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0)«
 				  »«ENDIF»;
 				--
 				-- Populate flashback archive (part 2)

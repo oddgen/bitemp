@@ -39,7 +39,7 @@ class RemoveTemporalValidityTest extends AbstractJdbcTest {
 		jdbcTemplate.execute('''
 			CREATE TABLE t3 (
 			   c1 INTEGER,
-			   PERIOD FOR vt
+			   PERIOD FOR vt$
 			)
 		''')
 		// try to avoid ORA-54015: Duplicate column expression was specified 
@@ -67,7 +67,7 @@ class RemoveTemporalValidityTest extends AbstractJdbcTest {
 	@AfterClass
 	def static void tearDown() {
 		try {
-		jdbcTemplate.execute("ALTER TABLE t3 DROP (PERIOD FOR vt)")
+		jdbcTemplate.execute("ALTER TABLE t3 DROP (PERIOD FOR vt$)")
 		} catch (Exception e) {
 		}
 		try {

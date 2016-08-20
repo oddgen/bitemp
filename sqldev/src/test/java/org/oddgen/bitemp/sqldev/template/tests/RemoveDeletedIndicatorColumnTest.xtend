@@ -31,7 +31,7 @@ class RemoveDeletedIndicatorColumnTest extends AbstractJdbcTest {
 		jdbcTemplate.execute('''
 			CREATE TABLE t4 (
 			   c1 INTEGER PRIMARY KEY,
-			   IS_DELETED INTEGER
+			   IS_DELETED$ INTEGER
 			)
 		''')
 		jdbcTemplate.execute('''

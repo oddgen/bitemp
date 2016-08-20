@@ -15,8 +15,8 @@
  */
 package org.oddgen.bitemp.sqldev.model.generator
 
-import java.util.ArrayList
 import java.util.Collections
+import java.util.LinkedHashMap
 import java.util.List
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.resources.BitempResources
@@ -74,7 +74,12 @@ class GeneratorModelTools {
 			val newHistTable = new Table()
 			newHistTable.tableName = '''«model.baseTableName»«model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase»'''
 			newHistTable.historyTable = true
-			newHistTable.columns = model.inputTable.columns
+			newHistTable.columns = new LinkedHashMap<String, Column> 
+			newHistTable.columns.put(BitempRemodeler.HISTORY_ID_COL_NAME, model.createHistIdColumn)
+			newHistTable.columns.put(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME), model.createValidTimeColumn(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)))
+			newHistTable.columns.put(model.params.get(BitempRemodeler.VALID_TO_COL_NAME), model.createValidTimeColumn(model.params.get(BitempRemodeler.VALID_TO_COL_NAME)))
+			newHistTable.columns.put(BitempRemodeler.IS_DELETED_COL_NAME, model.createIsDeletedColumn)
+			newHistTable.columns.putAll(model.inputTable.columns)
 			return newHistTable
 		}
 	}
@@ -175,9 +180,47 @@ class GeneratorModelTools {
 		return false
 	}
 	
+	def createHistIdColumn(GeneratorModel model) {
+		val col = new Column
+		col.columnName = BitempRemodeler.HISTORY_ID_COL_NAME.toUpperCase
+		col.dataType = "INTEGER"
+		col.dataPrecision = null
+		col.dataScale = 0
+		col.charLength = 0
+		col.charUsed = null
+		col.nullable = "N"
+		col.dataDefault = null
+		col.defaultOnNull = "NO"
+		col.hiddenColumn = "NO"
+		col.virtualColumn = "NO"
+		col.identityColumn = "YES"
+		col.generationType = null // do not need correct value
+		col.sequenceName = null // do not need correct value
+		return col
+	}
+	
+	def createIsDeletedColumn(GeneratorModel model) {
+		val col = new Column
+		col.columnName = BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
+		col.dataType = "NUMBER"
+		col.dataPrecision = 1
+		col.dataScale = 0
+		col.charLength = 0
+		col.charUsed = null
+		col.nullable = "Y"
+		col.dataDefault = null
+		col.defaultOnNull = "NO"
+		col.hiddenColumn = "NO"
+		col.virtualColumn = "NO"
+		col.identityColumn = "NO"
+		col.generationType = null
+		col.sequenceName = null
+		return col		
+	}
+	
 	def createValidTimeColumn(GeneratorModel model, String columnName) {
 		val col = new Column
-		col.columnName = columnName
+		col.columnName = columnName.toUpperCase
 		col.dataType = model.getValidTimeDataType
 		col.dataPrecision = null
 		col.dataScale = model.getValidTimeDataScale
@@ -197,16 +240,5 @@ class GeneratorModelTools {
 	def isTemporalValidity(GeneratorModel model) {
 		return model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL
 	}
-	
-	def getDelColumns (GeneratorModel model) {
-		val cols = new ArrayList<Column>
-		for (col : model.inputTable.primaryKeyConstraint.columnNames) {
-			cols.add(model.inputTable.columns.get(col))
-		}
-		if (model.isTemporalValidity) {
-			cols.add(model.createValidTimeColumn(BitempRemodeler.VALID_FROM_COL_NAME))
-			cols.add(model.createValidTimeColumn(BitempRemodeler.VALID_TO_COL_NAME))
-		}
-		return cols
-	}
+
 }

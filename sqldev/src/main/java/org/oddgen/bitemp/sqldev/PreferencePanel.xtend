@@ -40,7 +40,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 	val JTextField flashbackArchiveName = new JTextField
 	val JTextField validFromColName = new JTextField
 	val JTextField validToColName = new JTextField
-	val JTextField isDeletedColName = new JTextField
 	val JTextField objectTypeSuffix = new JTextField
 	val JTextField collectionTypeSuffix = new JTextField
 	val JTextField historyTableSuffix = new JTextField
@@ -98,9 +97,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 			builder.field.label.withText(BitempResources.getString("PREF_VALID_TO_COL_NAME_LABEL")).component(
 				validToColName))
 		builder.add(
-			builder.field.label.withText(BitempResources.getString("PREF_IS_DELETED_COL_NAME_LABEL")).component(
-				isDeletedColName))
-		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_HISTORY_TABLE_SUFFIX_LABEL")).component(
 				historyTableSuffix))
 		builder.add(
@@ -138,7 +134,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 		granularityComboBox.selectedItem = info.granularity
 		validFromColName.text = info.validFromColName
 		validToColName.text = info.validToColName
-		isDeletedColName.text = info.isDeletedColName
 		latestTableSuffix.text = info.latestTableSuffix
 		historyTableSuffix.text = info.historyTableSuffix
 		historyViewSuffix.text = info.historyViewSuffix
@@ -163,7 +158,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 		info.granularity = granularityComboBox.selectedItem as String
 		info.validFromColName = validFromColName.text
 		info.validToColName = validToColName.text
-		info.isDeletedColName = isDeletedColName.text
 		info.historyTableSuffix = historyTableSuffix.text
 		info.historyViewSuffix = historyViewSuffix.text
 		info.fullHistoryViewSuffix = fullHistoryViewSuffix.text

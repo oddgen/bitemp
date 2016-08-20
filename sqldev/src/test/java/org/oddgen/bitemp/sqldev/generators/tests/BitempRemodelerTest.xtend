@@ -51,7 +51,7 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 	@Test
 	def getParamsTest() {
 		val params = gen.getParams(dataSource.connection, "TABLE", null)
-		Assert.assertEquals(19, params.size)
+		Assert.assertEquals(18, params.size)
 	}
 
 	@Test
@@ -64,7 +64,7 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 	def getParamStates() {
 		val params = gen.getParams(dataSource.connection, "TABLE", null)
 		var paramStates = gen.getParamStates(dataSource.connection, "TABLE", null, params)
-		Assert.assertEquals(16, paramStates.size)
+		Assert.assertEquals(15, paramStates.size)
 		Assert.assertEquals(true, paramStates.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME))
 	}
 
@@ -86,7 +86,6 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 			--     - Granularity                           : Day
 			--     - Column name for valid from            : valid_from
 			--     - Column name for valid to              : valid_to
-			--     - Column name for is deleted indicator  : is_deleted
 			--     - Suffix for history table              : _ht
 			--     - Suffix for history view               : _hv
 			--     - Suffix for full history view          : _fhv

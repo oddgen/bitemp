@@ -64,7 +64,7 @@ class CreateApiPackageSpecification {
 			   /**
 			   * Delete from «model.targetModel.apiTypeToString» table «tableName».
 			   «IF model.isTemporalValidity»
-			   * Please note that instead of a physical delete operation the column «model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» is set to 1.
+			   * Please note that instead of a physical delete operation the column «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» is set to 1.
 			   «ENDIF»
 			   *
 			   * @param in_old_row Row with original column values. 

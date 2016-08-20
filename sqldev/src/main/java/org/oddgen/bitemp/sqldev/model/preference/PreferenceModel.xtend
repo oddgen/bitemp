@@ -43,7 +43,6 @@ class PreferenceModel extends HashStructureAdapter {
 	static final String KEY_GRANULARITY = "granularity"
 	static final String KEY_VALID_FROM_COL_NAME = "validFromColName"
 	static final String KEY_VALID_TO_COL_NAME = "validToColName"
-	static final String KEY_IS_DELETED_COL_NAME = "isDeletedColName"
 	static final String KEY_HISTORY_TABLE_SUFFIX = "historyTableSuffix"
 	static final String KEY_HISTORY_VIEW_SUFFIX = "historyViewSuffix"
 	static final String KEY_FULL_HISTORY_VIEW_SUFFIX = "fullHistoryViewSuffix"
@@ -150,15 +149,6 @@ class PreferenceModel extends HashStructureAdapter {
 
 	def setValidToColName(String validToColName) {
 		getHashStructure.putString(PreferenceModel.KEY_VALID_TO_COL_NAME, validToColName)
-
-	}
-
-	def getIsDeletedColName() {
-		return getHashStructure.getString(PreferenceModel.KEY_IS_DELETED_COL_NAME, "is_deleted")
-	}
-
-	def setIsDeletedColName(String isDeletedColName) {
-		getHashStructure.putString(PreferenceModel.KEY_IS_DELETED_COL_NAME, isDeletedColName)
 
 	}
 

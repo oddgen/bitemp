@@ -49,7 +49,6 @@ class BitempRemodeler implements OddgenGenerator {
 	public static String FLASHBACK_ARCHIVE_NAME = BitempResources.get("PREF_FLASHBACK_ARCHIVE_NAME_LABEL")
 	public static String VALID_FROM_COL_NAME = BitempResources.get("PREF_VALID_FROM_COL_NAME_LABEL")
 	public static String VALID_TO_COL_NAME = BitempResources.get("PREF_VALID_TO_COL_NAME_LABEL")
-	public static String IS_DELETED_COL_NAME = BitempResources.get("PREF_IS_DELETED_COL_NAME_LABEL")
 	public static String OBJECT_TYPE_SUFFIX = BitempResources.get("PREF_OBJECT_TYPE_SUFFIX_LABEL")
 	public static String COLLECTION_TYPE_SUFFIX = BitempResources.get("PREF_COLLECTION_TYPE_SUFFIX_LABEL")
 	public static String HISTORY_TABLE_SUFFIX = BitempResources.get("PREF_HISTORY_TABLE_SUFFIX_LABEL")
@@ -58,7 +57,10 @@ class BitempRemodeler implements OddgenGenerator {
 	public static String IOT_SUFFIX = BitempResources.get("PREF_IOT_SUFFIX_LABEL")
 	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
+
 	public static String HISTORY_ID_COL_NAME = "HIST_ID$"
+	public static String VALID_TIME_PERIOD_NAME = "VT$"
+	public static String IS_DELETED_COL_NAME = "IS_DELETED$"
 
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 	private PrerequisiteModel prerequisiteModel = new PrerequisiteModel
@@ -118,7 +120,6 @@ class BitempRemodeler implements OddgenGenerator {
 			params.put(GRANULARITY, pref.granularity)
 			params.put(VALID_FROM_COL_NAME, pref.validFromColName)
 			params.put(VALID_TO_COL_NAME, pref.validToColName)
-			params.put(IS_DELETED_COL_NAME, pref.isDeletedColName)
 			params.put(HISTORY_TABLE_SUFFIX, pref.historyTableSuffix)
 			params.put(HISTORY_VIEW_SUFFIX, pref.historyViewSuffix)
 			params.put(FULL_HISTORY_VIEW_SUFFIX, pref.fullHistoryViewSuffix)
@@ -170,7 +171,6 @@ class BitempRemodeler implements OddgenGenerator {
 			paramStates.put(GRANULARITY, isValidTime && isGenApi)
 			paramStates.put(VALID_FROM_COL_NAME, isValidTime)
 			paramStates.put(VALID_TO_COL_NAME, isValidTime)
-			paramStates.put(IS_DELETED_COL_NAME, isValidTime)
 			paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
 			paramStates.put(HISTORY_VIEW_SUFFIX, (isValidTime || isTransactionTime) && isGenApi)
 			paramStates.put(FULL_HISTORY_VIEW_SUFFIX, (isValidTime || isTransactionTime) && isGenApi)

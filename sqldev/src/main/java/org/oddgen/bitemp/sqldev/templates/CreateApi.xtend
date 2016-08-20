@@ -45,6 +45,7 @@ class CreateApi {
 			«(new CreateHookPackageSpecification).compile(model)»
 			«(new CreateApiPackageBody).compile(model)»
 			«(new CreateLatestView).compile(model)»
+			«(new CreateHistoryView).compile(model)»
 		«ENDIF»
 	'''
 }

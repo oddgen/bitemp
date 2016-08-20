@@ -72,9 +72,9 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
 			   valid_from DATE NULL,
 			   valid_to DATE NULL,
-			   is_deleted NUMBER(1,0) NULL,
-			   CHECK (is_deleted IN (0,1)),
-			   PERIOD FOR vt (valid_from, valid_to),
+			   is_deleted$ NUMBER(1,0) NULL,
+			   CHECK (is_deleted$ IN (0,1)),
+			   PERIOD FOR vt$ (valid_from, valid_to),
 			   c1 INTEGER,
 			   c2 VARCHAR2(20)
 			)
@@ -166,18 +166,18 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			CREATE TABLE t2_lt (
 				c1         INTEGER PRIMARY KEY,
 				c2         VARCHAR2(20), FOREIGN KEY (c2) REFERENCES t2_text,
-				is_deleted NUMBER(1,0)
+				is_deleted$ NUMBER(1,0)
 			)
 		''')
 		jdbcTemplate.execute('''
 			BEGIN
-				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (1, 'one', 1);
-				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (2, 'two', 1);
-				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (3, 'three changed', null);
-				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (4, 'four', null);
-				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (5, 'five', null);
-				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (6, 'six', null);
-				INSERT INTO t2_lt (c1, c2, is_deleted) VALUES (7, 'seven', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted$) VALUES (1, 'one', 1);
+				INSERT INTO t2_lt (c1, c2, is_deleted$) VALUES (2, 'two', 1);
+				INSERT INTO t2_lt (c1, c2, is_deleted$) VALUES (3, 'three changed', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted$) VALUES (4, 'four', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted$) VALUES (5, 'five', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted$) VALUES (6, 'six', null);
+				INSERT INTO t2_lt (c1, c2, is_deleted$) VALUES (7, 'seven', null);
 				COMMIT;
 			END;
 		''')
@@ -187,9 +187,9 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
 			   valid_from DATE NULL,
 			   valid_to DATE NULL,
-			   is_deleted NUMBER(1,0) NULL,
-			   CHECK (is_deleted IN (0,1)),
-			   PERIOD FOR vt (valid_from, valid_to),
+			   is_deleted$ NUMBER(1,0) NULL,
+			   CHECK (is_deleted$ IN (0,1)),
+			   PERIOD FOR vt$ (valid_from, valid_to),
 			   c1 INTEGER, FOREIGN KEY (c1) REFERENCES t2_lt,
 			   c2 VARCHAR2(20)
 			) FLASHBACK ARCHIVE fba1
@@ -207,7 +207,7 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		jdbcTemplate.execute('''
 			BEGIN
 				UPDATE t2_ht
-				   SET is_deleted = 1
+				   SET is_deleted$ = 1
 				 WHERE c1 IN (1, 2);
 				COMMIT; -- 2nd SCN
 				UPDATE t2_ht 
@@ -269,11 +269,11 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			val count = jdbcTemplate.queryForObject('''
 				SELECT COUNT(*) 
 				  FROM (
-				           SELECT c1, c2, is_deleted
+				           SELECT c1, c2, is_deleted$
 				             FROM t2_ht AS OF SCN ?
-				            WHERE is_deleted = 0 OR is_deleted IS NULL
+				            WHERE is_deleted$ = 0 OR is_deleted$ IS NULL
 				            MINUS
-				           SELECT c1, c2, is_deleted
+				           SELECT c1, c2, is_deleted$
 				             FROM t2_lt AS OF SCN ?
 				       )
 			''', Integer, #[scn, scn])
@@ -283,10 +283,10 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 			val count = jdbcTemplate.queryForObject('''
 				SELECT COUNT(*) 
 				  FROM (
-				           SELECT c1, c2, is_deleted
+				           SELECT c1, c2, is_deleted$
 				             FROM t2_lt AS OF SCN ?
 				            MINUS
-				           SELECT c1, c2, is_deleted
+				           SELECT c1, c2, is_deleted$
 				             FROM t2_ht AS OF SCN ?
 				       )
 			''', Integer, #[scn, scn])

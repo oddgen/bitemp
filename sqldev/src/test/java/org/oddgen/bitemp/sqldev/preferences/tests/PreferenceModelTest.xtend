@@ -33,7 +33,6 @@ class PreferenceModelTest {
 		Assert.assertEquals("Day", model.granularity)
 		Assert.assertEquals("valid_from", model.validFromColName)
 		Assert.assertEquals("valid_to", model.validToColName)
-		Assert.assertEquals("is_deleted", model.isDeletedColName)
 		Assert.assertEquals("_ht", model.historyTableSuffix)
 		Assert.assertEquals("_hv", model.historyViewSuffix)
 		Assert.assertEquals("_fhv", model.fullHistoryViewSuffix)
