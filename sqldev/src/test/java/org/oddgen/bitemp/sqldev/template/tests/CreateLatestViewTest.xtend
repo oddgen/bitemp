@@ -41,6 +41,52 @@ class CreateLatestViewTest extends AbstractJdbcTest {
 		Assert.assertEquals("VALID", getObjectStatus("VIEW", "DEPT_LV"))
 	}
 
+	@Test
+	def deptBiTemporal() {
+		jdbcTemplate.execute('''
+			CREATE TABLE t1 (
+				c1 INTEGER PRIMARY KEY,
+				c2 VARCHAR2(20),
+				is_deleted NUMBER(1,0) NULL,
+				CHECK (is_deleted IN (0,1))
+			)
+		''')
+		jdbcTemplate.execute('''
+			CREATE TABLE t1_ht (
+			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
+			   valid_from DATE NULL,
+			   valid_to DATE NULL,
+			   is_deleted NUMBER(1,0) NULL,
+			   CHECK (is_deleted IN (0,1)),
+			   PERIOD FOR vt (valid_from, valid_to),
+			   c1 INTEGER,
+			   c2 VARCHAR2(20)
+			)
+		''')
+		jdbcTemplate.execute('''
+			ALTER TABLE t1_ht ADD FOREIGN KEY (c1) REFERENCES t1
+		''')
+		jdbcTemplate.execute('''
+			CREATE INDEX t1_ht_i0$ ON t1_ht (c1)
+		''')
+		jdbcTemplate.execute('''
+			ALTER TABLE t1_ht FLASHBACK ARCHIVE fba1
+		''')
+		val template = new CreateLatestView
+		val gen = new BitempRemodeler
+		val params = gen.getParams(dataSource.connection, "TABLE", "T1")
+		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
+		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "1")
+		params.put(BitempRemodeler.GEN_VALID_TIME, "1")
+		val model = gen.getModel(dataSource.connection, "T1", params)
+		val script = template.compile(model).toString
+		for (stmt : script.statements) {
+			jdbcTemplate.execute(stmt)
+		}
+		Assert.assertEquals("VALID", getObjectStatus("VIEW", "T1_LV"))
+	}
+
+
 	@BeforeClass
 	def static void setup() {
 		tearDown();
@@ -48,6 +94,22 @@ class CreateLatestViewTest extends AbstractJdbcTest {
 
 	@AfterClass
 	def static void tearDown() {
+		try {
+			jdbcTemplate.execute("ALTER TABLE t1_ht NO FLASHBACK ARCHIVE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TABLE t1_ht PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TABLE t1 PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP VIEW t1_lv")
+		} catch (Exception e) {
+		}
 		try {
 			jdbcTemplate.execute("DROP VIEW dept_lv")
 		} catch (Exception e) {
