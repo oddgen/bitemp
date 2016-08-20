@@ -22,7 +22,7 @@ import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.sqldev.LoggableConstants
 
 @Loggable(LoggableConstants.DEBUG)
-class CreateTableApi {
+class CreateApi {
 
 	def compile(Connection conn, GeneratorModel model) '''
 		«/*
@@ -41,8 +41,12 @@ class CreateTableApi {
 		 * 
 		 */»
 		«IF model.params.get(BitempRemodeler.GEN_API) == "1"»
-			«val createObjectType= new CreateObjectType»
+			«val createObjectType = new CreateObjectType»
+			«val createApiPackageSpecification = new CreateApiPackageSpecification»
+			«val createApiPackageBody = new CreateApiPackageBody»
 			«createObjectType.compile(model)»
+			«createApiPackageSpecification.compile(model)»
+			«createApiPackageBody.compile(model)»
 		«ENDIF»
 	'''
 }
