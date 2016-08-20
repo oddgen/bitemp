@@ -18,6 +18,7 @@ package org.oddgen.bitemp.sqldev.tests
 import java.io.StringReader
 import java.util.ArrayList
 import java.util.Properties
+import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtType
 import oracle.dbtools.worksheet.scriptparser.sqlplus.SQLPlusScriptParser
 import org.junit.BeforeClass
 import org.springframework.jdbc.core.JdbcTemplate
@@ -55,7 +56,7 @@ class AbstractJdbcTest {
 		val stmts = new ArrayList<String>
 		while (p.hasNext) {
 			val stmt = p.next
-			if (stmt.executable || stmt.sql.endsWith(";")) {
+			if ((stmt.executable || stmt.runnable) && stmt.stmtType != StmtType.G_C_COMMENT) {
 				stmts.add(stmt.sql)
 			}
 		}
