@@ -49,6 +49,7 @@ class CreateObjectTypeTest extends AbstractJdbcTest {
 		}
 		Assert.assertEquals(7, getColCount("DEPT_OT"))
 		Assert.assertEquals(0, getColCount("DEPT_CT"))
+		Assert.assertEquals("VALID", getObjectStatus("TYPE BODY", "DEPT_OT"))
 	}
 
 	@BeforeClass

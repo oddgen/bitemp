@@ -41,10 +41,25 @@ class CreateObjectType {
 			   	«model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType»,
 			   	«model.params.get(BitempRemodeler.IS_DELETED_COL_NAME).toLowerCase» NUMBER(1,0),
 			   «ENDIF»
-			   «FOR col : columns SEPARATOR ","»
-			   	«col.columnName.toLowerCase» «col.fullDataType»
+			   «FOR col : columns»
+			   	«col.columnName.toLowerCase» «col.fullDataType»,
 			   «ENDFOR»
+			   CONSTRUCTOR FUNCTION «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase» RETURN SELF AS RESULT
 			);
+			/
+			--
+			-- Create object type body
+			--
+			CREATE OR REPLACE TYPE BODY «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase» IS
+				--
+				-- Default constructor
+				--
+				CONSTRUCTOR FUNCTION «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+				   RETURN SELF AS RESULT IS
+				BEGIN
+				   RETURN;
+				END «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»;
+			END;
 			/
 			--
 			-- Create collection type

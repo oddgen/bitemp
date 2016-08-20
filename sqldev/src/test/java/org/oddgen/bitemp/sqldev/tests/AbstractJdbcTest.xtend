@@ -61,6 +61,17 @@ class AbstractJdbcTest {
 		}
 		return stmts;
 	}
+	
+	def getObjectStatus(String objectType, String objectName) {
+		val status = jdbcTemplate.queryForObject('''
+			SELECT status 
+			  FROM user_objects
+			 WHERE object_type = ?
+			   AND object_name = ?
+		''', String, #[objectType, objectName])
+		return status
+	}	
+	
 
 	@BeforeClass
 	def static void setup() {
