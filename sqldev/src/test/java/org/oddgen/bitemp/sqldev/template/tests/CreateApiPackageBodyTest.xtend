@@ -22,6 +22,7 @@ import org.junit.Test
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.templates.CreateApiPackageBody
 import org.oddgen.bitemp.sqldev.templates.CreateApiPackageSpecification
+import org.oddgen.bitemp.sqldev.templates.CreateHookPackageSpecification
 import org.oddgen.bitemp.sqldev.templates.CreateObjectType
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
@@ -49,6 +50,9 @@ class CreateApiPackageBodyTest extends AbstractJdbcTest {
 			jdbcTemplate.execute(stmt)
 		}
 		for (stmt : (new CreateApiPackageSpecification).compile(model).toString.statements) {
+			jdbcTemplate.execute(stmt)
+		}
+		for (stmt : (new CreateHookPackageSpecification).compile(model).toString.statements) {
 			jdbcTemplate.execute(stmt)
 		}
 		val script = (new CreateApiPackageBody).compile(model).toString

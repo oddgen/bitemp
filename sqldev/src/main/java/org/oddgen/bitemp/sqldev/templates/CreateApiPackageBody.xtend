@@ -26,44 +26,101 @@ class CreateApiPackageBody {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
 	def compile(GeneratorModel model) '''
+		«val apiName = model.baseTableName.toLowerCase + model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase»
+		«val hookName = model.baseTableName.toLowerCase + model.params.get(BitempRemodeler.HOOK_PACKAGE_SUFFIX).toLowerCase»
+		«val otName = model.baseTableName.toLowerCase + model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
 		«IF model.inputTable.exists»
 			--
 			-- Create API package body
 			--
-			CREATE OR REPLACE PACKAGE BODY «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase» AS
+			CREATE OR REPLACE PACKAGE BODY «apiName» AS
+			
+			   --
+			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«hookName»"'
+			   --
+			   e_hook_body_missing EXCEPTION;
+			   PRAGMA exception_init(e_hook_body_missing, -6508);
 			
 			   --
 			   -- ins
 			   --
 			   PROCEDURE ins (
-			      in_new_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      in_new_row «otName»
 			   ) IS
 			   BEGIN
-			      NULL;
+			      <<trap_pre_ins>>
+			      BEGIN
+			         «hookName».pre_ins(in_new_row => in_new_row);
+			      EXCEPTION
+			         WHEN e_hook_body_missing THEN
+			            NULL;
+			      END trap_pre_ins;
+			      -- TODO: insert
+			      <<trap_post_ins>>
+			      BEGIN
+			         «hookName».post_ins(in_new_row => in_new_row);
+			      EXCEPTION
+			         WHEN e_hook_body_missing THEN
+			            NULL;
+			      END trap_post_ins;
 			   END ins;
 
 			   --
 			   -- upd
 			   --
 			   PROCEDURE upd (
-			      in_new_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»,
-			      in_old_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      in_new_row «otName»,
+			      in_old_row «otName»
 			   ) IS
 			   BEGIN
-			      NULL;
+			      <<trap_pre_upd>>
+			      BEGIN
+			         «hookName».pre_upd(
+			            in_new_row => in_new_row,
+			            in_old_row => in_new_row
+			         );
+			      EXCEPTION
+			         WHEN e_hook_body_missing THEN
+			            NULL;
+			      END trap_pre_upd;
+			      -- TODO: update
+			      <<trap_post_upd>>
+			      BEGIN
+			         «hookName».post_upd(
+			            in_new_row => in_new_row,
+			            in_old_row => in_old_row
+			         );
+			      EXCEPTION
+			         WHEN e_hook_body_missing THEN
+			            NULL;
+			      END trap_post_upd;
 			   END upd;
 
 			   --
 			   -- del
 			   --
 			   PROCEDURE del (
-			      in_old_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      in_old_row «otName»
 			   ) IS
 			   BEGIN
-			      NULL;
+			      <<trap_pre_del>>
+			      BEGIN
+			         «hookName».pre_del(in_old_row => in_old_row);
+			      EXCEPTION
+			         WHEN e_hook_body_missing THEN
+			            NULL;
+			      END trap_pre_del;
+			      -- TODO: delete
+			      <<trap_post_del>>
+			      BEGIN
+			         «hookName».post_del(in_old_row => in_old_row);
+			      EXCEPTION
+			         WHEN e_hook_body_missing THEN
+			            NULL;
+			      END trap_post_del;
 			   END del;
 
-			END «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase»;
+			END «apiName»;
 			/
 		«ENDIF»
 	'''
