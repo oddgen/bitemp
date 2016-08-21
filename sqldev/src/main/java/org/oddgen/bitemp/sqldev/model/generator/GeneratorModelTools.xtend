@@ -123,7 +123,7 @@ class GeneratorModelTools {
 	def getFullDataType(Column column) {
 		val result = '''
 			«IF column.dataType == "NUMBER"»
-				«column.dataType»(«IF column.dataPrecision != null»«column.dataPrecision»«ELSE»*«ENDIF»«IF column.dataScale != null», «column.dataScale»«ENDIF»)
+				«column.dataType»(«IF column.dataPrecision != null»«column.dataPrecision»«ELSE»38«ENDIF»«IF column.dataScale != null», «column.dataScale»«ENDIF»)
 			«ELSEIF column.dataType == "FLOAT"»
 				«column.dataType»«IF column.dataPrecision != null»(«column.dataPrecision»)«ENDIF»
 			«ELSEIF #["CHAR", "VARCHAR2", "NCHAR", "NVARCHAR2"].contains(column.dataType)»
