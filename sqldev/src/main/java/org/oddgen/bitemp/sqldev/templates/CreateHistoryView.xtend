@@ -69,7 +69,7 @@ class CreateHistoryView {
 				       	»«col.toLowerCase»«
 				       »«ENDFOR»
 				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-					  FROM «model.inputTable.getNewTableName(model)»
+					  FROM «model.inputTable.getNewTableName(model)»;
 				«ELSE»
 					  FROM «model.getNewHistTable.tableName.toLowerCase»
 					 WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL«
