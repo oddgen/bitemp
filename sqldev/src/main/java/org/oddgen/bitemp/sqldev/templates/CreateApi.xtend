@@ -24,19 +24,15 @@ import org.oddgen.sqldev.LoggableConstants
 class CreateApi {
 
 	def compile(GeneratorModel model) '''
-		«/*
-		 * Table API
-		 * - Instead-of-Trigger on latest view
-		 * - Instead-of-Trigger on history view
-		 * 
-		 */»
 		«IF model.params.get(BitempRemodeler.GEN_API) == "1"»
 			«(new CreateObjectType).compile(model)»
 			«(new CreateApiPackageSpecification).compile(model)»
 			«(new CreateHookPackageSpecification).compile(model)»
 			«(new CreateApiPackageBody).compile(model)»
 			«(new CreateLatestView).compile(model)»
+			«(new CreateLatestViewInsteadOfTrigger).compile(model)»
 			«(new CreateHistoryView).compile(model)»
+			«(new CreateHistoryViewInsteadOfTrigger).compile(model)»
 			«(new CreateFullHistoryView).compile(model)»
 		«ENDIF»
 	'''
