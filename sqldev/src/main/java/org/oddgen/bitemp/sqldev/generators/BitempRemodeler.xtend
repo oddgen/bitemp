@@ -172,7 +172,7 @@ class BitempRemodeler implements OddgenGenerator {
 			paramStates.put(VALID_FROM_COL_NAME, isValidTime)
 			paramStates.put(VALID_TO_COL_NAME, isValidTime)
 			paramStates.put(HISTORY_TABLE_SUFFIX, isValidTime)
-			paramStates.put(HISTORY_VIEW_SUFFIX, (isValidTime || isTransactionTime) && isGenApi)
+			paramStates.put(HISTORY_VIEW_SUFFIX, isValidTime && isGenApi)
 			paramStates.put(FULL_HISTORY_VIEW_SUFFIX, (isValidTime || isTransactionTime) && isGenApi)
 			paramStates.put(OBJECT_TYPE_SUFFIX, isGenApi)
 			paramStates.put(COLLECTION_TYPE_SUFFIX, isGenApi)

@@ -55,7 +55,7 @@ class CreateHistoryView {
 
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
-			«IF model.targetModel != ApiType.NON_TEMPORAL»
+			«IF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL»
 				--
 				-- Create history view
 				--
@@ -68,13 +68,9 @@ class CreateHistoryView {
 				SELECT «FOR col : model.columnNames SEPARATOR ',' + System.lineSeparator + '       '»«
 				       	»«col.toLowerCase»«
 				       »«ENDFOR»
-				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-					«'  '»FROM «model.inputTable.getNewTableName(model)»;
-				«ELSE»
-					«' '» FROM «model.getNewHistTable.tableName.toLowerCase»
-					«' '»WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL«
-					» OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0;
-				«ENDIF»
+				  FROM «model.getNewHistTable.tableName.toLowerCase»
+				 WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL«
+				» OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0;
 			«ENDIF»
 		«ENDIF»
 	'''
