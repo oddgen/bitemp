@@ -46,6 +46,7 @@ class CreateApi {
 			«(new CreateApiPackageBody).compile(model)»
 			«(new CreateLatestView).compile(model)»
 			«(new CreateHistoryView).compile(model)»
+			«(new CreateFullHistoryView).compile(model)»
 		«ENDIF»
 	'''
 }
