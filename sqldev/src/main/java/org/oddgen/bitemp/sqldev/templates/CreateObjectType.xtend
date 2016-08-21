@@ -29,7 +29,8 @@ class CreateObjectType {
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
 			«val columns = model.inputTable.columns.values.filter[
-				!it.isTemporalValidityColumn(model) && it.virtualColumn == "NO"
+				!it.isTemporalValidityColumn(model) && it.virtualColumn == "NO" && 
+				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
 			]»
 			--
 			-- Create object type
