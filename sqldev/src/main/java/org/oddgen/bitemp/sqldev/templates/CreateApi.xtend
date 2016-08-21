@@ -26,17 +26,8 @@ class CreateApi {
 	def compile(GeneratorModel model) '''
 		«/*
 		 * Table API
-		 * - Object type
-		 * - Collection type
-		 * - API Package Spec
-		 * - API Package Body
-		 * - Hook Package Spec (do not generate Body, dedicated Generator)
-		 * - Latest view
-		 * - History view (using context)
-		 * - Full history view
 		 * - Instead-of-Trigger on latest view
 		 * - Instead-of-Trigger on history view
-		 * - Instead-of-Trigger on full history view
 		 * 
 		 */»
 		«IF model.params.get(BitempRemodeler.GEN_API) == "1"»
