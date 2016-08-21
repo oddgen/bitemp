@@ -17,6 +17,7 @@ package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
 import java.util.ArrayList
+import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
@@ -47,12 +48,15 @@ class CreateFullHistoryView {
 			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME))
 			cols.add(BitempRemodeler.IS_DELETED_COL_NAME)
 		}
-		for (col : model.inputTable.columns.values.filter [it.virtualColumn == "NO" && it.hiddenColumn != "YES" && !cols.contains(it.columnName)]) {
+		for (col : model.inputTable.columns.values.filter [
+			it.virtualColumn == "NO" && it.hiddenColumn != "YES" && !cols.contains(it.columnName) &&
+				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
+		]) {
 			cols.add(col.columnName)
 		}
 		return cols
 	}
-	
+
 	def getPkColumnNames(GeneratorModel model) {
 		val cols = new ArrayList<String>
 		cols.addAll(model.inputTable.primaryKeyConstraint.columnNames)
@@ -65,9 +69,49 @@ class CreateFullHistoryView {
 		return cols
 	}
 
-	def compile(GeneratorModel model) '''
+	/*
+	 * Do not use MINVALUE to avoid wrong results after changing model 
+	 * from uni-temporal to bi-temporal or vice-versa. 
+	 * A workaround is to use "SCN 0". To ensure "ORA-08181: specified 
+	 * number is not a valid system change number" is not thrown, the 
+	 * archive table has to be visible.
+	 */
+	def getMinScn(GeneratorModel model) {
+		if (model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME || model.originModel == ApiType.BI_TEMPORAL) {
+			return "0"
+		} else {
+			return "MINVALUE"
+		}
+	}
+
+	def getOriginalTableName(GeneratorModel model) {
+		if (model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME) {
+			model.inputTable.tableName
+		} else {
+			model.inputTable.histTable.tableName
+		}
+	}
+
+	def compile(
+		GeneratorModel model) '''
 		«IF model.inputTable.exists»
 			«IF model.targetModel != ApiType.NON_TEMPORAL»
+				«IF model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME || model.originModel == ApiType.BI_TEMPORAL»
+					--
+					-- Enforce visibility of source flashback archive tables
+					--
+					BEGIN
+					   dbms_flashback_archive.disassociate_fba(
+					      owner_name => '«model.conn.metaData.userName»',
+					      table_name => '«model.originalTableName.toUpperCase»'
+					   );
+					   dbms_flashback_archive.reassociate_fba(
+					       owner_name => '«model.conn.metaData.userName»',
+					       table_name => '«model.originalTableName.toUpperCase»'
+					   );
+					END;
+					/
+				«ENDIF»
 				--
 				-- Create history view
 				--
@@ -81,12 +125,12 @@ class CreateFullHistoryView {
 				       	»«col.toLowerCase»«
 				       »«ENDFOR»
 				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-					«'  '»FROM «model.inputTable.tableName.toLowerCase» VERSIONS BETWEEN SCN MINVALUE AND MAXVALUE;
+					«'  '»FROM «model.inputTable.tableName.toLowerCase» VERSIONS BETWEEN SCN «model.minScn» AND MAXVALUE;
 				«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 					«'  '»FROM «model.getNewHistTable.tableName.toLowerCase» VERSIONS PERIOD FOR «
 					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE;
 				«ELSE»
-					«'  '»FROM «model.getNewHistTable.tableName.toLowerCase» VERSIONS BETWEEN SCN MINVALUE AND MAXVALUE VERSIONS PERIOD FOR «
+					«'  '»FROM «model.getNewHistTable.tableName.toLowerCase» VERSIONS BETWEEN SCN «model.minScn» AND MAXVALUE VERSIONS PERIOD FOR «
 					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE;
 				«ENDIF»
 			«ENDIF»
