@@ -46,7 +46,7 @@ class CreateLatestViewInsteadOfTrigger {
 			--
 			-- Create instead of trigger on latest view
 			--
-			CREATE OR REPLACE TRIGGER «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»
+			CREATE OR REPLACE TRIGGER «model.latestViewName.toLowerCase»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»
 			   INSTEAD OF INSERT OR UPDATE OR DELETE 
 			   ON «model.latestViewName»
 			DECLARE
@@ -88,7 +88,7 @@ class CreateLatestViewInsteadOfTrigger {
 						in_old_row => l_old_row
 					);
 				END IF;
-			END «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»;
+			END «model.latestViewName.toLowerCase»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»;
 			/
 		«ENDIF»
 	'''

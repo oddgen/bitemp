@@ -54,7 +54,7 @@ class CreateLatestViewInsteadOfTriggerTest extends AbstractJdbcTest {
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
 		}
-		Assert.assertEquals("VALID", getObjectStatus("TRIGGER", "DEPT_TRG"))
+		Assert.assertEquals("VALID", getObjectStatus("TRIGGER", "DEPT_LV_TRG"))
 	}
 
 	@Test
@@ -112,7 +112,7 @@ class CreateLatestViewInsteadOfTriggerTest extends AbstractJdbcTest {
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
 		}
-		Assert.assertEquals("VALID", getObjectStatus("TRIGGER", "T1_TRG"))
+		Assert.assertEquals("VALID", getObjectStatus("TRIGGER", "T1_LV_TRG"))
 	}
 
 
