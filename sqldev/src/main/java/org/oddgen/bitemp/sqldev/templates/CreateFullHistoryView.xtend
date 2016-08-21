@@ -81,13 +81,13 @@ class CreateFullHistoryView {
 				       	»«col.toLowerCase»«
 				       »«ENDFOR»
 				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-				  FROM «model.inputTable.tableName.toLowerCase» VERSIONS BETWEEN SCN MINVALUE AND MAXVALUE;
+					«'  '»FROM «model.inputTable.tableName.toLowerCase» VERSIONS BETWEEN SCN MINVALUE AND MAXVALUE;
 				«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
-				  FROM «model.getNewHistTable.tableName.toLowerCase» VERSIONS PERIOD FOR «
-				  BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE;
+					«'  '»FROM «model.getNewHistTable.tableName.toLowerCase» VERSIONS PERIOD FOR «
+					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE;
 				«ELSE»
-				  FROM «model.getNewHistTable.tableName.toLowerCase» VERSIONS BETWEEN SCN MINVALUE AND MAXVALUE VERSIONS PERIOD FOR «
-				  BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE;
+					«'  '»FROM «model.getNewHistTable.tableName.toLowerCase» VERSIONS BETWEEN SCN MINVALUE AND MAXVALUE VERSIONS PERIOD FOR «
+					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE;
 				«ENDIF»
 			«ENDIF»
 		«ENDIF»		

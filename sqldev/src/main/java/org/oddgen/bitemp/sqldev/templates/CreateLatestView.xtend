@@ -17,6 +17,7 @@ package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
+import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.sqldev.LoggableConstants
@@ -55,12 +56,13 @@ class CreateLatestView {
 			SELECT «FOR col : model.columns SEPARATOR ',' + System.lineSeparator + '       '»«
 			       	»«col.columnName.toLowerCase»«
 			       »«ENDFOR»
-			«'  '»«
-			»FROM «model.inputTable.getNewTableName(model).toLowerCase»«
-			»«IF model.isTemporalValidity»«System.lineSeparator
-			» WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL«
-			» OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0«
-			»«ENDIF»;
+			«IF model.targetModel == ApiType.NON_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+				«'  '»FROM «model.inputTable.getNewTableName(model).toLowerCase»;
+			«ELSE»
+				«' '» FROM «model.inputTable.getNewTableName(model).toLowerCase»
+				«' '»WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL«
+				» OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0;
+			«ENDIF»
 		«ENDIF»
 	'''
 }
