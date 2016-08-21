@@ -36,7 +36,10 @@ class CreateFullHistoryViewTest extends AbstractJdbcTest {
 		val model = gen.getModel(dataSource.connection, "DEPT", params)
 		val script = template.compile(model).toString
 		for (stmt : script.statements) {
+			try {
 			jdbcTemplate.execute(stmt)
+			} catch (Exception e) {
+			}
 		}
 		Assert.assertEquals("INVALID", getObjectStatus("VIEW", "DEPT_FHV"))
 		val colCount = jdbcTemplate.queryForObject('''
