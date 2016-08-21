@@ -38,6 +38,7 @@ class PreferencePanel extends DefaultTraversablePanel {
 	var JComboBox<String> granularityComboBox
 	val JCheckBox transactionTimeDefaultCheckBox = new JCheckBox
 	val JTextField flashbackArchiveName = new JTextField
+	var JComboBox<String> contextLevelComboBox
 	val JTextField validFromColName = new JTextField
 	val JTextField validToColName = new JTextField
 	val JTextField objectTypeSuffix = new JTextField
@@ -62,21 +63,24 @@ class PreferencePanel extends DefaultTraversablePanel {
 			builder.field.label.withText(BitempResources.getString("PREF_CRUD_COMPATIBILITY_ORIGINAL_TABLE_LABEL")).
 				component(crudCompitiblityForOriginalTableCheckBox))
 		builder.add(
-			builder.field.label.withText(BitempResources.getString("PREF_LATEST_TABLE_SUFFIX_LABEL")).component(
-				latestTableSuffix))
-		builder.add(
-			builder.field.label.withText(BitempResources.getString("PREF_LATEST_VIEW_SUFFIX_LABEL")).component(
-				latestViewSuffix))
-		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_GEN_TRANSACTION_TIME_LABEL")).component(
 				transactionTimeDefaultCheckBox))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_FLASHBACK_ARCHIVE_NAME_LABEL")).component(
 				flashbackArchiveName))
+		val contextLevelModel = new DefaultComboBoxModel<String>
+		contextLevelModel.addElement(BitempResources.getString("PREF_CONTEXT_LEVEL_ALL"))
+		contextLevelModel.addElement(BitempResources.getString("PREF_CONTEXT_LEVEL_TYPICAL"))
+		contextLevelModel.addElement(BitempResources.getString("PREF_CONTEXT_LEVEL_NONE"))
+		contextLevelModel.addElement(BitempResources.getString("PREF_CONTEXT_LEVEL_KEEP"))
+		contextLevelComboBox = new JComboBox<String>(contextLevelModel)
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_FLASHBACK_ARCHIVE_CONTEXT_LEVEL_LABEL")).component(
+				contextLevelComboBox))		
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_GEN_VALID_TIME_LABEL")).component(
 				validTimeDefaultCheckBox))
-		val granularityModel = new DefaultComboBoxModel<String>();
+		val granularityModel = new DefaultComboBoxModel<String>
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_YEAR"))
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_MONTH"))
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_WEEK"))
@@ -96,6 +100,12 @@ class PreferencePanel extends DefaultTraversablePanel {
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_VALID_TO_COL_NAME_LABEL")).component(
 				validToColName))
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_LATEST_TABLE_SUFFIX_LABEL")).component(
+				latestTableSuffix))
+		builder.add(
+			builder.field.label.withText(BitempResources.getString("PREF_LATEST_VIEW_SUFFIX_LABEL")).component(
+				latestViewSuffix))
 		builder.add(
 			builder.field.label.withText(BitempResources.getString("PREF_HISTORY_TABLE_SUFFIX_LABEL")).component(
 				historyTableSuffix))
@@ -130,6 +140,7 @@ class PreferencePanel extends DefaultTraversablePanel {
 		latestViewSuffix.text = info.latestViewSuffix
 		transactionTimeDefaultCheckBox.selected = info.genTransactionTime
 		flashbackArchiveName.text = info.flashbackArchiveName
+		contextLevelComboBox.selectedItem = info.flashbackArchiveContextLevel
 		validTimeDefaultCheckBox.selected = info.isGenValidTime
 		granularityComboBox.selectedItem = info.granularity
 		validFromColName.text = info.validFromColName
@@ -154,6 +165,7 @@ class PreferencePanel extends DefaultTraversablePanel {
 		info.latestViewSuffix = latestViewSuffix.text
 		info.genTransactionTime = transactionTimeDefaultCheckBox.selected
 		info.flashbackArchiveName = flashbackArchiveName.text
+		info.flashbackArchiveContextLevel = contextLevelComboBox.selectedItem as String
 		info.genValidTime = validTimeDefaultCheckBox.selected
 		info.granularity = granularityComboBox.selectedItem as String
 		info.validFromColName = validFromColName.text

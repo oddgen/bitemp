@@ -31,6 +31,7 @@ class CreateDataStructure {
 		«val removeTable = new RemoveTable»
 		«val renameTable = new RenameTable»
 		«val addFlashbackArchive = new AddFlashbackArchive»
+		«val setFlashbackArchiveContextLevel = new SetFlashbackArchiveContextLevel»
 		«val createHistoryTable = new CreateHistoryTable»
 		«val addDeletedIndicatorColumn = new AddDeletedIndicatorColumn»
 		«val removeDeletedIndicatorColumn = new RemoveDeletedIndicatorColumn»
@@ -46,6 +47,7 @@ class CreateDataStructure {
 		«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 			«removeTemporalValidity.compile(model.inputTable)»
 			«renameTable.compile(model)»
+			«setFlashbackArchiveContextLevel.compile(model)»
 			«addFlashbackArchive.compile(model.inputTable, model)»
 			«IF model.originModel == ApiType.BI_TEMPORAL»
 				«populateFlashbackArchive.compile(model)»
@@ -68,6 +70,7 @@ class CreateDataStructure {
 			«renameTable.compile(model)»
 			«addDeletedIndicatorColumn.compile(model)»
 			«createHistoryTable.compile(model)»
+			«setFlashbackArchiveContextLevel.compile(model)»
 			«addFlashbackArchive.compile(model.newHistTable, model)»
 			«IF model.originModel == ApiType.NON_TEMPORAL»
 				«initializeHistory.compile(model)»

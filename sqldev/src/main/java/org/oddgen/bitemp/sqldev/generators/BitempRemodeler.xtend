@@ -47,6 +47,8 @@ class BitempRemodeler implements OddgenGenerator {
 	public static String GRANULARITY = BitempResources.get("PREF_GRANULARITY_LABEL")
 	public static String GEN_TRANSACTION_TIME = BitempResources.get("PREF_GEN_TRANSACTION_TIME_LABEL")
 	public static String FLASHBACK_ARCHIVE_NAME = BitempResources.get("PREF_FLASHBACK_ARCHIVE_NAME_LABEL")
+	public static String FLASHBACK_ARCHIVE_CONTEXT_LEVEL = BitempResources.get(
+		"PREF_FLASHBACK_ARCHIVE_CONTEXT_LEVEL_LABEL")
 	public static String VALID_FROM_COL_NAME = BitempResources.get("PREF_VALID_FROM_COL_NAME_LABEL")
 	public static String VALID_TO_COL_NAME = BitempResources.get("PREF_VALID_TO_COL_NAME_LABEL")
 	public static String OBJECT_TYPE_SUFFIX = BitempResources.get("PREF_OBJECT_TYPE_SUFFIX_LABEL")
@@ -106,8 +108,6 @@ class BitempRemodeler implements OddgenGenerator {
 			val PreferenceModel pref = PreferenceModel.getInstance(preferences)
 			params.put(GEN_API, if(pref.genApi) "1" else "0")
 			params.put(CRUD_COMPATIBILITY_ORIGINAL_TABLE, if(pref.crudCompatiblityOriginalTable) "1" else "0")
-			params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
-			params.put(LATEST_VIEW_SUFFIX, pref.latestViewSuffix)
 			params.put(GEN_TRANSACTION_TIME, if(pref.genTransactionTime) "1" else "0")
 			val sessionDao = new SessionDao(conn)
 			val fbas = sessionDao.accessibleFlashbackArchives
@@ -116,10 +116,13 @@ class BitempRemodeler implements OddgenGenerator {
 			} else {
 				params.put(FLASHBACK_ARCHIVE_NAME, fbas.get(0))
 			}
+			params.put(FLASHBACK_ARCHIVE_CONTEXT_LEVEL, pref.flashbackArchiveContextLevel)
 			params.put(GEN_VALID_TIME, if(pref.genValidTime) "1" else "0")
 			params.put(GRANULARITY, pref.granularity)
 			params.put(VALID_FROM_COL_NAME, pref.validFromColName)
 			params.put(VALID_TO_COL_NAME, pref.validToColName)
+			params.put(LATEST_TABLE_SUFFIX, pref.latestTableSuffix)
+			params.put(LATEST_VIEW_SUFFIX, pref.latestViewSuffix)
 			params.put(HISTORY_TABLE_SUFFIX, pref.historyTableSuffix)
 			params.put(HISTORY_VIEW_SUFFIX, pref.historyViewSuffix)
 			params.put(FULL_HISTORY_VIEW_SUFFIX, pref.fullHistoryViewSuffix)
@@ -141,6 +144,11 @@ class BitempRemodeler implements OddgenGenerator {
 			lov.put(GEN_TRANSACTION_TIME, #["1", "0"])
 			val sessionDao = new SessionDao(conn)
 			lov.put(FLASHBACK_ARCHIVE_NAME, sessionDao.accessibleFlashbackArchives)
+			lov.put(FLASHBACK_ARCHIVE_CONTEXT_LEVEL,
+				#[BitempResources.getString("PREF_CONTEXT_LEVEL_ALL"),
+					BitempResources.getString("PREF_CONTEXT_LEVEL_TYPICAL"),
+					BitempResources.getString("PREF_CONTEXT_LEVEL_NONE"),
+					BitempResources.getString("PREF_CONTEXT_LEVEL_KEEP")])
 			lov.put(GEN_VALID_TIME, #["1", "0"])
 			lov.put(GRANULARITY,
 				#[BitempResources.getString("PREF_GRANULARITY_YEAR"),
@@ -167,6 +175,7 @@ class BitempRemodeler implements OddgenGenerator {
 			paramStates.put(LATEST_VIEW_SUFFIX, !isCrudCompatiblityOriginalTable && isGenApi)
 			val isTransactionTime = params.get(GEN_TRANSACTION_TIME) == "1"
 			paramStates.put(FLASHBACK_ARCHIVE_NAME, isTransactionTime)
+			paramStates.put(FLASHBACK_ARCHIVE_CONTEXT_LEVEL, isTransactionTime)
 			val isValidTime = params.get(GEN_VALID_TIME) == "1"
 			paramStates.put(GRANULARITY, isValidTime && isGenApi)
 			paramStates.put(VALID_FROM_COL_NAME, isValidTime)
@@ -193,10 +202,10 @@ class BitempRemodeler implements OddgenGenerator {
 			return template.compile(conn, objectName)
 		}
 	}
-	
+
 	def getModel(Connection conn, String tableName, LinkedHashMap<String, String> params) {
 		populateGeneratorModel(conn, tableName, params)
-		return generatorModel		
+		return generatorModel
 	}
 
 	def private populatePrerequisiteModel(Connection conn) {
@@ -222,7 +231,7 @@ class BitempRemodeler implements OddgenGenerator {
 			if (historyTable.flashbackArchiveTable != null) {
 				generatorModel.originModel = ApiType.BI_TEMPORAL
 			} else {
-				generatorModel.originModel = ApiType.UNI_TEMPORAL_VALID_TIME				
+				generatorModel.originModel = ApiType.UNI_TEMPORAL_VALID_TIME
 			}
 		}
 		if (params.get(GEN_TRANSACTION_TIME) == "1") {

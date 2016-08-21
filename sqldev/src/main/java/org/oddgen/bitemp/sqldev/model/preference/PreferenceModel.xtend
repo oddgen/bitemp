@@ -39,6 +39,7 @@ class PreferenceModel extends HashStructureAdapter {
 	static final String KEY_LATEST_VIEW_SUFFIX = "latestViewSuffix"
 	static final String KEY_GEN_TRANSACTION_TIME = "genTransactionTime"
 	static final String KEY_FLASHBACK_ARCHIVE_NAME = "flashbackArchiveName"
+	static final String KEY_FLASHBACK_ARCHIVE_CONTEXT_LEVEL = "flashbackArchiveContextLevel"
 	static final String KEY_GEN_VALID_TIME = "genValidTime"
 	static final String KEY_GRANULARITY = "granularity"
 	static final String KEY_VALID_FROM_COL_NAME = "validFromColName"
@@ -99,6 +100,24 @@ class PreferenceModel extends HashStructureAdapter {
 
 	def setFlashbackArchiveName(String flashbackArchiveName) {
 		getHashStructure.putString(PreferenceModel.KEY_FLASHBACK_ARCHIVE_NAME, flashbackArchiveName)
+	}
+
+	def getFlashbackArchiveContextLevel() {
+		val level = getHashStructure.getString(PreferenceModel.KEY_FLASHBACK_ARCHIVE_CONTEXT_LEVEL, BitempResources.getString("PREF_CONTEXT_LEVEL_KEEP"))
+		val validLevels = new HashSet<String>
+		validLevels.add(BitempResources.getString("PREF_CONTEXT_LEVEL_ALL"))
+		validLevels.add(BitempResources.getString("PREF_CONTEXT_LEVEL_TYPICAL"))
+		validLevels.add(BitempResources.getString("PREF_CONTEXT_LEVEL_NONE"))
+		validLevels.add(BitempResources.getString("PREF_CONTEXT_LEVEL_KEEP"))
+		if (validLevels.contains(level)) {
+			return level
+		} else {
+			return BitempResources.getString("PREF_CONTEXT_LEVEL_KEEP")
+		}
+	}
+
+	def setFlashbackArchiveContextLevel(String flashbackArchiveContextLevel) {
+		getHashStructure.putString(PreferenceModel.KEY_FLASHBACK_ARCHIVE_CONTEXT_LEVEL, flashbackArchiveContextLevel)
 	}
 
 	def isGenValidTime() {

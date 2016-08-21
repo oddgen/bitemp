@@ -51,20 +51,20 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 	@Test
 	def getParamsTest() {
 		val params = gen.getParams(dataSource.connection, "TABLE", null)
-		Assert.assertEquals(18, params.size)
+		Assert.assertEquals(19, params.size)
 	}
 
 	@Test
 	def getLov() {
 		val lov = gen.getLov(dataSource.connection, "TABLE", null, null)
-		Assert.assertEquals(6, lov.size)
+		Assert.assertEquals(7, lov.size)
 	}
 
 	@Test
 	def getParamStates() {
 		val params = gen.getParams(dataSource.connection, "TABLE", null)
 		var paramStates = gen.getParamStates(dataSource.connection, "TABLE", null, params)
-		Assert.assertEquals(15, paramStates.size)
+		Assert.assertEquals(16, paramStates.size)
 		Assert.assertEquals(true, paramStates.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME))
 	}
 
@@ -81,11 +81,12 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 			-- - Parameters
 			--     - Generate table API?                   : Yes
 			--     - CRUD compatibility for original table?: No
-			--     - Suffix for view with latest content   : _lv
 			--     - Flashback data archive name           : FBA1
+			--     - Flashback archive context level       : Keep current level
 			--     - Granularity                           : Day
 			--     - Column name for valid from            : valid_from
 			--     - Column name for valid to              : valid_to
+			--     - Suffix for view with latest content   : _lv
 			--     - Suffix for history table              : _ht
 			--     - Suffix for history view               : _hv
 			--     - Suffix for full history view          : _fhv
