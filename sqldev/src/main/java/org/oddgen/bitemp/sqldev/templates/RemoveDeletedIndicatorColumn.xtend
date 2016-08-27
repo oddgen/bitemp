@@ -31,7 +31,7 @@ class RemoveDeletedIndicatorColumn {
 			--
 			-- Remove indicator for deleted rows
 			--
-			ALTER TABLE «model.inputTable.getNewTableName(model).toLowerCase» DROP COLUMN «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»;
+			ALTER TABLE «model.latestTableName» DROP COLUMN «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»;
 		«ENDIF»
 	'''
 }

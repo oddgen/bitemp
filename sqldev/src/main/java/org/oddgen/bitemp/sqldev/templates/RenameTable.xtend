@@ -26,12 +26,12 @@ class RenameTable {
 
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
-			«val newTableName = getNewTableName(model.inputTable, model)»
-			«IF model.inputTable.tableName.toLowerCase != newTableName.toLowerCase»
+			«val newTableName = model.latestTableName»
+			«IF model.inputTable.tableName.toLowerCase != newTableName»
 				--
 				-- Rename table
 				--
-				RENAME «model.inputTable.tableName.toLowerCase» TO «newTableName.toLowerCase»;
+				RENAME «model.inputTable.tableName.toLowerCase» TO «newTableName»;
 			«ENDIF»
 		«ENDIF»
 	'''

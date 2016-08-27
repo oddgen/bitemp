@@ -28,14 +28,11 @@ class CreateHistoryTable {
 	def compile(
 		GeneratorModel model) '''
 		«IF model.inputTable.exists»
-			«val histTable = getHistTable(model.inputTable)»
-			«IF histTable == null»
-				«val latestTableName = getNewTableName(model.inputTable, model)»
-				«val historyTableName = getNewTableName(model.newHistTable, model)»
+			«IF model.inputTable.histTable == null»
 				--
 				-- Create history table
 				--
-				CREATE TABLE «historyTableName.toLowerCase» (
+				CREATE TABLE «model.historyTableName» (
 					«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
 					«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
 					«model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
@@ -50,11 +47,11 @@ class CreateHistoryTable {
 					«ENDFOR»
 				);
 				«val latestPkCols = model.inputTable.primaryKeyConstraint.columnNames»
-				ALTER TABLE «historyTableName.toLowerCase» ADD FOREIGN KEY («FOR col : latestPkCols SEPARATOR ", "»«col.toLowerCase»«ENDFOR») REFERENCES «latestTableName.toLowerCase»;
-				CREATE INDEX «historyTableName.toLowerCase»_i0$ ON «historyTableName» («FOR col : latestPkCols SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
+				ALTER TABLE «model.historyTableName» ADD FOREIGN KEY («FOR col : latestPkCols SEPARATOR ", "»«col.toLowerCase»«ENDFOR») REFERENCES «model.latestTableName»;
+				CREATE INDEX «model.historyTableName»_i0$ ON «model.historyTableName» («FOR col : latestPkCols SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
 				«var int index = 1»
 				«FOR fk : model.inputTable.foreignKeyConstraints»
-					CREATE INDEX «historyTableName.toLowerCase»_i«index++»$ ON «historyTableName.toLowerCase» («FOR col : fk.columnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
+					CREATE INDEX «model.historyTableName»_i«index++»$ ON «model.historyTableName» («FOR col : fk.columnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
 				«ENDFOR»
 			«ENDIF»
 		«ENDIF»

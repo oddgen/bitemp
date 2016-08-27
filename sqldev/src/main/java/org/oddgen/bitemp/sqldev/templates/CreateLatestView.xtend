@@ -49,9 +49,9 @@ class CreateLatestView {
 			       	»«col.columnName.toLowerCase»«
 			       »«ENDFOR»
 			«IF model.targetModel == ApiType.NON_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-				«'  '»FROM «model.inputTable.getNewTableName(model).toLowerCase»;
+				«'  '»FROM «model.latestTableName»;
 			«ELSE»
-				«' '» FROM «model.inputTable.getNewTableName(model).toLowerCase»
+				«' '» FROM «model.latestTableName»
 				«' '»WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL«
 				» OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0;
 			«ENDIF»

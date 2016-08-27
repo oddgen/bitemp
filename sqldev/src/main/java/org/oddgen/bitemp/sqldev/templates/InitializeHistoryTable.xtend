@@ -27,17 +27,14 @@ class InitializeHistoryTable {
 
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
-			«val histTable = getHistTable(model.inputTable)»
-			«IF histTable == null»
-				«val latestTableName = getNewTableName(model.inputTable, model).toLowerCase»
-				«val historyTableName = getNewTableName(model.newHistTable, model).toLowerCase»
+			«IF model.inputTable.histTable == null»
 				«val columns = model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && 
 					it.columnName != BitempRemodeler.IS_DELETED_COL_NAME && it.virtualColumn == "NO"
 				]»
 				--
 				-- Initialize history table with latest data
 				--
-				INSERT INTO «historyTableName» (
+				INSERT INTO «model.historyTableName» (
 				          «FOR col : columns SEPARATOR ","»
 				          	«col.columnName.toLowerCase»
 				          «ENDFOR»
@@ -45,7 +42,7 @@ class InitializeHistoryTable {
 				SELECT «FOR col : columns SEPARATOR ',' + System.lineSeparator + '       '»«
 				       	»«col.columnName.toLowerCase»«
 				       »«ENDFOR»
-				  FROM «latestTableName»;
+				  FROM «model.latestTableName»;
 				COMMIT;
 			«ENDIF»
 		«ENDIF»
