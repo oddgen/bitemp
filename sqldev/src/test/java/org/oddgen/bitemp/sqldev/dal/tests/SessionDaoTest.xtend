@@ -172,8 +172,15 @@ class SessionDaoTest extends AbstractJdbcTest {
 	
 	@Test
 	def void getMissingInstallPrerequisites() {
-		val doa = new SessionDao(dataSource.connection)
-		val prereqs = doa.missingInstallPrerequisites
+		val dao = new SessionDao(dataSource.connection)
+		val prereqs = dao.missingInstallPrerequisites
 		Assert.assertEquals(0, prereqs.size)
+	}
+	
+	@Test
+	def void existsObject() {
+		val dao = new SessionDao(dataSource.connection)
+		Assert.assertEquals(true, dao.existsObject("TABLE", "EMP"))
+		Assert.assertEquals(false, dao.existsObject("TABLE", "EMP_MISSING"))
 	}
 }
