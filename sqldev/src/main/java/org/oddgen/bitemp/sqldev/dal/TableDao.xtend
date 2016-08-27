@@ -210,13 +210,13 @@ class TableDao {
 	}
 
 	def isHistoryTable(String tableName) {
-		// faster than querying constraint and cons_columns, good enough, BitempRemodeler.HIST_ID_COL_NAME must not be used for other purposes
+		// faster than querying constraint and cons_columns, good enough, BitempRemodeler.VALID_TIME_PERIOD_NAME must not be used for other purposes
 		val sql = '''
 			SELECT COUNT(*) AS found
-			  FROM user_tab_columns
+			  FROM user_tab_cols
 			 WHERE table_name = ?
-			       AND column_name = '«BitempRemodeler.HISTORY_ID_COL_NAME»'
-			       AND identity_column = 'YES'
+			       AND column_name = '«BitempRemodeler.VALID_TIME_PERIOD_NAME»'
+			       AND hidden_column = 'YES'
 		'''
 		val result = jdbcTemplate.queryForObject(sql, Integer, #[tableName])
 		return result == 1

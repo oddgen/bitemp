@@ -47,7 +47,7 @@ class CreateObjectTypeTest extends AbstractJdbcTest {
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
 		}
-		Assert.assertEquals(7, getColCount("DEPT_OT"))
+		Assert.assertEquals(6, getColCount("DEPT_OT"))
 		Assert.assertEquals(0, getColCount("DEPT_CT"))
 		Assert.assertEquals("VALID", getObjectStatus("TYPE BODY", "DEPT_OT"))
 	}

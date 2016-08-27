@@ -48,8 +48,9 @@ class SessionDao {
 			   ),
 			   hist_tabs AS (
 			      SELECT /*+ materialize */ table_name
-			        FROM user_tab_columns
-			       WHERE column_name = '«BitempRemodeler.HISTORY_ID_COL_NAME»'
+			        FROM user_tab_cols
+			       WHERE column_name = '«BitempRemodeler.VALID_TIME_PERIOD_NAME.toUpperCase»'
+			         AND hidden_column = 'YES'
 			   ),
 			   pk_tabs AS (
 			      SELECT /*+ materialize */ table_name 

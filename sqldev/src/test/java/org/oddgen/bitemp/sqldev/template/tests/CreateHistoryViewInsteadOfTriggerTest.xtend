@@ -40,7 +40,6 @@ class CreateHistoryViewInsteadOfTriggerTest extends AbstractJdbcTest {
 		''')
 		jdbcTemplate.execute('''
 			CREATE TABLE t1_ht (
-			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
 			   valid_from DATE NULL,
 			   valid_to DATE NULL,
 			   is_deleted$ NUMBER(1,0) NULL,
@@ -49,6 +48,9 @@ class CreateHistoryViewInsteadOfTriggerTest extends AbstractJdbcTest {
 			   c1 INTEGER,
 			   c2 VARCHAR2(20)
 			)
+		''')
+		jdbcTemplate.execute('''
+			ALTER TABLE t1_ht ADD PRIMARY KEY (c1, valid_from)
 		''')
 		jdbcTemplate.execute('''
 			ALTER TABLE t1_ht ADD FOREIGN KEY (c1) REFERENCES t1

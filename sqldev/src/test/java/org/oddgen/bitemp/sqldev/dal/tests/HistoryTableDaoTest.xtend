@@ -36,8 +36,8 @@ class HistoryTableDaoTest extends AbstractJdbcTest {
 		try {
 		jdbcTemplate.execute('''
 			CREATE TABLE t1 (
-			   «BitempRemodeler.HISTORY_ID_COL_NAME» INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
-			   c1 VARCHAR2(20)
+			   «BitempRemodeler.VALID_TIME_PERIOD_NAME» VARCHAR2(10) INVISIBLE, 
+			   c1 VARCHAR2(20) PRIMARY KEY
 			)
 		''')
 		} catch (Exception e) {
@@ -52,8 +52,8 @@ class HistoryTableDaoTest extends AbstractJdbcTest {
 		try {
 		jdbcTemplate.execute('''
 			CREATE TABLE t2 (
-			   hist_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, 
-			   c1 VARCHAR2(20)
+			   «BitempRemodeler.VALID_TIME_PERIOD_NAME» VARCHAR2(10), 
+			   c1 VARCHAR2(20) PRIMARY KEY
 			)
 		''')
 		} catch (Exception e) {

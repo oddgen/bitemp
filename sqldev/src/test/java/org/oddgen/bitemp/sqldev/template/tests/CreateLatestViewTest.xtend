@@ -53,18 +53,16 @@ class CreateLatestViewTest extends AbstractJdbcTest {
 		''')
 		jdbcTemplate.execute('''
 			CREATE TABLE t1_ht (
-			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
 			   valid_from DATE NULL,
 			   valid_to DATE NULL,
 			   is_deleted$ NUMBER(1,0) NULL,
 			   CHECK (is_deleted$ IN (0,1)),
 			   PERIOD FOR vt$ (valid_from, valid_to),
 			   c1 INTEGER,
-			   c2 VARCHAR2(20)
+			   c2 VARCHAR2(20),
+			   UNIQUE (c1, valid_from),
+			   FOREIGN KEY (c1) REFERENCES t1
 			)
-		''')
-		jdbcTemplate.execute('''
-			ALTER TABLE t1_ht ADD FOREIGN KEY (c1) REFERENCES t1
 		''')
 		jdbcTemplate.execute('''
 			CREATE INDEX t1_ht_i0$ ON t1_ht (c1)

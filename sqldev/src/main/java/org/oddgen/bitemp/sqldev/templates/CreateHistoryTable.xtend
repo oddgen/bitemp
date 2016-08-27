@@ -16,6 +16,7 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
+import java.util.ArrayList
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
@@ -24,6 +25,20 @@ import org.oddgen.sqldev.LoggableConstants
 @Loggable(LoggableConstants.DEBUG)
 class CreateHistoryTable {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
+	
+	def getLatestPkColumnNames(GeneratorModel model) {
+		val cols = new ArrayList<String>
+		for (col : model.inputTable.primaryKeyConstraint.columnNames) {
+			cols.add(col.toLowerCase)
+		}
+		return cols
+	}
+
+	def getHistoryPkColumnNames(GeneratorModel model) {
+		val cols = model.latestPkColumnNames
+		cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase)
+		return cols
+	}
 
 	def compile(
 		GeneratorModel model) '''
@@ -33,7 +48,6 @@ class CreateHistoryTable {
 				-- Create history table
 				--
 				CREATE TABLE «model.historyTableName» (
-					«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
 					«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
 					«model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
 					«BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» NUMBER(1,0) NULL,
@@ -46,12 +60,11 @@ class CreateHistoryTable {
 						»«ENDIF»
 					«ENDFOR»
 				);
-				«val latestPkCols = model.inputTable.primaryKeyConstraint.columnNames»
-				ALTER TABLE «model.historyTableName» ADD FOREIGN KEY («FOR col : latestPkCols SEPARATOR ", "»«col.toLowerCase»«ENDFOR») REFERENCES «model.latestTableName»;
-				CREATE INDEX «model.historyTableName»_i0$ ON «model.historyTableName» («FOR col : latestPkCols SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
+				ALTER TABLE «model.historyTableName» ADD UNIQUE («FOR col : model.historyPkColumnNames SEPARATOR ", "»«col»«ENDFOR»);
+				ALTER TABLE «model.historyTableName» ADD FOREIGN KEY («FOR col : model.latestPkColumnNames SEPARATOR ", "»«col»«ENDFOR») REFERENCES «model.latestTableName»;
 				«var int index = 1»
 				«FOR fk : model.inputTable.foreignKeyConstraints»
-					CREATE INDEX «model.historyTableName»_i«index++»$ ON «model.historyTableName» («FOR col : fk.columnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
+					CREATE INDEX «model.historyTableName»«String.format(BitempRemodeler.INDEX_SUFFIX_PATTERN, index++).toLowerCase» ON «model.historyTableName» («FOR col : fk.columnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
 				«ENDFOR»
 			«ENDIF»
 		«ENDIF»
