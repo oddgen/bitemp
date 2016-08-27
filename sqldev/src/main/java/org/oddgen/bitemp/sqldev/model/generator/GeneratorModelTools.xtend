@@ -74,10 +74,12 @@ class GeneratorModelTools {
 			val newHistTable = new Table()
 			newHistTable.tableName = '''«model.baseTableName»«model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase»'''
 			newHistTable.historyTable = true
-			newHistTable.columns = new LinkedHashMap<String, Column> 
+			newHistTable.columns = new LinkedHashMap<String, Column>
 			newHistTable.columns.put(BitempRemodeler.HISTORY_ID_COL_NAME, model.createHistIdColumn)
-			newHistTable.columns.put(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME), model.createValidTimeColumn(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)))
-			newHistTable.columns.put(model.params.get(BitempRemodeler.VALID_TO_COL_NAME), model.createValidTimeColumn(model.params.get(BitempRemodeler.VALID_TO_COL_NAME)))
+			newHistTable.columns.put(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME),
+				model.createValidTimeColumn(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)))
+			newHistTable.columns.put(model.params.get(BitempRemodeler.VALID_TO_COL_NAME),
+				model.createValidTimeColumn(model.params.get(BitempRemodeler.VALID_TO_COL_NAME)))
 			newHistTable.columns.put(BitempRemodeler.IS_DELETED_COL_NAME, model.createIsDeletedColumn)
 			newHistTable.columns.putAll(model.inputTable.columns)
 			return newHistTable
@@ -159,7 +161,7 @@ class GeneratorModelTools {
 			default: "DATE"
 		}
 	}
-	
+
 	def getValidTimeDataScale(GeneratorModel model) {
 		return switch (model.params.get(BitempRemodeler.GRANULARITY)) {
 			case BitempResources.getString("PREF_GRANULARITY_CENTISECOND"): 2
@@ -179,7 +181,7 @@ class GeneratorModelTools {
 		}
 		return false
 	}
-	
+
 	def createHistIdColumn(GeneratorModel model) {
 		val col = new Column
 		col.columnName = BitempRemodeler.HISTORY_ID_COL_NAME.toUpperCase
@@ -198,7 +200,7 @@ class GeneratorModelTools {
 		col.sequenceName = null // do not need correct value
 		return col
 	}
-	
+
 	def createIsDeletedColumn(GeneratorModel model) {
 		val col = new Column
 		col.columnName = BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
@@ -215,9 +217,9 @@ class GeneratorModelTools {
 		col.identityColumn = "NO"
 		col.generationType = null
 		col.sequenceName = null
-		return col		
+		return col
 	}
-	
+
 	def createValidTimeColumn(GeneratorModel model, String columnName) {
 		val col = new Column
 		col.columnName = columnName.toUpperCase
@@ -236,11 +238,11 @@ class GeneratorModelTools {
 		col.sequenceName = null
 		return col
 	}
-	
+
 	def isTemporalValidity(GeneratorModel model) {
 		return model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL
 	}
-	
+
 	def getFullHistoryViewName(
 		GeneratorModel model) {
 		val name = '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.FULL_HISTORY_VIEW_SUFFIX).toLowerCase»'''
@@ -252,44 +254,59 @@ class GeneratorModelTools {
 		val name = '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.HISTORY_VIEW_SUFFIX).toLowerCase»'''
 		return name.toString
 	}
-	
-	def getHistoryViewInsteadOfTriggerName(
-		GeneratorModel model) {
+
+	def getHistoryViewInsteadOfTriggerName(GeneratorModel model) {
 		val name = '''«model.historyViewName»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»'''
 		return name.toString
-	}	
-	
+	}
+
+	def getHistoryTableName(GeneratorModel model) {
+		val name = '''«model.getNewHistTable.tableName.toLowerCase»'''
+		return name.toString
+	}
+
 	def getLatestViewName(GeneratorModel model) {
 		if (model.params.get(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1") {
-			return model.getBaseTableName.toLowerCase
+			return model.getBaseTableName.
+				toLowerCase
 		} else {
 			return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.LATEST_VIEW_SUFFIX).toLowerCase»'''
 		}
 	}
-	
+
 	def getLatestViewInsteadOfTriggerName(GeneratorModel model) {
 		val name = '''«model.latestViewName»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»'''
 		return name.toString
 	}
+	
+	def getLatestTableName(GeneratorModel model) {
+		val name = '''«model.inputTable.getNewTableName(model).toLowerCase»'''
+		return name.toString
+	}
+	
 
-	def getApiPackageName(GeneratorModel model) {
+	def getApiPackageName(
+		GeneratorModel model) {
 		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase»'''
 		return name.toString
 	}
 
-	def getHookPackageName(GeneratorModel model) {
+	def getHookPackageName(
+		GeneratorModel model) {
 		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.HOOK_PACKAGE_SUFFIX).toLowerCase»'''
 		return name.toString
 	}
-	
-	def getObjectTypeName(GeneratorModel model) {
+
+	def getObjectTypeName(
+		GeneratorModel model) {
 		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»'''
 		return name.toString
 	}
 
-	def getCollectionTypeName(GeneratorModel model) {
+	def getCollectionTypeName(
+		GeneratorModel model) {
 		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.COLLECTION_TYPE_SUFFIX).toLowerCase»'''
 		return name.toString
-	}	
-	
+	}
+
 }
