@@ -35,7 +35,7 @@ class CreateObjectType {
 			--
 			-- Create object type
 			--
-			CREATE OR REPLACE TYPE «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase» FORCE AS OBJECT (
+			CREATE OR REPLACE TYPE «model.objectTypeName» FORCE AS OBJECT (
 			   «IF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME ||  model.targetModel == ApiType.BI_TEMPORAL»
 			   	«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» INTEGER,
 			   	«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType»,
@@ -45,28 +45,27 @@ class CreateObjectType {
 			   «FOR col : columns»
 			   	«col.columnName.toLowerCase» «col.fullDataType»,
 			   «ENDFOR»
-			   CONSTRUCTOR FUNCTION «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase» RETURN SELF AS RESULT
+			   CONSTRUCTOR FUNCTION «model.objectTypeName» RETURN SELF AS RESULT
 			);
 			/
 			--
 			-- Create object type body
 			--
-			CREATE OR REPLACE TYPE BODY «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase» IS
+			CREATE OR REPLACE TYPE BODY «model.objectTypeName» IS
 				--
 				-- Default constructor
 				--
-				CONSTRUCTOR FUNCTION «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+				CONSTRUCTOR FUNCTION «model.objectTypeName»
 				   RETURN SELF AS RESULT IS
 				BEGIN
 				   RETURN;
-				END «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»;
+				END «model.objectTypeName»;
 			END;
 			/
 			--
 			-- Create collection type
 			--
-			CREATE OR REPLACE TYPE «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.COLLECTION_TYPE_SUFFIX).toLowerCase» «
-			»AS TABLE OF «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»;
+			CREATE OR REPLACE TYPE «model.collectionTypeName» AS TABLE OF «model.objectTypeName»;
 			/
 		«ENDIF»
 	'''

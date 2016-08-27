@@ -27,11 +27,6 @@ import org.oddgen.sqldev.LoggableConstants
 class CreateHistoryView {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def getHistoryViewName(
-		GeneratorModel model) {
-		return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.HISTORY_VIEW_SUFFIX).toLowerCase»'''
-	}
-
 	def getColumnNames(GeneratorModel model) {
 		val cols = new ArrayList<String>
 		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {

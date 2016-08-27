@@ -27,11 +27,6 @@ import org.oddgen.sqldev.LoggableConstants
 class CreateHistoryViewInsteadOfTrigger {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def getHistoryViewName(
-		GeneratorModel model) {
-		return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.HISTORY_VIEW_SUFFIX).toLowerCase»'''
-	}
-
 	def getColumnNames(GeneratorModel model) {
 		val cols = new ArrayList<String>
 		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {
@@ -59,18 +54,18 @@ class CreateHistoryViewInsteadOfTrigger {
 				--
 				-- Create instead of trigger on latest view
 				--
-				CREATE OR REPLACE TRIGGER «model.historyViewName.toLowerCase»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»
+				CREATE OR REPLACE TRIGGER «model.historyViewInsteadOfTriggerName»
 				   INSTEAD OF INSERT OR UPDATE OR DELETE 
 				   ON «model.historyViewName»
 				DECLARE
-					l_old_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»;
-					l_new_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»;
+					l_old_row «model.objectTypeName»;
+					l_new_row «model.objectTypeName»;
 				BEGIN
 					--
 					-- Populate old row
 					--
 					IF UPDATING OR DELETING THEN
-					   l_old_row := NEW «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»();
+					   l_old_row := NEW «model.objectTypeName»();
 					   «FOR col : model.columnNames»
 					   	l_old_row.«col.toLowerCase» := :OLD.«col.toLowerCase»;
 					   «ENDFOR»
@@ -79,7 +74,7 @@ class CreateHistoryViewInsteadOfTrigger {
 					-- Populate new row
 					--
 					IF INSERTING OR UPDATING THEN
-					   l_new_row := NEW «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»();
+					   l_new_row := NEW «model.objectTypeName»();
 					   «FOR col : model.columnNames»
 					   	l_new_row.«col.toLowerCase» := :NEW.«col.toLowerCase»;
 					   «ENDFOR»
@@ -88,20 +83,20 @@ class CreateHistoryViewInsteadOfTrigger {
 					-- Call API
 					--
 					IF INSERTING THEN
-						«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase».ins(
+						«model.apiPackageName».ins(
 							in_new_row => l_new_row
 						);
 					ELSIF UPDATING THEN
-						«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase».upd(
+						«model.apiPackageName».upd(
 							in_new_row => l_new_row,
 							in_old_row => l_old_row
 						);
 					ELSIF DELETING THEN
-						«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase».del(
+						«model.apiPackageName».del(
 							in_old_row => l_old_row
 						);
 					END IF;
-				END «model.historyViewName.toLowerCase»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»;
+				END «model.historyViewInsteadOfTriggerName»;
 				/
 			«ENDIF»
 		«ENDIF»

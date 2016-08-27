@@ -26,14 +26,6 @@ import org.oddgen.sqldev.LoggableConstants
 class CreateLatestView {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def getLatestViewName(GeneratorModel model) {
-		if (model.params.get(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1") {
-			return model.getBaseTableName.toLowerCase
-		} else {
-			return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.LATEST_VIEW_SUFFIX).toLowerCase»'''
-		}
-	}
-
 	def getColumns(GeneratorModel model) {
 		val columns = model.inputTable.columns.values.filter [
 			!it.isTemporalValidityColumn(model) && it.virtualColumn == "NO" &&

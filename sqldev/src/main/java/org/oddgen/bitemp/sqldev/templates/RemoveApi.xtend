@@ -26,46 +26,6 @@ import org.oddgen.sqldev.LoggableConstants
 class RemoveApi {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def getFullHistoryViewName(
-		GeneratorModel model) {
-		val name = '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.FULL_HISTORY_VIEW_SUFFIX).toLowerCase»'''
-		return name.toString
-	}
-
-	def getHistoryViewName(
-		GeneratorModel model) {
-		val name = '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.HISTORY_VIEW_SUFFIX).toLowerCase»'''
-		return name.toString
-	}
-	
-	def getLatestViewName(GeneratorModel model) {
-		if (model.params.get(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1") {
-			return model.getBaseTableName.toLowerCase
-		} else {
-			return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.LATEST_VIEW_SUFFIX).toLowerCase»'''
-		}
-	}
-	
-	def getApiPackageName(GeneratorModel model) {
-		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase»'''
-		return name.toString
-	}
-
-	def getHookPackageName(GeneratorModel model) {
-		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.HOOK_PACKAGE_SUFFIX).toLowerCase»'''
-		return name.toString
-	}
-	
-	def getObjectTypeName(GeneratorModel model) {
-		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»'''
-		return name.toString
-	}
-
-	def getCollectionTypeName(GeneratorModel model) {
-		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.COLLECTION_TYPE_SUFFIX).toLowerCase»'''
-		return name.toString
-	}
-
 	def compile(GeneratorModel model) '''
 		«val dao = new SessionDao(model.conn)»
 		«IF dao.existsObject("VIEW", model.fullHistoryViewName.toUpperCase)»

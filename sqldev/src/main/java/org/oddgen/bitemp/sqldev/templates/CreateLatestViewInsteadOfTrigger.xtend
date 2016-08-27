@@ -25,14 +25,6 @@ import org.oddgen.sqldev.LoggableConstants
 class CreateLatestViewInsteadOfTrigger {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
-	def getLatestViewName(GeneratorModel model) {
-		if (model.params.get(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "1") {
-			return model.getBaseTableName.toLowerCase
-		} else {
-			return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.LATEST_VIEW_SUFFIX).toLowerCase»'''
-		}
-	}
-
 	def getColumns(GeneratorModel model) {
 		val columns = model.inputTable.columns.values.filter [
 			!it.isTemporalValidityColumn(model) && it.virtualColumn == "NO" &&
@@ -46,18 +38,18 @@ class CreateLatestViewInsteadOfTrigger {
 			--
 			-- Create instead of trigger on latest view
 			--
-			CREATE OR REPLACE TRIGGER «model.latestViewName.toLowerCase»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»
+			CREATE OR REPLACE TRIGGER «model.latestViewInsteadOfTriggerName»
 			   INSTEAD OF INSERT OR UPDATE OR DELETE 
 			   ON «model.latestViewName»
 			DECLARE
-				l_old_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»;
-				l_new_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»;
+				l_old_row «model.objectTypeName»;
+				l_new_row «model.objectTypeName»;
 			BEGIN
 				--
 				-- Populate old row
 				--
 				IF UPDATING OR DELETING THEN
-				   l_old_row := NEW «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»();
+				   l_old_row := NEW «model.objectTypeName»();
 				   «FOR col : model.columns»
 				   	l_old_row.«col.columnName.toLowerCase» := :OLD.«col.columnName.toLowerCase»;
 				   «ENDFOR»
@@ -66,7 +58,7 @@ class CreateLatestViewInsteadOfTrigger {
 				-- Populate new row
 				--
 				IF INSERTING OR UPDATING THEN
-				   l_new_row := NEW «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»();
+				   l_new_row := NEW «model.objectTypeName»();
 				   «FOR col : model.columns»
 				   	l_new_row.«col.columnName.toLowerCase» := :NEW.«col.columnName.toLowerCase»;
 				   «ENDFOR»
@@ -75,20 +67,20 @@ class CreateLatestViewInsteadOfTrigger {
 				-- Call API
 				--
 				IF INSERTING THEN
-					«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase».ins(
+					«model.apiPackageName».ins(
 						in_new_row => l_new_row
 					);
 				ELSIF UPDATING THEN
-					«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase».upd(
+					«model.apiPackageName».upd(
 						in_new_row => l_new_row,
 						in_old_row => l_old_row
 					);
 				ELSIF DELETING THEN
-					«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase».del(
+					«model.apiPackageName».del(
 						in_old_row => l_old_row
 					);
 				END IF;
-			END «model.latestViewName.toLowerCase»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»;
+			END «model.latestViewInsteadOfTriggerName»;
 			/
 		«ENDIF»
 	'''

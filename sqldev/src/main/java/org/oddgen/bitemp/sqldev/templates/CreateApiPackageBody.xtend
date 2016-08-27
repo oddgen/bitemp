@@ -16,7 +16,6 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
-import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.sqldev.LoggableConstants
@@ -26,17 +25,14 @@ class CreateApiPackageBody {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 
 	def compile(GeneratorModel model) '''
-		«val apiName = model.baseTableName.toLowerCase + model.params.get(BitempRemodeler.API_PACKAGE_SUFFIX).toLowerCase»
-		«val hookName = model.baseTableName.toLowerCase + model.params.get(BitempRemodeler.HOOK_PACKAGE_SUFFIX).toLowerCase»
-		«val otName = model.baseTableName.toLowerCase + model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
 		«IF model.inputTable.exists»
 			--
 			-- Create API package body
 			--
-			CREATE OR REPLACE PACKAGE BODY «apiName» AS
+			CREATE OR REPLACE PACKAGE BODY «model.apiPackageName» AS
 			
 			   --
-			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«model.conn.metaData.userName».«hookName.toUpperCase»"'
+			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«model.conn.metaData.userName».«model.hookPackageName.toUpperCase»"'
 			   --
 			   e_hook_body_missing EXCEPTION;
 			   PRAGMA exception_init(e_hook_body_missing, -6508);
@@ -45,14 +41,14 @@ class CreateApiPackageBody {
 			   -- ins
 			   --
 			   PROCEDURE ins (
-			      in_new_row IN «otName»
+			      in_new_row IN «model.objectTypeName»
 			   ) IS
-			      l_new_row «otName»;
+			      l_new_row «model.objectTypeName»;
 			   BEGIN
 			      l_new_row := in_new_row;
 			      <<trap_pre_ins>>
 			      BEGIN
-			         «hookName».pre_ins(io_new_row => l_new_row);
+			         «model.hookPackageName».pre_ins(io_new_row => l_new_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
@@ -60,7 +56,7 @@ class CreateApiPackageBody {
 			      -- TODO: insert
 			      <<trap_post_ins>>
 			      BEGIN
-			         «hookName».post_ins(in_new_row => l_new_row);
+			         «model.hookPackageName».post_ins(in_new_row => l_new_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
@@ -71,15 +67,15 @@ class CreateApiPackageBody {
 			   -- upd
 			   --
 			   PROCEDURE upd (
-			      in_new_row IN «otName»,
-			      in_old_row IN «otName»
+			      in_new_row IN «model.objectTypeName»,
+			      in_old_row IN «model.objectTypeName»
 			   ) IS
-			      l_new_row «otName»;
+			      l_new_row «model.objectTypeName»;
 			   BEGIN
 			      l_new_row := in_new_row;
 			      <<trap_pre_upd>>
 			      BEGIN
-			         «hookName».pre_upd(
+			         «model.hookPackageName».pre_upd(
 			            io_new_row => l_new_row,
 			            in_old_row => in_new_row
 			         );
@@ -90,7 +86,7 @@ class CreateApiPackageBody {
 			      -- TODO: update
 			      <<trap_post_upd>>
 			      BEGIN
-			         «hookName».post_upd(
+			         «model.hookPackageName».post_upd(
 			            in_new_row => l_new_row,
 			            in_old_row => in_old_row
 			         );
@@ -104,12 +100,12 @@ class CreateApiPackageBody {
 			   -- del
 			   --
 			   PROCEDURE del (
-			      in_old_row IN «otName»
+			      in_old_row IN «model.objectTypeName»
 			   ) IS
 			   BEGIN
 			      <<trap_pre_del>>
 			      BEGIN
-			         «hookName».pre_del(in_old_row => in_old_row);
+			         «model.hookPackageName».pre_del(in_old_row => in_old_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
@@ -117,14 +113,14 @@ class CreateApiPackageBody {
 			      -- TODO: delete
 			      <<trap_post_del>>
 			      BEGIN
-			         «hookName».post_del(in_old_row => in_old_row);
+			         «model.hookPackageName».post_del(in_old_row => in_old_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
 			      END trap_post_del;
 			   END del;
 
-			END «apiName»;
+			END «model.apiPackageName»;
 			/
 		«ENDIF»
 	'''
