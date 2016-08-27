@@ -34,10 +34,13 @@ class CreateApiPackageBody {
 			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase)
 			cols.add(BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase)
 		}
-		for (col : model.inputTable.columns.values.filter [it.virtualColumn == "NO" && !cols.contains(it.columnName)]) {
+		for (col : model.inputTable.columns.values.filter [
+			it.virtualColumn == "NO" && !cols.contains(it.columnName) &&
+				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
+		]) {
 			cols.add(col.columnName.toLowerCase)
 		}
-		return cols		
+		return cols
 	}
 	
 	def getPkColumnNames(GeneratorModel model) {
