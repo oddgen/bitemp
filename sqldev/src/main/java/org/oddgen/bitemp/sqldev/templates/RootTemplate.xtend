@@ -38,6 +38,7 @@ class RootTemplate {
 		«ENDFOR»
 		--
 		«(new CreateDataStructure).compile(model)»
+		«(new RemoveApi).compile(model)»
 		«(new CreateApi).compile(model)»
 	'''
 }
