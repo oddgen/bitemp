@@ -171,6 +171,29 @@ class GeneratorModelTools {
 		}
 	}
 
+	def granularityRequiresTruncation(GeneratorModel model) {
+		return switch (model.params.get(BitempRemodeler.GRANULARITY)) {
+			case BitempResources.getString("PREF_GRANULARITY_YEAR"): true
+			case BitempResources.getString("PREF_GRANULARITY_MONTH"): true
+			case BitempResources.getString("PREF_GRANULARITY_WEEK"): true
+			case BitempResources.getString("PREF_GRANULARITY_DAY"): true
+			case BitempResources.getString("PREF_GRANULARITY_HOUR"): true
+			case BitempResources.getString("PREF_GRANULARITY_MINUTE"): true
+			default: false // truncated by precision of target column
+		}
+	}
+
+	def getGranuarityTruncationFormat(GeneratorModel model) {
+		return switch (model.params.get(BitempRemodeler.GRANULARITY)) {
+			case BitempResources.getString("PREF_GRANULARITY_YEAR"): "YEAR"
+			case BitempResources.getString("PREF_GRANULARITY_MONTH"): "MONTH"
+			case BitempResources.getString("PREF_GRANULARITY_WEEK"): "IW"
+			case BitempResources.getString("PREF_GRANULARITY_DAY"): "DDD"
+			case BitempResources.getString("PREF_GRANULARITY_HOUR"): "HH24"
+			case BitempResources.getString("PREF_GRANULARITY_MINUTE"): "MI"
+		}
+	}
+
 	def isTemporalValidityColumn(Column column, GeneratorModel model) {
 		for (period : model.inputTable.temporalValidityPeriods) {
 			if (column.columnName == period.periodstart || column.columnName == period.periodend ||
@@ -258,12 +281,11 @@ class GeneratorModelTools {
 		val name = '''«model.latestViewName»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»'''
 		return name.toString
 	}
-	
+
 	def getLatestTableName(GeneratorModel model) {
 		val name = '''«model.inputTable.getNewTableName(model).toLowerCase»'''
 		return name.toString
 	}
-	
 
 	def getApiPackageName(
 		GeneratorModel model) {

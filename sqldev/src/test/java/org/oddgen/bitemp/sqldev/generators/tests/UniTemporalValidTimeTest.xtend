@@ -22,7 +22,7 @@ import org.junit.Test
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
-class NonTemporalTest extends AbstractJdbcTest {
+class UniTemporalValidTimeTest extends AbstractJdbcTest {
 
 	def getCount(String tableName, String whereClause) {
 		val count = jdbcTemplate.queryForObject('''
@@ -36,44 +36,27 @@ class NonTemporalTest extends AbstractJdbcTest {
 	@Test
 	def genDeptBased() {
 		jdbcTemplate.execute('''
-			CREATE TABLE d1 AS SELECT * FROM dept
+			CREATE TABLE d2 AS SELECT * FROM dept
 		''')
 		jdbcTemplate.execute('''
-			ALTER TABLE d1 ADD CONSTRAINT d1_pk PRIMARY KEY (deptno, dname)
+			ALTER TABLE d2 ADD CONSTRAINT d2_pk PRIMARY KEY (deptno, dname)
 		''')
 
 		val gen = new BitempRemodeler
-		val params = gen.getParams(dataSource.connection, "TABLE", "D1")
+		val params = gen.getParams(dataSource.connection, "TABLE", "D2")
 		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "0")
-		params.put(BitempRemodeler.GEN_VALID_TIME, "0")
-		val script = gen.generate(dataSource.connection, "TABLE", "D1", params)
+		params.put(BitempRemodeler.GEN_VALID_TIME, "1")
+		val script = gen.generate(dataSource.connection, "TABLE", "D2", params)
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
 		}
 		val invalids = jdbcTemplate.queryForObject('''
 			SELECT COUNT(*)
 			  FROM user_objects
-			 WHERE status != 'VALID' and object_name LIKE 'D1%'
+			 WHERE status != 'VALID'
+			   AND object_name LIKE 'D2%'
 		''', Integer)
 		Assert.assertEquals(0, invalids)
-		jdbcTemplate.execute('''
-			INSERT 
-			  INTO d1_lv 
-			VALUES (50, 'TEST', 'ZUERICH')
-		''')
-		Assert.assertEquals(5, getCount("D1", ""))
-		jdbcTemplate.execute('''
-			UPDATE d1_lv 
-			   SET loc = 'Zürich'
-			 WHERE deptno = 50
-		''')
-		Assert.assertEquals(1, getCount("D1", "WHERE loc = 'Zürich'"))
-		jdbcTemplate.execute('''
-			DELETE 
-			  FROM d1_lv 
-			 WHERE deptno = 50
-		''')
-		Assert.assertEquals(4, getCount("D1", ""))
 	}
 
 	@BeforeClass
@@ -84,30 +67,45 @@ class NonTemporalTest extends AbstractJdbcTest {
 	@AfterClass
 	def static void tearDown() {
 		try {
-			jdbcTemplate.execute("DROP TABLE d1 PURGE")
+			jdbcTemplate.execute("ALTER TABLE d2_ht NO FLASHBACK ARCHIVE")
 		} catch (Exception e) {
 		}
 		try {
-			jdbcTemplate.execute("DROP VIEW d1_lv")
+			jdbcTemplate.execute("DROP TABLE d2_ht PURGE")
 		} catch (Exception e) {
 		}
 		try {
-			jdbcTemplate.execute("DROP PACKAGE d1_api")
+			jdbcTemplate.execute("DROP TABLE d2 PURGE")
 		} catch (Exception e) {
 		}
 		try {
-			jdbcTemplate.execute("DROP PACKAGE d1_hook")
+			jdbcTemplate.execute("DROP VIEW d2_fhv")
 		} catch (Exception e) {
 		}
 		try {
-			jdbcTemplate.execute("DROP TYPE d1_ct")
+			jdbcTemplate.execute("DROP VIEW d2_hv")
 		} catch (Exception e) {
 		}
 		try {
-			jdbcTemplate.execute("DROP TYPE d1_ot")
+			jdbcTemplate.execute("DROP VIEW d2_lv")
 		} catch (Exception e) {
 		}
-
+		try {
+			jdbcTemplate.execute("DROP PACKAGE d2_api")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP PACKAGE d2_hook")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TYPE d2_ct")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TYPE d2_ot")
+		} catch (Exception e) {
+		}
 
 	}
 

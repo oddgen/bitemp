@@ -36,7 +36,8 @@ class CreateApiPackageBody {
 		}
 		for (col : model.inputTable.columns.values.filter [
 			it.virtualColumn == "NO" && !cols.contains(it.columnName) &&
-				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
+				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase &&
+				!(it.identityColumn == "YES" && it.generationType == "ALWAYS")
 		]) {
 			cols.add(col.columnName.toLowerCase)
 		}
@@ -57,13 +58,158 @@ class CreateApiPackageBody {
 			-- Create API package body
 			--
 			CREATE OR REPLACE PACKAGE BODY «model.apiPackageName» AS
-			
+				«val validFrom = model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase»
+				«val validTo = model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»
 			   --
 			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«model.conn.metaData.userName».«model.hookPackageName.toUpperCase»"'
 			   --
 			   e_hook_body_missing EXCEPTION;
 			   PRAGMA exception_init(e_hook_body_missing, -6508);
-			
+
+			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
+			   --
+			   -- truncate_to_granularity
+			   --
+			   PROCEDURE truncate_to_granularity (
+			      io_row IN OUT «model.objectTypeName»
+			   ) IS
+			   BEGIN
+			      «IF model.granularityRequiresTruncation»
+			      	-- truncate validity to «model.params.get(BitempRemodeler.GRANULARITY)»
+			      	io_row.«validFrom» := TRUNC(io_row.«validFrom», '«model.granuarityTruncationFormat»');
+			      	io_row.«validTo» := TRUNC(io_row.«validTo», '«model.granuarityTruncationFormat»');
+			      «ELSE»
+			      	-- truncated automatically to «model.params.get(BitempRemodeler.GRANULARITY)» by data type precision
+			      	NULL;
+			      «ENDIF»
+			   END truncate_to_granularity;
+
+			   --
+			   -- get_versions
+			   --
+			   FUNCTION get_versions (
+			      in_row IN «model.objectTypeName»
+			   ) return «model.collectionTypeName» IS
+			      l_versions «model.collectionTypeName»;
+			   BEGIN
+			      SELECT «model.objectTypeName» (
+			                «FOR col : model.columnNames SEPARATOR ','»
+			                	«col»
+			                «ENDFOR»
+			             )
+			        BULK COLLECT INTO l_versions
+			        FROM «model.historyTableName» AS OF SCN SYS.dbms_flashback.get_system_change_number «
+			             »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
+			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»;
+			      RETURN l_versions;
+			   END get_versions;
+
+			   --
+			   -- handle_predecessor
+			   --
+			   PROCEDURE handle_predecessor (
+			      io_versions IN OUT «model.collectionTypeName»,
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			      i PLS_INTEGER;
+			   BEGIN
+			      IF io_versions IS NOT NULL AND io_versions.count() > 0 THEN
+			         IF in_row.«validFrom» IS NOT NULL THEN
+			            -- reduce validity of immediate predecessor
+			            i := io_versions.first();
+			            WHILE i IS NOT NULL LOOP
+			               IF (io_versions(i).«validFrom» IS NULL OR io_versions(i).«validFrom» <= in_row.«validFrom»)
+			                  AND (io_versions(i).«validTo» IS NULL OR io_versions(i).«validTo» > in_row.«validFrom»)
+			               THEN
+			                  io_versions(i).«validTo» := in_row.«validFrom»;
+			               END IF;
+			               i := io_versions.next(i);
+			            END LOOP;
+			         ELSE
+			            -- delete all predecessors
+			            i := io_versions.first();
+			            WHILE i IS NOT NULL LOOP
+			               IF io_versions(i).«validTo» < in_row.«validTo» OR in_row.«validTo» IS NULL THEN
+			                  io_versions.delete(i);
+			               END IF;
+			               i := io_versions.next(i);
+			            END LOOP;
+			         END IF;
+			      END IF;
+			   END handle_predecessor;
+
+			   --
+			   -- handle_successor
+			   --
+			   PROCEDURE handle_successor (
+			      io_versions IN OUT «model.collectionTypeName»,
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			      i PLS_INTEGER;
+			   BEGIN
+			      IF io_versions IS NOT NULL AND io_versions.count() > 0 THEN
+			         IF in_row.«validTo» IS NOT NULL THEN
+			            -- reduce validity of immediate successor
+			            i := io_versions.first();
+			            WHILE i IS NOT NULL LOOP
+			               IF (io_versions(i).«validFrom» IS NULL OR io_versions(i).«validFrom» <= in_row.«validTo»)
+			                  AND (io_versions(i).«validTo» IS NULL OR io_versions(i).«validTo» > in_row.«validTo»)
+			               THEN
+			                  io_versions(i).«validFrom» := in_row.«validTo»;
+			               END IF;
+			               i := io_versions.next(i);
+			            END LOOP;
+			         ELSE
+			            -- delete all successors
+			            i := io_versions.first();
+			            WHILE i IS NOT NULL LOOP
+			               IF io_versions(i).«validFrom» > in_row.«validFrom» OR in_row.«validFrom» IS NULL THEN
+			                  io_versions.delete(i);
+			               END IF;
+			               i := io_versions.next(i);
+			            END LOOP;
+			         END IF;
+			      END IF;
+			   END handle_successor;
+
+			   --
+			   -- add_version
+			   --
+			   PROCEDURE add_version (
+			      io_versions IN OUT «model.collectionTypeName»,
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			   BEGIN
+			      io_versions.extend();
+			      io_versions(io_versions.last()) := in_row;
+			   END add_version;
+
+			   --
+			   -- save_versions
+			   --
+			   PROCEDURE save_versions (
+			      in_versions IN «model.collectionTypeName»
+			   ) IS
+			   BEGIN
+			      -- TODO
+			      NULL;
+			   END save_versions;
+
+			   --
+			   -- do_ins
+			   --
+			   PROCEDURE do_ins (
+			      io_row IN OUT «model.objectTypeName»
+			   ) IS
+			      l_versions «model.collectionTypeName»;
+			   BEGIN
+			      truncate_to_granularity(io_row => io_row);
+			      l_versions := get_versions(in_row => io_row);
+			      handle_predecessor(io_versions => l_versions, in_row => io_row);
+			      handle_successor(io_versions => l_versions, in_row => io_row);
+			      add_version(io_versions => l_versions, in_row => io_row);
+			   END do_ins;
+			   «ENDIF»
 			   --
 			   -- ins
 			   --
@@ -91,7 +237,7 @@ class CreateApiPackageBody {
 			      	   «ENDFOR»
 			      	);
 			      «ELSE»
-			      	-- TODO temporal insert
+			      	do_ins(io_row => l_new_row);
 			      «ENDIF»
 			      <<trap_post_ins>>
 			      BEGIN

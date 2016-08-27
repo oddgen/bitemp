@@ -39,12 +39,12 @@ class CreateApiPackageBodyTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def deptBitemporal() {
+	def deptNonTemporal() {
 		val gen = new BitempRemodeler
 		val params = gen.getParams(dataSource.connection, "TABLE", "DEPT")
 		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
-		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "1")
-		params.put(BitempRemodeler.GEN_VALID_TIME, "1")
+		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "0")
+		params.put(BitempRemodeler.GEN_VALID_TIME, "0")
 		val model = gen.getModel(dataSource.connection, "DEPT", params)
 		for (stmt : (new CreateObjectType).compile(model).toString.statements) {
 			jdbcTemplate.execute(stmt)

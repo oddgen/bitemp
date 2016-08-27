@@ -82,20 +82,22 @@ class CreateFullHistoryView {
 		GeneratorModel model) '''
 		«IF model.inputTable.exists»
 			«IF model.targetModel != ApiType.NON_TEMPORAL»
-				--
-				-- Enforce visibility of source flashback archive tables (for SCN 0 instead of SCN MINVALUE)
-				--
-				BEGIN
-				   dbms_flashback_archive.disassociate_fba(
-				      owner_name => '«model.conn.metaData.userName»',
-				      table_name => '«model.sourceTableName.toUpperCase»'
-				   );
-				   dbms_flashback_archive.reassociate_fba(
-				       owner_name => '«model.conn.metaData.userName»',
-				       table_name => '«model.sourceTableName.toUpperCase»'
-				   );
-				END;
-				/
+				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME || model.targetModel == ApiType.BI_TEMPORAL»
+					--
+					-- Enforce visibility of source flashback archive tables (for SCN 0 instead of SCN MINVALUE)
+					--
+					BEGIN
+					   dbms_flashback_archive.disassociate_fba(
+					      owner_name => '«model.conn.metaData.userName»',
+					      table_name => '«model.sourceTableName.toUpperCase»'
+					   );
+					   dbms_flashback_archive.reassociate_fba(
+					       owner_name => '«model.conn.metaData.userName»',
+					       table_name => '«model.sourceTableName.toUpperCase»'
+					   );
+					END;
+					/
+				«ENDIF»
 				--
 				-- Create history view
 				--
