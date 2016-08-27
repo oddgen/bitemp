@@ -16,6 +16,9 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
+import java.util.ArrayList
+import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
+import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.sqldev.LoggableConstants
@@ -23,7 +26,28 @@ import org.oddgen.sqldev.LoggableConstants
 @Loggable(LoggableConstants.DEBUG)
 class CreateApiPackageBody {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
-
+	
+	def getColumnNames(GeneratorModel model) {
+		val cols = new ArrayList<String>
+		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {
+			cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase)
+			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase)
+			cols.add(BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase)
+		}
+		for (col : model.inputTable.columns.values.filter [it.virtualColumn == "NO" && !cols.contains(it.columnName)]) {
+			cols.add(col.columnName.toLowerCase)
+		}
+		return cols		
+	}
+	
+	def getPkColumnNames(GeneratorModel model) {
+		val cols = new ArrayList<String>
+		for (col : model.inputTable.primaryKeyConstraint.columnNames) {
+			cols.add(col.toLowerCase)
+		}
+		return cols
+	}
+	
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
 			--
@@ -53,7 +77,19 @@ class CreateApiPackageBody {
 			         WHEN e_hook_body_missing THEN
 			            NULL;
 			      END trap_pre_ins;
-			      -- TODO: insert
+			      «IF model.targetModel == ApiType.NON_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+			      	INSERT INTO «model.latestTableName» (
+			      	   «FOR col : model.columnNames SEPARATOR ","»
+			      	   	«col.toLowerCase»
+			      	   «ENDFOR»
+			      	) VALUES (
+			      	   «FOR col : model.columnNames SEPARATOR ","»
+			      	   	l_new_row.«col.toLowerCase»
+			      	   «ENDFOR»
+			      	);
+			      «ELSE»
+			      	-- TODO temporal insert
+			      «ENDIF»
 			      <<trap_post_ins>>
 			      BEGIN
 			         «model.hookPackageName».post_ins(in_new_row => l_new_row);
@@ -83,7 +119,13 @@ class CreateApiPackageBody {
 			         WHEN e_hook_body_missing THEN
 			            NULL;
 			      END trap_pre_upd;
-			      -- TODO: update
+			      «IF model.targetModel == ApiType.NON_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+			      	UPDATE «model.latestTableName»
+			      	   SET «FOR col : model.columnNames SEPARATOR ', ' + System.lineSeparator + '    '»«col» = l_new_row.«col»«ENDFOR»
+			      	 WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_old_row.«col»«ENDFOR»;
+			      «ELSE»
+			      	-- TODO temporal update
+			      «ENDIF»
 			      <<trap_post_upd>>
 			      BEGIN
 			         «model.hookPackageName».post_upd(
@@ -110,7 +152,13 @@ class CreateApiPackageBody {
 			         WHEN e_hook_body_missing THEN
 			            NULL;
 			      END trap_pre_del;
-			      -- TODO: delete
+			      «IF model.targetModel == ApiType.NON_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
+			      	DELETE 
+			      	  FROM «model.latestTableName»
+			      	 WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '   AND '»«col» = in_old_row.«col»«ENDFOR»;
+			      «ELSE»
+			      	-- TODO temporal delete
+			      «ENDIF»
 			      <<trap_post_del>>
 			      BEGIN
 			         «model.hookPackageName».post_del(in_old_row => in_old_row);
