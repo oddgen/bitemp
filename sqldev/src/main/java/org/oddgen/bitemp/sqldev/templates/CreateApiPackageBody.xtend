@@ -45,12 +45,14 @@ class CreateApiPackageBody {
 			   -- ins
 			   --
 			   PROCEDURE ins (
-			      in_new_row «otName»
+			      in_new_row IN «otName»
 			   ) IS
+			      l_new_row «otName»;
 			   BEGIN
+			      l_new_row := in_new_row;
 			      <<trap_pre_ins>>
 			      BEGIN
-			         «hookName».pre_ins(in_new_row => in_new_row);
+			         «hookName».pre_ins(io_new_row => l_new_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
@@ -58,7 +60,7 @@ class CreateApiPackageBody {
 			      -- TODO: insert
 			      <<trap_post_ins>>
 			      BEGIN
-			         «hookName».post_ins(in_new_row => in_new_row);
+			         «hookName».post_ins(in_new_row => l_new_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
@@ -69,14 +71,16 @@ class CreateApiPackageBody {
 			   -- upd
 			   --
 			   PROCEDURE upd (
-			      in_new_row «otName»,
-			      in_old_row «otName»
+			      in_new_row IN «otName»,
+			      in_old_row IN «otName»
 			   ) IS
+			      l_new_row «otName»;
 			   BEGIN
+			      l_new_row := in_new_row;
 			      <<trap_pre_upd>>
 			      BEGIN
 			         «hookName».pre_upd(
-			            in_new_row => in_new_row,
+			            io_new_row => l_new_row,
 			            in_old_row => in_new_row
 			         );
 			      EXCEPTION
@@ -87,7 +91,7 @@ class CreateApiPackageBody {
 			      <<trap_post_upd>>
 			      BEGIN
 			         «hookName».post_upd(
-			            in_new_row => in_new_row,
+			            in_new_row => l_new_row,
 			            in_old_row => in_old_row
 			         );
 			      EXCEPTION
@@ -100,7 +104,7 @@ class CreateApiPackageBody {
 			   -- del
 			   --
 			   PROCEDURE del (
-			      in_old_row «otName»
+			      in_old_row IN «otName»
 			   ) IS
 			   BEGIN
 			      <<trap_pre_del>>

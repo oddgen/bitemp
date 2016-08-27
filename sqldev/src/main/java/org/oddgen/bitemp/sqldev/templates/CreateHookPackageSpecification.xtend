@@ -45,10 +45,10 @@ class CreateHookPackageSpecification {
 			   /**
 			   * Hook called before insert into «model.targetModel.apiTypeToString» table «tableName».
 			   *
-			   * @param in_new_row new Row to be inserted
+			   * @param io_new_row new Row to be inserted
 			   */
 			   PROCEDURE pre_ins (
-			      in_new_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      io_new_row IN OUT «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
 			   );
 
 			   /**
@@ -57,29 +57,29 @@ class CreateHookPackageSpecification {
 			   * @param in_new_row new Row to be inserted
 			   */
 			   PROCEDURE post_ins (
-			      in_new_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      in_new_row IN «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
 			   );
 
 			   /**
 			   * Hook called before update «model.targetModel.apiTypeToString» table «tableName».
 			   *
-			   * @param in_new_row Row with updated column values
+			   * @param io_new_row Row with updated column values
 			   * @param in_old_row Row with original column values
 			   */
 			   PROCEDURE pre_upd (
-			      in_new_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»,
-			      in_old_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      io_new_row IN OUT «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»,
+			      in_old_row IN «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
 			   );
 
 			   /**
-			   * Hook called before update «model.targetModel.apiTypeToString» table «tableName».
+			   * Hook called after update «model.targetModel.apiTypeToString» table «tableName».
 			   *
 			   * @param in_new_row Row with updated column values
 			   * @param in_old_row Row with original column values
 			   */
 			   PROCEDURE post_upd (
-			      in_new_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»,
-			      in_old_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      in_new_row IN «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»,
+			      in_old_row IN «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
 			   );
 
 			   /**
@@ -88,7 +88,7 @@ class CreateHookPackageSpecification {
 			   * @param in_old_row Row with original column values
 			   */
 			   PROCEDURE pre_del (
-			      in_old_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      in_old_row IN «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
 			   );
 
 			   /**
@@ -97,7 +97,7 @@ class CreateHookPackageSpecification {
 			   * @param in_old_row Row with original column values
 			   */
 			   PROCEDURE post_del (
-			      in_old_row «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
+			      in_old_row IN «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.OBJECT_TYPE_SUFFIX).toLowerCase»
 			   );
 
 			END «model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.HOOK_PACKAGE_SUFFIX).toLowerCase»;
