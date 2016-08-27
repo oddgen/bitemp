@@ -30,6 +30,7 @@ class CreateApiPackageBody {
 	def getColumnNames(GeneratorModel model) {
 		val cols = new ArrayList<String>
 		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {
+			cols.add(BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase)
 			cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase)
 			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase)
 			cols.add(BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase)

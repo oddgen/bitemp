@@ -69,6 +69,7 @@ class CreateLatestViewInsteadOfTriggerTest extends AbstractJdbcTest {
 		''')
 		jdbcTemplate.execute('''
 			CREATE TABLE t1_ht (
+			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
 			   valid_from DATE NULL,
 			   valid_to DATE NULL,
 			   is_deleted$ NUMBER(1,0) NULL,

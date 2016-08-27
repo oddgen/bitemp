@@ -60,6 +60,7 @@ class BitempRemodeler implements OddgenGenerator {
 	public static String API_PACKAGE_SUFFIX = BitempResources.get("PREF_API_PACKAGE_SUFFIX_LABEL")
 	public static String HOOK_PACKAGE_SUFFIX = BitempResources.get("PREF_HOOK_PACKAGE_SUFFIX_LABEL")
 
+	public static String HISTORY_ID_COL_NAME = "HIST_ID$"
 	public static String VALID_TIME_PERIOD_NAME = "VT$"
 	public static String INDEX_SUFFIX_PATTERN = "_I%d$"
 	public static String IS_DELETED_COL_NAME = "IS_DELETED$"

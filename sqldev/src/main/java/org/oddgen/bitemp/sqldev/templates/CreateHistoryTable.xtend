@@ -34,7 +34,7 @@ class CreateHistoryTable {
 		return cols
 	}
 
-	def getHistoryPkColumnNames(GeneratorModel model) {
+	def getHistoryUkColumnNames(GeneratorModel model) {
 		val cols = model.latestPkColumnNames
 		cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase)
 		return cols
@@ -48,19 +48,20 @@ class CreateHistoryTable {
 				-- Create history table
 				--
 				CREATE TABLE «model.historyTableName» (
-					«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
-					«model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
-					«BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» NUMBER(1,0) NULL,
-					CHECK («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IN (0,1)),
-					PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» («model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase», «model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»),
-					«FOR col : model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase] SEPARATOR ","»
-						«col.columnName.toLowerCase» «col.fullDataType»«IF col.hiddenColumn == "YES"» INVISIBLE«ENDIF»«
-						»«IF col.virtualColumn == "YES"» GENERATED ALWAYS AS («col.dataDefault») VIRTUAL«
-						»«ELSE»«IF !col.defaultClause.empty» «col.defaultClause»«ENDIF» «col.notNull»«
-						»«ENDIF»
-					«ENDFOR»
+				   «BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
+				   «model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
+				   «model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
+				   «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» NUMBER(1,0) NULL,
+				   CHECK («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IN (0,1)),
+				   PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» («model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase», «model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»),
+				   «FOR col : model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase] SEPARATOR ","»
+				   	«col.columnName.toLowerCase» «col.fullDataType»«IF col.hiddenColumn == "YES"» INVISIBLE«ENDIF»«
+				   	»«IF col.virtualColumn == "YES"» GENERATED ALWAYS AS («col.dataDefault») VIRTUAL«
+				   	»«ELSE»«IF !col.defaultClause.empty» «col.defaultClause»«ENDIF» «col.notNull»«
+				   	»«ENDIF»
+				   «ENDFOR»
 				);
-				ALTER TABLE «model.historyTableName» ADD UNIQUE («FOR col : model.historyPkColumnNames SEPARATOR ", "»«col»«ENDFOR»);
+				ALTER TABLE «model.historyTableName» ADD UNIQUE («FOR col : model.historyUkColumnNames SEPARATOR ", "»«col»«ENDFOR»);
 				ALTER TABLE «model.historyTableName» ADD FOREIGN KEY («FOR col : model.latestPkColumnNames SEPARATOR ", "»«col»«ENDFOR») REFERENCES «model.latestTableName»;
 				«var int index = 1»
 				«FOR fk : model.inputTable.foreignKeyConstraints»

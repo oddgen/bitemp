@@ -37,6 +37,7 @@ class CreateObjectType {
 			--
 			CREATE OR REPLACE TYPE «model.objectTypeName» FORCE AS OBJECT (
 			   «IF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME ||  model.targetModel == ApiType.BI_TEMPORAL»
+			   	«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» INTEGER,
 			   	«model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType»,
 			   	«model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType»,
 			   	«BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» NUMBER(1,0),

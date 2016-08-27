@@ -75,6 +75,7 @@ class GeneratorModelTools {
 			newHistTable.tableName = '''«model.baseTableName»«model.params.get(BitempRemodeler.HISTORY_TABLE_SUFFIX).toUpperCase»'''
 			newHistTable.historyTable = true
 			newHistTable.columns = new LinkedHashMap<String, Column>
+			newHistTable.columns.put(BitempRemodeler.HISTORY_ID_COL_NAME, model.createHistIdColumn)
 			newHistTable.columns.put(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME),
 				model.createValidTimeColumn(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME)))
 			newHistTable.columns.put(model.params.get(BitempRemodeler.VALID_TO_COL_NAME),
@@ -202,6 +203,25 @@ class GeneratorModelTools {
 			}
 		}
 		return false
+	}
+
+	def createHistIdColumn(GeneratorModel model) {
+		val col = new Column
+		col.columnName = BitempRemodeler.HISTORY_ID_COL_NAME.toUpperCase
+		col.dataType = "INTEGER"
+		col.dataPrecision = null
+		col.dataScale = 0
+		col.charLength = 0
+		col.charUsed = null
+		col.nullable = "N"
+		col.dataDefault = null
+		col.defaultOnNull = "NO"
+		col.hiddenColumn = "NO"
+		col.virtualColumn = "NO"
+		col.identityColumn = "YES"
+		col.generationType = null // do not need correct value
+		col.sequenceName = null // do not need correct value
+		return col
 	}
 
 	def createIsDeletedColumn(GeneratorModel model) {
