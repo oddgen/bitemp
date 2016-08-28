@@ -59,7 +59,7 @@ class CreateApiPackageBody {
 		]
 	}
 	
-	def getJoinColumnNames(GeneratorModel model) {
+	def getMergeColumnNames(GeneratorModel model) {
 		return model.columnNames.filter[
 			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase &&
 			it != model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase	&&
@@ -297,11 +297,11 @@ class CreateApiPackageBody {
 			                   NVL(«validFrom», co_minvalue) AS «validFrom»,
 			                   NVL(LEAD («validFrom», 1, valid_to) OVER (ORDER BY «validFrom» NULLS FIRST), co_maxvalue) AS «validTo»,
 			                   (
-			                      «FOR col : model.joinColumnNames SEPARATOR " || ',' || "»
+			                      «FOR col : model.mergeColumnNames SEPARATOR " || ',' || "»
 			                      	«col»
 			                      «ENDFOR»
 			                   ) AS «groupCols»,
-			                   «FOR col : model.joinColumnNames SEPARATOR ","»
+			                   «FOR col : model.mergeColumnNames SEPARATOR ","»
 			                   	«col»
 			                   «ENDFOR»
 			              FROM TABLE(g_versions)
@@ -316,7 +316,7 @@ class CreateApiPackageBody {
 			                      ELSE
 			                         1
 			                   END AS «newGroup»,
-			                   «FOR col : model.joinColumnNames SEPARATOR ","»
+			                   «FOR col : model.mergeColumnNames SEPARATOR ","»
 			                   	«col»
 			                   «ENDFOR»
 			              FROM base
@@ -326,7 +326,7 @@ class CreateApiPackageBody {
 			                   «validFrom»,
 			                   «validTo»,
 			                   SUM(«newGroup») OVER (ORDER BY «validFrom») AS «groupNo»,
-			                   «FOR col : model.joinColumnNames SEPARATOR ","»
+			                   «FOR col : model.mergeColumnNames SEPARATOR ","»
 			                   	«col»
 			                   «ENDFOR»
 			              FROM group_no_base
@@ -335,12 +335,12 @@ class CreateApiPackageBody {
 			            SELECT MAX(«histId») AS «histId»,
 			                   MIN(«validFrom») AS «validFrom»,
 			                   MAX(«validTo») AS «validTo»,
-			                   «FOR col : model.joinColumnNames SEPARATOR ","»
+			                   «FOR col : model.mergeColumnNames SEPARATOR ","»
 			                   	«col»
 			                   «ENDFOR»
 			              FROM group_no
 			             GROUP BY «groupNo»,
-			                      «FOR col : model.joinColumnNames SEPARATOR ","»
+			                      «FOR col : model.mergeColumnNames SEPARATOR ","»
 			                      	«col»
 			                      «ENDFOR»
 			         )
@@ -359,7 +359,7 @@ class CreateApiPackageBody {
 			                   ELSE
 			                      «validTo»
 			                END,
-			                «FOR col : model.joinColumnNames SEPARATOR ","»
+			                «FOR col : model.mergeColumnNames SEPARATOR ","»
 			                	«col»
 			                «ENDFOR»
 			             )
