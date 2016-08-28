@@ -64,6 +64,7 @@ class BitempRemodeler implements OddgenGenerator {
 	public static String VALID_TIME_PERIOD_NAME = "VT$"
 	public static String INDEX_SUFFIX_PATTERN = "_I%d$"
 	public static String IS_DELETED_COL_NAME = "IS_DELETED$"
+	public static String OPERATION_COL_NAME = "OPERATION$"
 
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 	private PrerequisiteModel prerequisiteModel = new PrerequisiteModel
