@@ -33,7 +33,10 @@ class CreateHistoryView {
 			cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME))
 			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME))
 		}
-		for (col : model.inputTable.columns.values.filter [it.virtualColumn == "NO" && it.hiddenColumn != "YES" && !cols.contains(it.columnName)]) {
+		for (col : model.inputTable.columns.values.filter [
+			it.virtualColumn == "NO" && it.hiddenColumn != "YES" && !cols.contains(it.columnName) &&
+			it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase()
+		]) {
 			cols.add(col.columnName)
 		}
 		return cols
