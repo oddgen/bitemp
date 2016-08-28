@@ -157,7 +157,7 @@ class CreateApiPackageBody {
 			                SELECT «model.objectTypeName» (
 			                          «FOR col : model.columnNames SEPARATOR ","»
 			                          	«IF col == validTo»
-			                          		LEAD («validFrom», 1, NULL) OVER (ORDER BY «validFrom» NULLS FIRST)
+			                          		LEAD («validFrom», 1, valid_to) OVER (ORDER BY «validFrom» NULLS FIRST)
 			                          	«ELSE»
 			                          		«col»
 			                          	«ENDIF»
@@ -246,6 +246,7 @@ class CreateApiPackageBody {
 			           FROM TABLE(g_versions)
 			          ORDER BY «validFrom» DESC NULLS LAST
 			          FETCH FIRST ROW ONLY;
+			         l_version.«validFrom» := l_version.«validTo»;
 			         l_version.«validTo» := NULL;
 			         l_version.«isDeleted» := 1;
 			         add_version(in_row => l_version);
@@ -350,6 +351,7 @@ class CreateApiPackageBody {
 			      save_latest;
 			      save_versions;
 			   END do_ins;
+
 			   «ENDIF»
 			   --
 			   -- ins
