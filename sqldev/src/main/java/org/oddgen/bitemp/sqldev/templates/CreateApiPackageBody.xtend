@@ -83,6 +83,7 @@ class CreateApiPackageBody {
 			CREATE OR REPLACE PACKAGE BODY «model.apiPackageName» AS
 				«val validFrom = model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase»
 				«val validTo = model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»
+				«val isDeleted = BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»
 			   --
 			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«model.conn.metaData.userName».«model.hookPackageName.toUpperCase»"'
 			   --
@@ -91,19 +92,20 @@ class CreateApiPackageBody {
 
 			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			   --
-			   -- history rows
+			   -- valid time constants, implicitely truncated to the granularity of «model.params.get(BitempRemodeler.GRANULARITY)»
+			   --
+			   co_minvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('-4712', 'SYYYY');
+			   co_maxvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('9999-12-31 23:59:59.999999999', 'YYYY-MM-DD HH24:MI:SS.FF9');
+
+			   --
+			   -- working copy of history rows
 			   --
 			   g_versions «model.collectionTypeName»;
 			   
 			   --
-			   -- number of history rows originally found
+			   -- original, unchanged history rows 
 			   --
-			   g_versions_count PLS_INTEGER;
-			   
-			   --
-			   -- history rows to be physically deleted
-			   --
-			   g_versions_del «model.collectionTypeName» := «model.collectionTypeName»();
+			   g_versions_original «model.collectionTypeName»;
 			   
 			   --
 			   -- truncate_to_granularity
@@ -134,83 +136,64 @@ class CreateApiPackageBody {
 			                	«col»
 			                «ENDFOR»
 			             )
-			        BULK COLLECT INTO g_versions
-			        FROM «model.historyTableName» AS OF SCN SYS.dbms_flashback.get_system_change_number «
+			        BULK COLLECT INTO g_versions_original
+			        FROM «model.historyTableName» «
 			             »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»;
-			      g_versions_count := g_versions.count();
-			      g_versions_del.delete();
+			      g_versions := g_versions_original;
 			   END load_versions;
 
 			   --
-			   -- handle_predecessor
+			   -- get_version_at
 			   --
-			   PROCEDURE handle_predecessor (
-			      in_row IN «model.objectTypeName»
-			   ) IS
-			      i PLS_INTEGER;
+			   FUNCTION get_version_at (
+			      in_at IN «model.validTimeDataType»
+			   ) RETURN «model.objectTypeName» IS
+			      l_version «model.objectTypeName»;
 			   BEGIN
-			      IF g_versions IS NOT NULL AND g_versions.count() > 0 THEN
-			         IF in_row.«validFrom» IS NOT NULL THEN
-			            -- reduce validity of immediate predecessor
-			            i := g_versions.first();
-			            WHILE i IS NOT NULL LOOP
-			               IF (g_versions(i).«validFrom» IS NULL OR g_versions(i).«validFrom» <= in_row.«validFrom»)
-			                  AND (g_versions(i).«validTo» IS NULL OR g_versions(i).«validTo» > in_row.«validFrom»)
-			               THEN
-			                  g_versions(i).«validTo» := in_row.«validFrom»;
-			               END IF;
-			               i := g_versions.next(i);
-			            END LOOP;
-			         ELSE
-			            -- delete all predecessors
-			            i := g_versions.first();
-			            WHILE i IS NOT NULL LOOP
-			               IF g_versions(i).«validTo» < in_row.«validTo» OR in_row.«validTo» IS NULL THEN
-			                  g_versions_del.extend();
-			                  g_versions_del(g_versions_del.last()) := g_versions(i);
-			                  g_versions.delete(i);
-			               END IF;
-			               i := g_versions.next(i);
-			            END LOOP;
-			         END IF;
-			      END IF;
-			   END handle_predecessor;
+			      SELECT version
+			        INTO l_version
+			        FROM (
+			                SELECT «model.objectTypeName» (
+			                          «FOR col : model.columnNames SEPARATOR ","»
+			                          	«IF col == validTo»
+			                          		LEAD («validFrom», 1, NULL) OVER (ORDER BY «validFrom» NULLS FIRST)
+			                          	«ELSE»
+			                          		«col»
+			                          	«ENDIF»
+			                          «ENDFOR»
+			                       ) version
+			                  FROM TABLE(g_versions)
+			             ) v
+			       WHERE (v.version.«validFrom» IS NULL OR v.version.«validFrom» <= in_at)
+			         AND (v.version.«validTo» IS NULL OR v.version.«validTo» > in_at);
+			      RETURN l_version;
+			   EXCEPTION
+			      WHEN NO_DATA_FOUND THEN
+			         RETURN NULL;
+			   END get_version_at;
 
 			   --
-			   -- handle_successor
+			   -- del_enclosed_versions
 			   --
-			   PROCEDURE handle_successor (
+			   PROCEDURE del_enclosed_versions (
 			      in_row IN «model.objectTypeName»
 			   ) IS
-			      i PLS_INTEGER;
+			      l_versions «model.collectionTypeName»;
 			   BEGIN
-			      IF g_versions IS NOT NULL AND g_versions.count() > 0 THEN
-			         IF in_row.«validTo» IS NOT NULL THEN
-			            -- reduce validity of immediate successor
-			            i := g_versions.first();
-			            WHILE i IS NOT NULL LOOP
-			               IF (g_versions(i).«validFrom» IS NULL OR g_versions(i).«validFrom» <= in_row.«validTo»)
-			                  AND (g_versions(i).«validTo» IS NULL OR g_versions(i).«validTo» > in_row.«validTo»)
-			               THEN
-			                  g_versions(i).«validFrom» := in_row.«validTo»;
-			               END IF;
-			               i := g_versions.next(i);
-			            END LOOP;
-			         ELSE
-			            -- delete all successors
-			            i := g_versions.first();
-			            WHILE i IS NOT NULL LOOP
-			               IF g_versions(i).«validFrom» > in_row.«validFrom» OR in_row.«validFrom» IS NULL THEN
-			                  g_versions_del.extend();
-			                  g_versions_del(g_versions_del.last()) := g_versions(i);
-			                  g_versions.delete(i);
-			               END IF;
-			               i := g_versions.next(i);
-			            END LOOP;
-			         END IF;
-			      END IF;
-			   END handle_successor;
+			      SELECT «model.objectTypeName» (
+			             «FOR col : model.columnNames SEPARATOR ","»
+			             	«col»
+			             «ENDFOR»
+			             )
+			        BULK COLLECT INTO l_versions
+			        FROM TABLE(g_versions)
+			       WHERE NOT (
+			       			NVL(«validFrom», co_minvalue) >= NVL(in_row.«validFrom», co_minvalue) 
+			       			AND NVL(«validTo», co_maxvalue) <= NVL(in_row.«validTo», co_maxvalue)
+			       	     );
+			       g_versions := l_versions;
+			   END del_enclosed_versions;
 
 			   --
 			   -- add_version
@@ -224,21 +207,60 @@ class CreateApiPackageBody {
 			   END add_version;
 
 			   --
+			   -- add_first_version
+			   --
+			   PROCEDURE add_first_version IS
+			      l_version «model.objectTypeName»;
+			   BEGIN
+			      l_version := get_version_at(co_minvalue);
+			      IF l_version IS NULL THEN
+			         SELECT «model.objectTypeName» (
+			                   «FOR col : model.columnNames SEPARATOR ","»
+			                   	«col»
+			                   «ENDFOR»
+			                ) version
+			           INTO l_version
+			           FROM TABLE(g_versions)
+			          ORDER BY «validFrom» NULLS FIRST
+			          FETCH FIRST ROW ONLY;
+			         l_version.«validFrom» := NULL;
+			         l_version.«isDeleted» := 1;
+			         add_version(in_row => l_version);
+			      END IF;
+			   END add_first_version;
+
+			   --
+			   -- add_last_version
+			   --
+			   PROCEDURE add_last_version IS
+			      l_version «model.objectTypeName»;
+			   BEGIN
+			      l_version := get_version_at(co_maxvalue);
+			      IF l_version IS NULL THEN
+			         SELECT «model.objectTypeName» (
+			                   «FOR col : model.columnNames SEPARATOR ","»
+			                   	«col»
+			                   «ENDFOR»
+			                ) version
+			           INTO l_version
+			           FROM TABLE(g_versions)
+			          ORDER BY «validFrom» DESC NULLS LAST
+			          FETCH FIRST ROW ONLY;
+			         l_version.«validTo» := NULL;
+			         l_version.«isDeleted» := 1;
+			         add_version(in_row => l_version);
+			      END IF;
+			   END add_last_version;
+
+			   --
 			   -- save_latest
 			   --
 			   PROCEDURE save_latest IS
 			      l_latest_row «model.objectTypeName»;
 			      i PLS_INTEGER;
 			   BEGIN
-			   	  SELECT «model.objectTypeName» (
-			                «FOR col : model.columnNames SEPARATOR ','»
-			                	«col»
-			                «ENDFOR»
-			             )
-			        INTO l_latest_row
-			        FROM TABLE(g_versions)
-			       WHERE «validTo» IS NULL;
-			      IF g_versions_count = 0 THEN
+			      l_latest_row := get_version_at(co_maxvalue);
+			      IF g_versions_original.COUNT() = 0 THEN
 			            INSERT
 			              INTO «model.latestTableName» (
 			                      «FOR col : model.latestColumnNames SEPARATOR ','»
@@ -274,25 +296,31 @@ class CreateApiPackageBody {
 			      MERGE 
 			       INTO «model.historyTableName» t
 			      USING (
-			               SELECT NULL AS operation$,
+			               SELECT NULL AS «BitempRemodeler.OPERATION_COL_NAME.toLowerCase»,
 			                      «FOR col : model.columnNames SEPARATOR ","»
-			                      	«col»
+			                      	«IF col == validTo»
+			                      		LEAD («validFrom», 1, NULL) OVER (ORDER BY «validFrom» NULLS FIRST) AS «validTo»
+			                      	«ELSE»
+			                      		«col»
+			                      	«ENDIF»
 			                      «ENDFOR»
 			                 FROM TABLE(g_versions)
 			               UNION ALL
-			               SELECT 'D' AS operation$,
+			               SELECT 'D' AS «BitempRemodeler.OPERATION_COL_NAME.toLowerCase»,
 			                      «FOR col : model.columnNames SEPARATOR ","»
-			                      	«col»
+			                      	o.«col»
 			                      «ENDFOR»
-			                 FROM TABLE(g_versions_del)
+			                 FROM TABLE(g_versions_original) o
+			                 LEFT JOIN TABLE(g_versions) w
+			                   ON w.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» = o.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»
+			                WHERE w.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» IS NULL
 			            ) s
 			         ON (s.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» = t.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»)
 			       WHEN MATCHED THEN
 			               UPDATE
 			                  SET «FOR col : model.updateableColumnNames SEPARATOR ',' + System.lineSeparator + '    '»t.«col» = s.«col»«ENDFOR»
-			                WHERE operation$ IS NULL
 			               DELETE
-			                WHERE operation$ = 'D'
+			                WHERE «BitempRemodeler.OPERATION_COL_NAME.toLowerCase» = 'D'
 			       WHEN NOT MATCHED THEN
 			               INSERT (
 			                         «FOR col : model.updateableColumnNames SEPARATOR ","»
@@ -315,9 +343,10 @@ class CreateApiPackageBody {
 			   BEGIN
 			      truncate_to_granularity(io_row => io_row);
 			      load_versions(in_row => io_row);
-			      handle_predecessor(in_row => io_row);
-			      handle_successor(in_row => io_row);
+			      del_enclosed_versions(in_row => io_row);
 			      add_version(in_row => io_row);
+			      add_first_version;
+			      add_last_version;
 			      save_latest;
 			      save_versions;
 			   END do_ins;
