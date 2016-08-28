@@ -61,7 +61,7 @@ class CreateHistoryTable {
 				   	»«ENDIF»
 				   «ENDFOR»
 				);
-				ALTER TABLE «model.historyTableName» ADD UNIQUE («FOR col : model.historyUkColumnNames SEPARATOR ", "»«col»«ENDFOR»);
+				ALTER TABLE «model.historyTableName» ADD UNIQUE («FOR col : model.historyUkColumnNames SEPARATOR ", "»«col»«ENDFOR») INITIALLY DEFERRED;
 				ALTER TABLE «model.historyTableName» ADD FOREIGN KEY («FOR col : model.latestPkColumnNames SEPARATOR ", "»«col»«ENDFOR») REFERENCES «model.latestTableName»;
 				«var int index = 1»
 				«FOR fk : model.inputTable.foreignKeyConstraints»
