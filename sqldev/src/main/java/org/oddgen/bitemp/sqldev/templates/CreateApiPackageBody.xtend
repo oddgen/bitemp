@@ -53,6 +53,28 @@ class CreateApiPackageBody {
 		return cols
 	}
 	
+	def getUpdateableColumnNames(GeneratorModel model) {
+		return model.columnNames.filter[
+			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase
+		]
+	}
+
+	def getLatestColumnNames(GeneratorModel model) {
+		return model.columnNames.filter[
+			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase &&
+			it != model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase	&&
+			it != model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase &&
+			it != BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase
+		]
+	}
+	
+	def getUpdateableLatestColumnNames(GeneratorModel model) {
+		return model.latestColumnNames.filter[
+			!model.inputTable.primaryKeyConstraint.columnNames.contains(it.toUpperCase)
+		]
+	}
+
+	
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
 			--
@@ -68,6 +90,21 @@ class CreateApiPackageBody {
 			   PRAGMA exception_init(e_hook_body_missing, -6508);
 
 			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
+			   --
+			   -- history rows
+			   --
+			   g_versions «model.collectionTypeName»;
+			   
+			   --
+			   -- number of history rows originally found
+			   --
+			   g_versions_count PLS_INTEGER;
+			   
+			   --
+			   -- history rows to be physically deleted
+			   --
+			   g_versions_del «model.collectionTypeName» := «model.collectionTypeName»();
+			   
 			   --
 			   -- truncate_to_granularity
 			   --
@@ -86,54 +123,55 @@ class CreateApiPackageBody {
 			   END truncate_to_granularity;
 
 			   --
-			   -- get_versions
+			   -- load_versions
 			   --
-			   FUNCTION get_versions (
+			   PROCEDURE load_versions (
 			      in_row IN «model.objectTypeName»
-			   ) return «model.collectionTypeName» IS
-			      l_versions «model.collectionTypeName»;
+			   ) IS
 			   BEGIN
 			      SELECT «model.objectTypeName» (
 			                «FOR col : model.columnNames SEPARATOR ','»
 			                	«col»
 			                «ENDFOR»
 			             )
-			        BULK COLLECT INTO l_versions
+			        BULK COLLECT INTO g_versions
 			        FROM «model.historyTableName» AS OF SCN SYS.dbms_flashback.get_system_change_number «
 			             »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»;
-			      RETURN l_versions;
-			   END get_versions;
+			      g_versions_count := g_versions.count();
+			      g_versions_del.delete();
+			   END load_versions;
 
 			   --
 			   -- handle_predecessor
 			   --
 			   PROCEDURE handle_predecessor (
-			      io_versions IN OUT «model.collectionTypeName»,
 			      in_row IN «model.objectTypeName»
 			   ) IS
 			      i PLS_INTEGER;
 			   BEGIN
-			      IF io_versions IS NOT NULL AND io_versions.count() > 0 THEN
+			      IF g_versions IS NOT NULL AND g_versions.count() > 0 THEN
 			         IF in_row.«validFrom» IS NOT NULL THEN
 			            -- reduce validity of immediate predecessor
-			            i := io_versions.first();
+			            i := g_versions.first();
 			            WHILE i IS NOT NULL LOOP
-			               IF (io_versions(i).«validFrom» IS NULL OR io_versions(i).«validFrom» <= in_row.«validFrom»)
-			                  AND (io_versions(i).«validTo» IS NULL OR io_versions(i).«validTo» > in_row.«validFrom»)
+			               IF (g_versions(i).«validFrom» IS NULL OR g_versions(i).«validFrom» <= in_row.«validFrom»)
+			                  AND (g_versions(i).«validTo» IS NULL OR g_versions(i).«validTo» > in_row.«validFrom»)
 			               THEN
-			                  io_versions(i).«validTo» := in_row.«validFrom»;
+			                  g_versions(i).«validTo» := in_row.«validFrom»;
 			               END IF;
-			               i := io_versions.next(i);
+			               i := g_versions.next(i);
 			            END LOOP;
 			         ELSE
 			            -- delete all predecessors
-			            i := io_versions.first();
+			            i := g_versions.first();
 			            WHILE i IS NOT NULL LOOP
-			               IF io_versions(i).«validTo» < in_row.«validTo» OR in_row.«validTo» IS NULL THEN
-			                  io_versions.delete(i);
+			               IF g_versions(i).«validTo» < in_row.«validTo» OR in_row.«validTo» IS NULL THEN
+			                  g_versions_del.extend();
+			                  g_versions_del(g_versions_del.last()) := g_versions(i);
+			                  g_versions.delete(i);
 			               END IF;
-			               i := io_versions.next(i);
+			               i := g_versions.next(i);
 			            END LOOP;
 			         END IF;
 			      END IF;
@@ -143,31 +181,32 @@ class CreateApiPackageBody {
 			   -- handle_successor
 			   --
 			   PROCEDURE handle_successor (
-			      io_versions IN OUT «model.collectionTypeName»,
 			      in_row IN «model.objectTypeName»
 			   ) IS
 			      i PLS_INTEGER;
 			   BEGIN
-			      IF io_versions IS NOT NULL AND io_versions.count() > 0 THEN
+			      IF g_versions IS NOT NULL AND g_versions.count() > 0 THEN
 			         IF in_row.«validTo» IS NOT NULL THEN
 			            -- reduce validity of immediate successor
-			            i := io_versions.first();
+			            i := g_versions.first();
 			            WHILE i IS NOT NULL LOOP
-			               IF (io_versions(i).«validFrom» IS NULL OR io_versions(i).«validFrom» <= in_row.«validTo»)
-			                  AND (io_versions(i).«validTo» IS NULL OR io_versions(i).«validTo» > in_row.«validTo»)
+			               IF (g_versions(i).«validFrom» IS NULL OR g_versions(i).«validFrom» <= in_row.«validTo»)
+			                  AND (g_versions(i).«validTo» IS NULL OR g_versions(i).«validTo» > in_row.«validTo»)
 			               THEN
-			                  io_versions(i).«validFrom» := in_row.«validTo»;
+			                  g_versions(i).«validFrom» := in_row.«validTo»;
 			               END IF;
-			               i := io_versions.next(i);
+			               i := g_versions.next(i);
 			            END LOOP;
 			         ELSE
 			            -- delete all successors
-			            i := io_versions.first();
+			            i := g_versions.first();
 			            WHILE i IS NOT NULL LOOP
-			               IF io_versions(i).«validFrom» > in_row.«validFrom» OR in_row.«validFrom» IS NULL THEN
-			                  io_versions.delete(i);
+			               IF g_versions(i).«validFrom» > in_row.«validFrom» OR in_row.«validFrom» IS NULL THEN
+			                  g_versions_del.extend();
+			                  g_versions_del(g_versions_del.last()) := g_versions(i);
+			                  g_versions.delete(i);
 			               END IF;
-			               i := io_versions.next(i);
+			               i := g_versions.next(i);
 			            END LOOP;
 			         END IF;
 			      END IF;
@@ -177,23 +216,94 @@ class CreateApiPackageBody {
 			   -- add_version
 			   --
 			   PROCEDURE add_version (
-			      io_versions IN OUT «model.collectionTypeName»,
 			      in_row IN «model.objectTypeName»
 			   ) IS
 			   BEGIN
-			      io_versions.extend();
-			      io_versions(io_versions.last()) := in_row;
+			      g_versions.extend();
+			      g_versions(g_versions.last()) := in_row;
 			   END add_version;
+
+			   --
+			   -- save_latest
+			   --
+			   PROCEDURE save_latest IS
+			      l_latest_row «model.objectTypeName»;
+			      i PLS_INTEGER;
+			   BEGIN
+			   	  SELECT «model.objectTypeName» (
+			                «FOR col : model.columnNames SEPARATOR ','»
+			                	«col»
+			                «ENDFOR»
+			             )
+			        INTO l_latest_row
+			        FROM TABLE(g_versions)
+			       WHERE «validTo» IS NULL;
+			      IF g_versions_count = 0 THEN
+			            INSERT
+			              INTO «model.latestTableName» (
+			                      «FOR col : model.latestColumnNames SEPARATOR ','»
+			                      	«col»
+			                   «ENDFOR»
+			                   )
+			            VALUES (
+			                      «FOR col : model.latestColumnNames SEPARATOR ','»
+			                      	l_latest_row.«col»
+			                      «ENDFOR»
+			                   )
+			         RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
+			              INTO «FOR col : model.pkColumnNames SEPARATOR ', '»l_latest_row.«col»«ENDFOR»;
+			         i := g_versions.first();
+			         WHILE i IS NOT NULL LOOP
+			            «FOR col : model.pkColumnNames»
+			            	g_versions(i).«col» := l_latest_row.«col»;
+			            «ENDFOR»
+			            i := g_versions.next(i);
+			         END LOOP;
+			      ELSE
+			         UPDATE «model.latestTableName»
+			            SET «FOR col : model.updateableLatestColumnNames SEPARATOR ',' + System.lineSeparator + '    '»«col» = l_latest_row.«col»«ENDFOR»
+			          WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = l_latest_row.«col»«ENDFOR»;
+			      END IF;
+			   END save_latest;
 
 			   --
 			   -- save_versions
 			   --
-			   PROCEDURE save_versions (
-			      in_versions IN «model.collectionTypeName»
-			   ) IS
+			   PROCEDURE save_versions IS
 			   BEGIN
-			      -- TODO
-			      NULL;
+			      MERGE 
+			       INTO «model.historyTableName» t
+			      USING (
+			               SELECT NULL AS operation$,
+			                      «FOR col : model.columnNames SEPARATOR ","»
+			                      	«col»
+			                      «ENDFOR»
+			                 FROM TABLE(g_versions)
+			               UNION ALL
+			               SELECT 'D' AS operation$,
+			                      «FOR col : model.columnNames SEPARATOR ","»
+			                      	«col»
+			                      «ENDFOR»
+			                 FROM TABLE(g_versions_del)
+			            ) s
+			         ON (s.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» = t.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»)
+			       WHEN MATCHED THEN
+			               UPDATE
+			                  SET «FOR col : model.updateableColumnNames SEPARATOR ',' + System.lineSeparator + '    '»t.«col» = s.«col»«ENDFOR»
+			                WHERE operation$ IS NULL
+			               DELETE
+			                WHERE operation$ = 'D'
+			       WHEN NOT MATCHED THEN
+			               INSERT (
+			                         «FOR col : model.updateableColumnNames SEPARATOR ","»
+			                         	t.«col»
+			                         «ENDFOR»
+			                      )
+			               VALUES (
+			                         «FOR col : model.updateableColumnNames SEPARATOR ","»
+			                         	s.«col»
+			                         «ENDFOR»
+			                      );
 			   END save_versions;
 
 			   --
@@ -202,13 +312,14 @@ class CreateApiPackageBody {
 			   PROCEDURE do_ins (
 			      io_row IN OUT «model.objectTypeName»
 			   ) IS
-			      l_versions «model.collectionTypeName»;
 			   BEGIN
 			      truncate_to_granularity(io_row => io_row);
-			      l_versions := get_versions(in_row => io_row);
-			      handle_predecessor(io_versions => l_versions, in_row => io_row);
-			      handle_successor(io_versions => l_versions, in_row => io_row);
-			      add_version(io_versions => l_versions, in_row => io_row);
+			      load_versions(in_row => io_row);
+			      handle_predecessor(in_row => io_row);
+			      handle_successor(in_row => io_row);
+			      add_version(in_row => io_row);
+			      save_latest;
+			      save_versions;
 			   END do_ins;
 			   «ENDIF»
 			   --
