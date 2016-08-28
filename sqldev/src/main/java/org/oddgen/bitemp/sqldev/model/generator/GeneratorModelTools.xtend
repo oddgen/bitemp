@@ -297,6 +297,15 @@ class GeneratorModelTools {
 		}
 	}
 
+	def getAlternativeLatestViewName(GeneratorModel model) {
+		if (model.params.get(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE) == "0") {
+			return model.getBaseTableName.
+				toLowerCase
+		} else {
+			return '''«model.getBaseTableName.toLowerCase»«model.params.get(BitempRemodeler.LATEST_VIEW_SUFFIX).toLowerCase»'''
+		}
+	}
+
 	def getLatestViewInsteadOfTriggerName(GeneratorModel model) {
 		val name = '''«model.latestViewName»«model.params.get(BitempRemodeler.IOT_SUFFIX).toLowerCase»'''
 		return name.toString

@@ -45,6 +45,12 @@ class RemoveApi {
 			--
 			DROP VIEW «model.latestViewName»;
 		«ENDIF»
+		«IF dao.existsObject("VIEW", model.alternativeLatestViewName.toUpperCase)»
+			--
+			-- DROP latest view including instead of trigger
+			--
+			DROP VIEW «model.alternativeLatestViewName»;
+		«ENDIF»
 		«IF dao.existsObject("PACKAGE", model.apiPackageName.toUpperCase)»
 			--
 			-- DROP API package specification and body

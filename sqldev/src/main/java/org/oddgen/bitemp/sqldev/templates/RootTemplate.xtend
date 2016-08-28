@@ -37,8 +37,8 @@ class RootTemplate {
 			--     - «String.format("%1$-" + maxParamLen + "s", key)»: «model.params.get(key).booleanParamToString»
 		«ENDFOR»
 		--
-		«(new CreateDataStructure).compile(model)»
 		«(new RemoveApi).compile(model)»
+		«(new CreateDataStructure).compile(model)»
 		«(new CreateApi).compile(model)»
 	'''
 }
