@@ -67,6 +67,12 @@ class CreateApiPackageBody {
 		]
 	}
 
+	def getDiffColumnNames(GeneratorModel model) {
+		return model.columnNames.filter[
+			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase
+		]
+	}
+
 	def getLatestColumnNames(GeneratorModel model) {
 		return model.columnNames.filter[
 			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase &&
@@ -204,6 +210,43 @@ class CreateApiPackageBody {
 			      WHEN NO_DATA_FOUND THEN
 			         RETURN NULL;
 			   END get_version_at;
+
+			   --
+			   -- changes_history
+			   --
+			   FUNCTION changes_history RETURN BOOLEAN IS
+			      l_diff_count PLS_INTEGER;
+			   BEGIN
+			      WITH 
+			         diff1 AS (
+			            SELECT «FOR col : model.diffColumnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			              FROM TABLE(g_versions)
+			             MINUS
+			            SELECT «FOR col : model.diffColumnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			              FROM TABLE(g_versions_original)
+			         ),
+			         diff2 AS (
+			            SELECT «FOR col : model.diffColumnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			              FROM TABLE(g_versions_original)
+			             MINUS
+			            SELECT «FOR col : model.diffColumnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			              FROM TABLE(g_versions)
+			         ),
+			         diff AS (
+			            SELECT COUNT(*) AS count_diff 
+			              FROM diff1 
+			             WHERE ROWNUM = 1
+			            UNION ALL
+			            SELECT COUNT(*) AS count_diff
+			              FROM diff2
+			             WHERE ROWNUM = 1 
+			         )
+			      SELECT SUM(count_diff)
+			        INTO l_diff_count
+			        FROM diff
+			       WHERE ROWNUM = 1;
+			     RETURN l_diff_count > 0;
+			   END changes_history;
 
 			   --
 			   -- del_enclosed_versions
@@ -400,7 +443,12 @@ class CreateApiPackageBody {
 			      ELSE
 			         UPDATE «model.latestTableName»
 			            SET «FOR col : model.updateableLatestColumnNames SEPARATOR ',' + System.lineSeparator + '    '»«col» = l_latest_row.«col»«ENDFOR»
-			          WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = l_latest_row.«col»«ENDFOR»;
+			          WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = l_latest_row.«col»«ENDFOR»
+			            AND (
+			                    «FOR col : model.updateableLatestColumnNames SEPARATOR " OR"»
+			                    	(«col» != l_latest_row.«col» OR «col» IS NULL AND l_latest_row.«col» IS NOT NULL OR «col» IS NOT NULL AND l_latest_row.«col» IS NULL)
+			                    «ENDFOR»
+			                );
 			      END IF;
 			   END save_latest;
 
@@ -464,8 +512,10 @@ class CreateApiPackageBody {
 			      add_first_version;
 			      add_last_version;
 			      merge_versions;
-			      save_latest;
-			      save_versions;
+			      IF changes_history() THEN
+			         save_latest;
+			         save_versions;
+			      END IF;
 			   END do_ins;
 
 			   «ENDIF»
