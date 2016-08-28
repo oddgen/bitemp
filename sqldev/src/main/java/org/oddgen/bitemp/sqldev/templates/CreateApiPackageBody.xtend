@@ -58,13 +58,20 @@ class CreateApiPackageBody {
 			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase
 		]
 	}
+	
+	def getJoinColumnNames(GeneratorModel model) {
+		return model.columnNames.filter[
+			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase &&
+			it != model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase	&&
+			it != model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase
+		]
+	}
 
 	def getLatestColumnNames(GeneratorModel model) {
 		return model.columnNames.filter[
 			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase &&
 			it != model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase	&&
-			it != model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase &&
-			it != BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase
+			it != model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase
 		]
 	}
 	
@@ -84,6 +91,11 @@ class CreateApiPackageBody {
 				«val validFrom = model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase»
 				«val validTo = model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»
 				«val isDeleted = BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»
+				«val histId = BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»
+				«val operation = BitempRemodeler.OPERATION_COL_NAME.toLowerCase»
+				«val groupCols = BitempRemodeler.GROUP_COLS_COL_NAME.toLowerCase»
+				«val newGroup = BitempRemodeler.NEW_GROUP_COL_NAME.toLowerCase»
+				«val groupNo = BitempRemodeler.GROUP_NO_COL_NAME.toLowerCase»
 			   --
 			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«model.conn.metaData.userName».«model.hookPackageName.toUpperCase»"'
 			   --
@@ -101,12 +113,32 @@ class CreateApiPackageBody {
 			   -- working copy of history rows
 			   --
 			   g_versions «model.collectionTypeName»;
-			   
+
 			   --
 			   -- original, unchanged history rows 
 			   --
 			   g_versions_original «model.collectionTypeName»;
-			   
+
+			   --
+			   -- print_collection
+			   --
+			   PROCEDURE print_collection (
+			      in_collection IN «model.collectionTypeName»,
+			      in_header IN VARCHAR2 DEFAULT NULL
+			   )
+			   IS
+			   BEGIN
+			      IF in_header IS NOT NULL THEN
+			         dbms_output.put_line(in_header);
+			      END IF;
+			      FOR i in 1..in_collection.COUNT() LOOP
+			         dbms_output.put_line('row ' || i || ':');
+			         «FOR col : model.columnNames»
+			         	dbms_output.put_line('.. «String.format("%-30s", col)»: ' || in_collection(i).«col»);
+			         «ENDFOR»
+			      END LOOP;
+			   END print_collection;
+
 			   --
 			   -- truncate_to_granularity
 			   --
@@ -254,6 +286,89 @@ class CreateApiPackageBody {
 			   END add_last_version;
 
 			   --
+			   -- merge_versions
+			   --
+			   PROCEDURE merge_versions IS
+			      l_merged «model.collectionTypeName»;
+			   BEGIN
+			      WITH
+			         base AS (
+			            SELECT «histId»,
+			                   NVL(«validFrom», co_minvalue) AS «validFrom»,
+			                   NVL(LEAD («validFrom», 1, valid_to) OVER (ORDER BY «validFrom» NULLS FIRST), co_maxvalue) AS «validTo»,
+			                   (
+			                      «FOR col : model.joinColumnNames SEPARATOR " || ',' || "»
+			                      	«col»
+			                      «ENDFOR»
+			                   ) AS «groupCols»,
+			                   «FOR col : model.joinColumnNames SEPARATOR ","»
+			                   	«col»
+			                   «ENDFOR»
+			              FROM TABLE(g_versions)
+			         ),
+			         group_no_base AS (
+			            SELECT «histId»,
+			                   «validFrom»,
+			                   «validTo»,
+			                   CASE
+			                      WHEN LAG(«groupCols», 1, «groupCols») OVER (ORDER BY «validFrom») = «groupCols» THEN
+			                         0
+			                      ELSE
+			                         1
+			                   END AS «newGroup»,
+			                   «FOR col : model.joinColumnNames SEPARATOR ","»
+			                   	«col»
+			                   «ENDFOR»
+			              FROM base
+			         ),
+			         group_no AS (
+			            SELECT «histId»,
+			                   «validFrom»,
+			                   «validTo»,
+			                   SUM(«newGroup») OVER (ORDER BY «validFrom») AS «groupNo»,
+			                   «FOR col : model.joinColumnNames SEPARATOR ","»
+			                   	«col»
+			                   «ENDFOR»
+			              FROM group_no_base
+			         ),
+			         merged AS (
+			            SELECT MAX(«histId») AS «histId»,
+			                   MIN(«validFrom») AS «validFrom»,
+			                   MAX(«validTo») AS «validTo»,
+			                   «FOR col : model.joinColumnNames SEPARATOR ","»
+			                   	«col»
+			                   «ENDFOR»
+			              FROM group_no
+			             GROUP BY «groupNo»,
+			                      «FOR col : model.joinColumnNames SEPARATOR ","»
+			                      	«col»
+			                      «ENDFOR»
+			         )
+			      -- main
+			      SELECT «model.objectTypeName» (
+			                «histId»,
+			                CASE 
+			                   WHEN «validFrom» = co_minvalue THEN
+			                      NULL
+			                   ELSE
+			                      «validFrom»
+			                END,
+			                CASE
+			                   WHEN «validTo» = co_maxvalue THEN
+			                      NULL
+			                   ELSE
+			                      «validTo»
+			                END,
+			                «FOR col : model.joinColumnNames SEPARATOR ","»
+			                	«col»
+			                «ENDFOR»
+			             )
+			        BULK COLLECT INTO l_merged
+			        FROM merged;
+			       g_versions := l_merged;
+			   END merge_versions;
+
+			   --
 			   -- save_latest
 			   --
 			   PROCEDURE save_latest IS
@@ -266,7 +381,7 @@ class CreateApiPackageBody {
 			              INTO «model.latestTableName» (
 			                      «FOR col : model.latestColumnNames SEPARATOR ','»
 			                      	«col»
-			                   «ENDFOR»
+			                      «ENDFOR»
 			                   )
 			            VALUES (
 			                      «FOR col : model.latestColumnNames SEPARATOR ','»
@@ -297,7 +412,7 @@ class CreateApiPackageBody {
 			      MERGE 
 			       INTO «model.historyTableName» t
 			      USING (
-			               SELECT NULL AS «BitempRemodeler.OPERATION_COL_NAME.toLowerCase»,
+			               SELECT NULL AS «operation»,
 			                      «FOR col : model.columnNames SEPARATOR ","»
 			                      	«IF col == validTo»
 			                      		LEAD («validFrom», 1, NULL) OVER (ORDER BY «validFrom» NULLS FIRST) AS «validTo»
@@ -307,21 +422,21 @@ class CreateApiPackageBody {
 			                      «ENDFOR»
 			                 FROM TABLE(g_versions)
 			               UNION ALL
-			               SELECT 'D' AS «BitempRemodeler.OPERATION_COL_NAME.toLowerCase»,
+			               SELECT 'D' AS «operation»,
 			                      «FOR col : model.columnNames SEPARATOR ","»
 			                      	o.«col»
 			                      «ENDFOR»
 			                 FROM TABLE(g_versions_original) o
 			                 LEFT JOIN TABLE(g_versions) w
-			                   ON w.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» = o.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»
-			                WHERE w.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» IS NULL
+			                   ON w.«histId» = o.«histId»
+			                WHERE w.«histId» IS NULL
 			            ) s
-			         ON (s.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase» = t.«BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»)
+			         ON (s.«histId» = t.«histId»)
 			       WHEN MATCHED THEN
 			               UPDATE
 			                  SET «FOR col : model.updateableColumnNames SEPARATOR ',' + System.lineSeparator + '    '»t.«col» = s.«col»«ENDFOR»
 			               DELETE
-			                WHERE «BitempRemodeler.OPERATION_COL_NAME.toLowerCase» = 'D'
+			                WHERE «operation» = 'D'
 			       WHEN NOT MATCHED THEN
 			               INSERT (
 			                         «FOR col : model.updateableColumnNames SEPARATOR ","»
@@ -348,6 +463,7 @@ class CreateApiPackageBody {
 			      add_version(in_row => io_row);
 			      add_first_version;
 			      add_last_version;
+			      merge_versions;
 			      save_latest;
 			      save_versions;
 			   END do_ins;
