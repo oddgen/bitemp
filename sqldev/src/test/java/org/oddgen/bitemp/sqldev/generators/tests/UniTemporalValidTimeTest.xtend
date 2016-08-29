@@ -71,13 +71,12 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		''')
 		Assert.assertEquals(5, getCount("D2", ""))
 		Assert.assertEquals(7, getCount("D2_HT", ""))
-		Assert.assertEquals(4, getCount("D2_LV", ""))
-		Assert.assertEquals(6, getCount("D2_HV", ""))
+		Assert.assertEquals(5, getCount("D2_LV", ""))
+		Assert.assertEquals(7, getCount("D2_HV", ""))
 		Assert.assertEquals(0, getCount("D2_LV", "WHERE loc = 'Zürich'"))
-		// TODO: Why is the last deleted version updated? Not really wrong, but unexpected
-		// Assert.assertEquals(1, getCount("D2_LV", "WHERE loc = 'ZUERICH'"))
+		Assert.assertEquals(1, getCount("D2_LV", "WHERE loc = 'ZUERICH'"))
 		Assert.assertEquals(1, getCount("D2_HT", "WHERE loc = 'Zürich' AND is_deleted$ IS NULL"))
-		Assert.assertEquals(1, getCount("D2_HT", "WHERE loc = 'ZUERICH' AND is_deleted$ IS NULL"))
+		Assert.assertEquals(2, getCount("D2_HT", "WHERE loc = 'ZUERICH' AND is_deleted$ IS NULL"))
 		jdbcTemplate.execute('''
 			INSERT 
 			  INTO d2_hv 

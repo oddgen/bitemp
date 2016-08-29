@@ -116,6 +116,13 @@ class CreateApiPackageBody {
 			   co_maxvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('9999-12-31 23:59:59.999999999', 'YYYY-MM-DD HH24:MI:SS.FF9');
 
 			   --
+			   -- update modes evaluated based on old and new values
+			   --
+			   co_upd_no_change CONSTANT PLS_INTEGER := 0; -- no update necessary since no changes have been made
+			   co_upd_as_insert CONSTANT PLS_INTEGER := 1; -- handle update as an insert, replaces all column values in chosen valid time range
+			   co_upd_appl_cols CONSTANT PLS_INTEGER := 2; -- updates changed columns in the chosen valid time range
+
+			   --
 			   -- working copy of history rows
 			   --
 			   g_versions «model.collectionTypeName»;
@@ -135,15 +142,57 @@ class CreateApiPackageBody {
 			   IS
 			   BEGIN
 			      IF in_header IS NOT NULL THEN
-			         dbms_output.put_line(in_header);
+			         sys.dbms_output.put_line(in_header);
 			      END IF;
+			      <<all_versions>>
 			      FOR i in 1..in_collection.COUNT() LOOP
-			         dbms_output.put_line('row ' || i || ':');
+			         sys.dbms_output.put_line('row ' || i || ':');
 			         «FOR col : model.columnNames»
 			         	dbms_output.put_line('.. «String.format("%-30s", col)»: ' || in_collection(i).«col»);
 			         «ENDFOR»
-			      END LOOP;
+			      END LOOP all_versions;
 			   END print_collection;
+
+			   --
+			   -- get_update_mode
+			   --
+			   FUNCTION get_update_mode (
+			      in_new_row IN «model.objectTypeName»,
+			      in_old_row IN «model.objectTypeName»
+			   ) RETURN PLS_INTEGER IS
+			      l_valid_time_range_changed BOOLEAN := FALSE;
+			      l_appl_items_changed BOOLEAN := FALSE;
+			      l_update_mode PLS_INTEGER;
+			   BEGIN
+			      IF (in_new_row.«validFrom» != in_old_row.«validFrom» 
+			          OR in_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL 
+			          OR in_new_row.«validFrom» IS NOT NULL AND in_old_row.«validFrom» IS NULL)
+			         OR
+			         (in_new_row.«validFrom» != in_old_row.«validFrom»
+			          OR in_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL 
+			          OR in_new_row.«validFrom» IS NOT NULL AND in_old_row.«validFrom» IS NULL)
+			      THEN
+			         l_valid_time_range_changed := TRUE;
+			      END IF;
+			      IF (
+			            «FOR col : model.updateableLatestColumnNames.filter[it != validFrom && it != validTo] SEPARATOR System.lineSeparator + 'OR'»
+			            	(in_new_row.«col» != in_old_row.«col» 
+			            	 OR in_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			            	 OR in_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL)
+			            «ENDFOR»
+			         ) 
+			      THEN
+			         l_appl_items_changed := TRUE;
+			      END IF;
+			      IF l_appl_items_changed THEN
+			         l_update_mode := co_upd_appl_cols;
+			      ELSIF l_valid_time_range_changed THEN
+			         l_update_mode := co_upd_as_insert;
+			      ELSE
+			         l_update_mode := co_upd_no_change;
+			      END IF;
+			      RETURN l_update_mode;
+			   END get_update_mode;
 
 			   --
 			   -- truncate_to_granularity
@@ -283,12 +332,34 @@ class CreateApiPackageBody {
 			   END add_version;
 
 			   --
+			   -- split_version
+			   --
+			   PROCEDURE split_version (
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			      l_version «model.objectTypeName»;
+			      l_copy «model.objectTypeName»;
+			   BEGIN
+			      IF in_row.«validTo» IS NOT NULL THEN
+			         l_version := get_version_at(in_at => co_minvalue);
+			         IF l_version IS NOT NULL THEN
+			            IF l_version.«validFrom» IS NULL AND l_version.«validTo» IS NULL THEN
+			               l_copy := l_version;
+			               l_copy.«histId» := NULL;
+			               l_copy.«validFrom» := in_row.«validTo»;
+			               add_version(in_row => l_copy);
+			            END IF;
+			         END IF;
+			      END IF;
+			   END split_version;
+
+			   --
 			   -- add_first_version
 			   --
 			   PROCEDURE add_first_version IS
 			      l_version «model.objectTypeName»;
 			   BEGIN
-			      l_version := get_version_at(co_minvalue);
+			      l_version := get_version_at(in_at => co_minvalue);
 			      IF l_version IS NULL THEN
 			         SELECT «model.objectTypeName» (
 			                   «FOR col : model.columnNames SEPARATOR ","»
@@ -311,7 +382,7 @@ class CreateApiPackageBody {
 			   PROCEDURE add_last_version IS
 			      l_version «model.objectTypeName»;
 			   BEGIN
-			      l_version := get_version_at(co_maxvalue);
+			      l_version := get_version_at(in_at => co_maxvalue);
 			      IF l_version IS NULL THEN
 			         SELECT «model.objectTypeName» (
 			                   «FOR col : model.columnNames SEPARATOR ","»
@@ -328,6 +399,69 @@ class CreateApiPackageBody {
 			         add_version(in_row => l_version);
 			      END IF;
 			   END add_last_version;
+			   
+			   --
+			   -- add_version_at_start
+			   --
+			   PROCEDURE add_version_at_start (
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			      l_version «model.objectTypeName»;
+			   BEGIN
+			      IF in_row.«validFrom» IS NOT NULL THEN
+			         l_version := get_version_at(in_at => in_row.«validFrom»);
+			         IF l_version.«validFrom» != in_row.«validFrom» OR l_version.«validFrom» IS NULL THEN
+			            l_version.«validFrom» := in_row.«validFrom»;
+			            add_version(in_row => l_version);
+			         END IF;
+			      END IF;
+			   END add_version_at_start;
+
+			   --
+			   -- add_version_at_end
+			   --
+			   PROCEDURE add_version_at_end (
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			      l_version «model.objectTypeName»;
+			   BEGIN
+			      IF in_row.«validTo» IS NOT NULL THEN
+			         l_version := get_version_at(in_at => in_row.«validTo»);
+			         IF l_version.«validFrom» != in_row.«validTo» OR l_version.«validFrom» IS NULL THEN
+			            l_version.«validFrom» := in_row.«validTo»;
+			            add_version(in_row => l_version);
+			         END IF;
+			      END IF;
+			   END add_version_at_end;
+
+			   --
+			   -- upd_appl_cols
+			   --
+			   PROCEDURE upd_appl_cols (
+			      in_new_row IN «model.objectTypeName»,
+			      in_old_row IN «model.objectTypeName»
+			   ) IS
+			      l_at «model.validTimeDataType»;
+			   BEGIN
+			      <<all_versions>>
+			      FOR i in 1..g_versions.COUNT() LOOP
+			         l_at := NVL(g_versions(i).«validFrom», co_minvalue);
+			         IF (in_new_row.«validFrom» IS NULL OR in_new_row.«validFrom» <= l_at)
+			            AND (in_new_row.«validTo» IS NULL OR in_new_row.«validTo» > l_at)
+			         THEN
+			            -- update period
+			            «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo]»
+			            	IF in_new_row.«validFrom» != in_old_row.«validFrom» 
+			            	   OR in_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL
+			            	   OR in_new_row.«validFrom» IS NOT NULL AND in_old_row.«validFrom» IS NULL
+			            	THEN
+			            	   -- update changed column
+			            	   g_versions(i).«col» := in_new_row.«col»;
+			            	END IF;
+			            «ENDFOR»
+			         END IF;
+			      END LOOP all_versions;
+			   END upd_appl_cols;
 
 			   --
 			   -- merge_versions
@@ -417,9 +551,8 @@ class CreateApiPackageBody {
 			   --
 			   PROCEDURE save_latest IS
 			      l_latest_row «model.objectTypeName»;
-			      i PLS_INTEGER;
 			   BEGIN
-			      l_latest_row := get_version_at(co_maxvalue);
+			      l_latest_row := get_version_at(in_at => co_maxvalue);
 			      IF g_versions_original.COUNT() = 0 THEN
 			            INSERT
 			              INTO «model.latestTableName» (
@@ -434,13 +567,12 @@ class CreateApiPackageBody {
 			                   )
 			         RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
 			              INTO «FOR col : model.pkColumnNames SEPARATOR ', '»l_latest_row.«col»«ENDFOR»;
-			         i := g_versions.first();
-			         WHILE i IS NOT NULL LOOP
+			         <<all_versions>>
+			         FOR i in 1..g_versions.COUNT() LOOP
 			            «FOR col : model.pkColumnNames»
 			            	g_versions(i).«col» := l_latest_row.«col»;
 			            «ENDFOR»
-			            i := g_versions.next(i);
-			         END LOOP;
+			         END LOOP all_versions;
 			      ELSE
 			         UPDATE «model.latestTableName»
 			            SET «FOR col : model.updateableLatestColumnNames SEPARATOR ',' + System.lineSeparator + '    '»«col» = l_latest_row.«col»«ENDFOR»
@@ -471,7 +603,7 @@ class CreateApiPackageBody {
 			                      «ENDFOR»
 			                 FROM TABLE(g_versions)
 			               UNION ALL
-			               SELECT 'D' AS «operation»,
+			               SELECT 'D' AS «operation», -- NOSONAR, PL/SQL Cop guideline 27, false positive
 			                      «FOR col : model.columnNames SEPARATOR ","»
 			                      	o.«col»
 			                      «ENDFOR»
@@ -509,6 +641,7 @@ class CreateApiPackageBody {
 			      truncate_to_granularity(io_row => io_row);
 			      load_versions(in_row => io_row);
 			      del_enclosed_versions(in_row => io_row);
+			      split_version(in_row => io_row);
 			      add_version(in_row => io_row);
 			      add_first_version;
 			      add_last_version;
@@ -518,6 +651,52 @@ class CreateApiPackageBody {
 			         save_versions;
 			      END IF;
 			   END do_ins;
+
+			   --
+			   -- do_upd
+			   --
+			   PROCEDURE do_upd (
+			      io_new_row IN OUT «model.objectTypeName»,
+			      in_old_row IN «model.objectTypeName»
+			   ) IS
+			      l_update_mode PLS_INTEGER;
+			   BEGIN
+			      truncate_to_granularity(io_row => io_new_row);
+			      l_update_mode := get_update_mode(in_new_row => io_new_row, in_old_row => in_old_row);
+			      IF l_update_mode = co_upd_as_insert THEN
+			         do_ins(io_row => io_new_row);
+			      ELSIF l_update_mode = co_upd_appl_cols THEN
+			         load_versions(in_row => in_old_row);
+			         add_version_at_start(in_row => io_new_row);
+			         add_version_at_end(in_row => io_new_row);
+			         upd_appl_cols(in_new_row => io_new_row, in_old_row => in_old_row);
+			         merge_versions;
+			         IF changes_history() THEN
+			            save_latest;
+			            save_versions;
+			         END IF;
+			      END IF;
+			   END do_upd;
+
+			   --
+			   -- do_del
+			   --
+			   PROCEDURE do_del (
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			      l_new_row «model.objectTypeName»;
+			      l_old_row «model.objectTypeName»;
+			   BEGIN
+			      l_new_row := NEW «model.objectTypeName»();
+			      l_new_row.«validFrom» := in_row.«validFrom»;
+			      l_new_row.«validTo» := in_row.«validTo»;
+			      «FOR col : model.pkColumnNames»
+			      	l_new_row.«col» := in_row.«col»;
+			      «ENDFOR»
+			      l_old_row := l_new_row;
+			      l_new_row.«isDeleted» := 1;
+			      do_upd(io_new_row => l_new_row, in_old_row => l_old_row);
+			   END do_del;
 
 			   «ENDIF»
 			   --
@@ -570,10 +749,7 @@ class CreateApiPackageBody {
 			      l_new_row := in_new_row;
 			      <<trap_pre_upd>>
 			      BEGIN
-			         «model.hookPackageName».pre_upd(
-			            io_new_row => l_new_row,
-			            in_old_row => in_new_row
-			         );
+			         «model.hookPackageName».pre_upd(io_new_row => l_new_row, in_old_row => in_new_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
@@ -583,14 +759,11 @@ class CreateApiPackageBody {
 			      	   SET «FOR col : model.columnNames SEPARATOR ', ' + System.lineSeparator + '    '»«col» = l_new_row.«col»«ENDFOR»
 			      	 WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_old_row.«col»«ENDFOR»;
 			      «ELSE»
-			      	-- TODO temporal update
+			      	do_upd(io_new_row => l_new_row, in_old_row => in_old_row);
 			      «ENDIF»
 			      <<trap_post_upd>>
 			      BEGIN
-			         «model.hookPackageName».post_upd(
-			            in_new_row => l_new_row,
-			            in_old_row => in_old_row
-			         );
+			         «model.hookPackageName».post_upd(in_new_row => l_new_row, in_old_row => in_old_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
@@ -616,7 +789,7 @@ class CreateApiPackageBody {
 			      	  FROM «model.latestTableName»
 			      	 WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '   AND '»«col» = in_old_row.«col»«ENDFOR»;
 			      «ELSE»
-			      	-- TODO temporal delete
+			      	do_del(in_row => in_old_row);
 			      «ENDIF»
 			      <<trap_post_del>>
 			      BEGIN
