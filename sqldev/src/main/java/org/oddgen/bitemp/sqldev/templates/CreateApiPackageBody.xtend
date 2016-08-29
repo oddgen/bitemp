@@ -326,9 +326,12 @@ class CreateApiPackageBody {
 			   PROCEDURE add_version (
 			      in_row IN «model.objectTypeName»
 			   ) IS
+			      l_row «model.objectTypeName»;
 			   BEGIN
+			      l_row := in_row;
+			      l_row.«histId» := NULL;
 			      g_versions.extend();
-			      g_versions(g_versions.last()) := in_row;
+			      g_versions(g_versions.last()) := l_row;
 			   END add_version;
 
 			   --
@@ -345,7 +348,6 @@ class CreateApiPackageBody {
 			         IF l_version IS NOT NULL THEN
 			            IF l_version.«validFrom» IS NULL AND l_version.«validTo» IS NULL THEN
 			               l_copy := l_version;
-			               l_copy.«histId» := NULL;
 			               l_copy.«validFrom» := in_row.«validTo»;
 			               add_version(in_row => l_copy);
 			            END IF;
@@ -451,9 +453,9 @@ class CreateApiPackageBody {
 			         THEN
 			            -- update period
 			            «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo]»
-			            	IF in_new_row.«validFrom» != in_old_row.«validFrom» 
-			            	   OR in_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL
-			            	   OR in_new_row.«validFrom» IS NOT NULL AND in_old_row.«validFrom» IS NULL
+			            	IF in_new_row.«col» != in_old_row.«col» 
+			            	   OR in_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			            	   OR in_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
 			            	THEN
 			            	   -- update changed column
 			            	   g_versions(i).«col» := in_new_row.«col»;
