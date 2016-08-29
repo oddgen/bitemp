@@ -177,7 +177,8 @@ class CreateApiPackageBody {
 			        BULK COLLECT INTO g_versions_original
 			        FROM «model.historyTableName» «
 			             »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
-			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»;
+			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»
+			         FOR UPDATE;
 			      g_versions := g_versions_original;
 			   END load_versions;
 
