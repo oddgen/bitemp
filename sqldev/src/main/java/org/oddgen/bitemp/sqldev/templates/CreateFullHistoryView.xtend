@@ -40,7 +40,6 @@ class CreateFullHistoryView {
 		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {
 			cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME))
 			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME))
-			cols.add(BitempRemodeler.IS_DELETED_COL_NAME)
 		}
 		for (col : model.inputTable.columns.values.filter [
 			it.virtualColumn == "NO" && it.hiddenColumn != "YES" && !cols.contains(it.columnName) &&
@@ -111,13 +110,17 @@ class CreateFullHistoryView {
 				       	»«col.toLowerCase»«
 				       »«ENDFOR»
 				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-					«'  '»FROM «model.sourceTableName» VERSIONS BETWEEN SCN 0 AND MAXVALUE;
+					«'  '»FROM «model.sourceTableName» VERSIONS BETWEEN SCN 0 AND MAXVALUE
+					«' '»WHERE VERSIONS_STARTSCN < VERSIONS_ENDSCN OR VERSIONS_STARTSCN IS NULL OR VERSIONS_ENDSCN IS NULL;
 				«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 					«'  '»FROM «model.sourceTableName» VERSIONS PERIOD FOR «
-					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE;
+					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
+					«' '»WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0;
 				«ELSE»
 					«'  '»FROM «model.sourceTableName» VERSIONS BETWEEN SCN 0 AND MAXVALUE VERSIONS PERIOD FOR «
-					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE;
+					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
+					«' '»WHERE (VERSIONS_STARTSCN < VERSIONS_ENDSCN OR VERSIONS_STARTSCN IS NULL OR VERSIONS_ENDSCN IS NULL)
+					«' '»  AND («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0);
 				«ENDIF»
 			«ENDIF»
 		«ENDIF»		
