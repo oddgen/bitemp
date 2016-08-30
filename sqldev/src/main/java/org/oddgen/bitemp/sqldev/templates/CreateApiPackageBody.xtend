@@ -876,9 +876,8 @@ class CreateApiPackageBody {
 			      in_tt_at IN TIMESTAMP DEFAULT NULL
 			   ) IS
 			   BEGIN
-			      IF in_tt_at IS NULL OR in_tt_at = SYSTIMESTAMP THEN
-			         sys.dbms_flashback.disable;
-			      ELSE
+			      sys.dbms_flashback.disable;
+			      IF TO_CHAR(in_tt_at, 'YYYY-MM-DD HH24:MI:SS.FF2') != TO_CHAR(SYSTIMESTAMP, 'YYYY-MM-DD HH24:MI:SS.FF2') THEN
 			         sys.dbms_flashback.enable_at_time(query_time => in_tt_at);
 			      END IF;
 			   END set_tt;
@@ -892,7 +891,7 @@ class CreateApiPackageBody {
 			   BEGIN
 			      IF in_vt_at IS NULL THEN
 			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'ALL');
-			      ELSIF in_vt_at = SYSTIMESTAMP THEN
+			      ELSIF TO_CHAR(in_vt_at, 'YYYY-MM-DD HH24:MI:SS.FF2') = TO_CHAR(SYSTIMESTAMP, 'YYYY-MM-DD HH24:MI:SS.FF2') THEN
 			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'CURRENT');
 			      ELSE
 			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'ASOF', query_time => in_vt_at);
