@@ -29,6 +29,13 @@ class RemoveDeletedIndicatorColumn {
 		«val isDeletedColumName = BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase»
 		«IF model.inputTable.columns.get(isDeletedColumName) != null»
 			--
+			-- Delete rows marked as deleted
+			--
+			DELETE
+			  FROM «model.latestTableName»
+			 WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 1;
+			COMMIT;
+			--
 			-- Remove indicator for deleted rows
 			--
 			ALTER TABLE «model.latestTableName» DROP COLUMN «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»;
