@@ -85,25 +85,36 @@ class CreateApiPackageSpecification {
 			   /**
 			   * Set transaction time context (point in time) for all data in the current session.
 			   * Wrapper for sys.dbms_flashback.disable and sys.dbms_flashback.enable_at_time.
-			   * @param in_tt_at set the transaction time to the passed value. 
+			   * @param in_at set the transaction time to the passed value. 
 			   *           - NULL disables the transaction time context (the default)
 			   *           - SYSTIMESTAMP disable the transaction time context as well.
 			   *           - Other values set the transaction time. 
 			   */
 			   PROCEDURE set_tt (
-			      in_tt_at IN TIMESTAMP DEFAULT NULL
+			      in_at IN TIMESTAMP DEFAULT NULL
+			   );
+
+			   /**
+			   * Set transaction time context (point in time) for all data in the current session.
+			   * Wrapper for sys.dbms_flashback.disable and dbms_flashback.enable_at_system_change_number.
+			   * @param in_at set transaction time according the passed system change number
+			   *           - NULL disables the transaction time context (the default)
+			   *           - Other values set the transaction time.
+			   */
+			   PROCEDURE set_scn (
+			      in_at IN INTEGER DEFAULT NULL
 			   );
 
 			   /**
 			   * Set valid time context (point in time or all periods) for all temporal data in the current session.
 			   * Wrapper for sys.dbms_flashback_archive.enable_at_valid_time.
-			   * @param in_vt_at set the valid time to the passed value. 
+			   * @param in_at set the valid time to the passed value. 
 			   *           - NULL disables the valid time context (level ALL, the default). 
 			   *           - SYSTIMESTAMP set the level to CURRENT.
 			   *           - Other values use level ASOF.
 			   */
 			   PROCEDURE set_vt (
-			      in_vt_at IN TIMESTAMP DEFAULT NULL
+			      in_at IN TIMESTAMP DEFAULT NULL
 			   );
 
 			END «model.apiPackageName»;
