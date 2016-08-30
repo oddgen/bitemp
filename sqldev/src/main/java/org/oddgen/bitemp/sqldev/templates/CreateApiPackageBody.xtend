@@ -657,9 +657,7 @@ class CreateApiPackageBody {
 			   BEGIN
 			      MERGE 
 			       INTO (
-			               SELECT «FOR col : model.columnNames SEPARATOR ',' + System.lineSeparator + '       '»
-			                      	«col»
-			                      «ENDFOR»
+			               SELECT «FOR col : model.columnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
 			                 FROM «model.historyTableName» «
 			                      »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			            ) t
