@@ -29,10 +29,10 @@ class CreateApi {
 			«(new CreateApiPackageSpecification).compile(model)»
 			«(new CreateHookPackageSpecification).compile(model)»
 			«(new CreateApiPackageBody).compile(model)»
-			«(new CreateLatestView).compile(model)»
-			«(new CreateLatestViewInsteadOfTrigger).compile(model)»
 			«(new CreateHistoryView).compile(model)»
 			«(new CreateHistoryViewInsteadOfTrigger).compile(model)»
+			«(new CreateLatestView).compile(model)»
+			«(new CreateLatestViewInsteadOfTrigger).compile(model)»
 			«(new CreateFullHistoryView).compile(model)»
 		«ENDIF»
 	'''
