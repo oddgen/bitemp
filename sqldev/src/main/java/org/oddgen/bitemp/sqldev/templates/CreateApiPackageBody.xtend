@@ -869,6 +869,36 @@ class CreateApiPackageBody {
 			      END trap_post_del;
 			   END del;
 
+			   --
+			   -- set_tt
+			   --
+			   PROCEDURE set_tt (
+			      in_tt_at IN TIMESTAMP DEFAULT NULL
+			   ) IS
+			   BEGIN
+			      IF in_tt_at IS NULL OR in_tt_at = SYSTIMESTAMP THEN
+			         sys.dbms_flashback.disable;
+			      ELSE
+			         sys.dbms_flashback.enable_at_time(query_time => in_tt_at);
+			      END IF;
+			   END set_tt;
+
+			   --
+			   -- set_vt
+			   --
+			   PROCEDURE set_vt (
+			      in_vt_at IN TIMESTAMP DEFAULT NULL
+			   ) IS
+			   BEGIN
+			      IF in_vt_at IS NULL THEN
+			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'ALL');
+			      ELSIF in_vt_at = SYSTIMESTAMP THEN
+			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'CURRENT');
+			      ELSE
+			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'ASOF', query_time => in_vt_at);
+			      END IF;
+			   END set_vt;
+
 			END «model.apiPackageName»;
 			/
 		«ENDIF»
