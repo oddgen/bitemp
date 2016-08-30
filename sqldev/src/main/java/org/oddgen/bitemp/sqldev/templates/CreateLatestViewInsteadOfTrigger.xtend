@@ -54,7 +54,7 @@ class CreateLatestViewInsteadOfTrigger {
 			   	-- Override default temporal period start for update and delete operations
 			   	--
 			   	IF UPDATING OR DELETING THEN
-			   	   SELECT «validFrom»
+			   	   SELECT NVL(«validFrom», SYSTIMESTAMP)
 			   	     INTO l_«validFrom»
 			   	     FROM «model.historyViewName»
 			   	    WHERE «validTo» IS NULL
