@@ -86,18 +86,11 @@ class CreateHistoryViewInsteadOfTrigger {
 					-- Call API
 					--
 					IF INSERTING THEN
-						«model.apiPackageName».ins(
-							in_new_row => l_new_row
-						);
+						«model.apiPackageName».ins(in_new_row => l_new_row);
 					ELSIF UPDATING THEN
-						«model.apiPackageName».upd(
-							in_new_row => l_new_row,
-							in_old_row => l_old_row
-						);
+						«model.apiPackageName».upd(in_new_row => l_new_row, in_old_row => l_old_row);
 					ELSIF DELETING THEN
-						«model.apiPackageName».del(
-							in_old_row => l_old_row
-						);
+						«model.apiPackageName».del(in_old_row => l_old_row);
 					END IF;
 				END «model.historyViewInsteadOfTriggerName»;
 				/
