@@ -21,6 +21,7 @@ import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
+import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.sqldev.LoggableConstants
 
 @Loggable(LoggableConstants.DEBUG)
@@ -114,13 +115,32 @@ class CreateApiPackageBody {
 			   --
 			   co_minvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('-4712', 'SYYYY');
 			   co_maxvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('9999-12-31 23:59:59.999999999', 'YYYY-MM-DD HH24:MI:SS.FF9');
+			   «IF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_YEAR")»
+			   	co_granule CONSTANT INTERVAL YEAR TO MONTH := INTERVAL '1' YEAR;
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MONTH")»
+			   	co_granule CONSTANT INTERVAL YEAR TO MONTH := INTERVAL '1' MONTH;
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_WEEK")»
+			   	co_granule CONSTANT INTERVAL DAY(1) TO SECOND(0) := INTERVAL '7' DAY;
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_DAY")»
+			   	co_granule CONSTANT INTERVAL DAY(1) TO SECOND(0) := INTERVAL '1' DAY;
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_SECOND")»
+			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(0) := INTERVAL '1' SECOND;
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_CENTISECOND")»
+			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(2) := INTERVAL '1' SECOND / 1E2 ;
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MILLIISECOND")»
+			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(3) := INTERVAL '1' SECOND / 1E3 ;
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MICROSECOND")»
+			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(6) := INTERVAL '1' SECOND / 1E6 ;
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_NANOSECOND")»
+			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(9) := INTERVAL '1' SECOND / 1E9 ;
+			   «ENDIF»
 
 			   --
 			   -- update modes evaluated based on old and new values
 			   --
 			   co_upd_no_change CONSTANT PLS_INTEGER := 0; -- no update necessary since no changes have been made
-			   co_upd_as_insert CONSTANT PLS_INTEGER := 1; -- handle update as an insert, replaces all column values in chosen valid time range
-			   co_upd_appl_cols CONSTANT PLS_INTEGER := 2; -- updates changed columns in the chosen valid time range
+			   co_upd_all_cols CONSTANT PLS_INTEGER := 1; -- updates all columns in chosen valid time range
+			   co_upd_changed_cols CONSTANT PLS_INTEGER := 2; -- updates changed columns in chosen valid time range
 
 			   --
 			   -- working copy of history rows
@@ -168,9 +188,9 @@ class CreateApiPackageBody {
 			          OR in_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL 
 			          OR in_new_row.«validFrom» IS NOT NULL AND in_old_row.«validFrom» IS NULL)
 			         OR
-			         (in_new_row.«validFrom» != in_old_row.«validFrom»
-			          OR in_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL 
-			          OR in_new_row.«validFrom» IS NOT NULL AND in_old_row.«validFrom» IS NULL)
+			         (in_new_row.«validTo» != in_old_row.«validTo»
+			          OR in_new_row.«validTo» IS NULL AND in_old_row.«validTo» IS NOT NULL 
+			          OR in_new_row.«validTo» IS NOT NULL AND in_old_row.«validTo» IS NULL)
 			      THEN
 			         l_valid_time_range_changed := TRUE;
 			      END IF;
@@ -185,9 +205,9 @@ class CreateApiPackageBody {
 			         l_appl_items_changed := TRUE;
 			      END IF;
 			      IF l_appl_items_changed THEN
-			         l_update_mode := co_upd_appl_cols;
+			         l_update_mode := co_upd_changed_cols;
 			      ELSIF l_valid_time_range_changed THEN
-			         l_update_mode := co_upd_as_insert;
+			         l_update_mode := co_upd_all_cols;
 			      ELSE
 			         l_update_mode := co_upd_no_change;
 			      END IF;
@@ -344,9 +364,9 @@ class CreateApiPackageBody {
 			      l_copy «model.objectTypeName»;
 			   BEGIN
 			      IF in_row.«validTo» IS NOT NULL THEN
-			         l_version := get_version_at(in_at => co_minvalue);
+			         l_version := get_version_at(in_at => NVL(in_row.«validFrom», co_minvalue));
 			         IF l_version IS NOT NULL THEN
-			            IF l_version.«validFrom» IS NULL AND l_version.«validTo» IS NULL THEN
+			            IF NVL(l_version.«validTo», co_maxvalue) > in_row.«validTo» THEN
 			               l_copy := l_version;
 			               l_copy.«validFrom» := in_row.«validTo»;
 			               add_version(in_row => l_copy);
@@ -437,9 +457,31 @@ class CreateApiPackageBody {
 			   END add_version_at_end;
 
 			   --
-			   -- upd_appl_cols
+			   -- upd_all_cols
 			   --
-			   PROCEDURE upd_appl_cols (
+			   PROCEDURE upd_all_cols (
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			      l_at «model.validTimeDataType»;
+			   BEGIN
+			      <<all_versions>>
+			      FOR i in 1..g_versions.COUNT() LOOP
+			         l_at := NVL(g_versions(i).«validFrom», co_minvalue);
+			         IF (in_row.«validFrom» IS NULL OR in_row.«validFrom» <= l_at)
+			            AND (in_row.«validTo» IS NULL OR in_row.«validTo» > l_at)
+			         THEN
+			            -- update period 
+			            «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo]»
+			            	g_versions(i).«col» := in_row.«col»;
+			            «ENDFOR»
+			         END IF;
+			      END LOOP all_versions;
+			   END upd_all_cols;
+
+			   --
+			   -- upd_changed_cols
+			   --
+			   PROCEDURE upd_changed_cols (
 			      in_new_row IN «model.objectTypeName»,
 			      in_old_row IN «model.objectTypeName»
 			   ) IS
@@ -463,7 +505,7 @@ class CreateApiPackageBody {
 			            «ENDFOR»
 			         END IF;
 			      END LOOP all_versions;
-			   END upd_appl_cols;
+			   END upd_changed_cols;
 
 			   --
 			   -- merge_versions
@@ -665,13 +707,16 @@ class CreateApiPackageBody {
 			   BEGIN
 			      truncate_to_granularity(io_row => io_new_row);
 			      l_update_mode := get_update_mode(in_new_row => io_new_row, in_old_row => in_old_row);
-			      IF l_update_mode = co_upd_as_insert THEN
-			         do_ins(io_row => io_new_row);
-			      ELSIF l_update_mode = co_upd_appl_cols THEN
+			      IF l_update_mode IN (co_upd_all_cols, co_upd_changed_cols) THEN
 			         load_versions(in_row => in_old_row);
+			         split_version(in_row => io_new_row);
 			         add_version_at_start(in_row => io_new_row);
 			         add_version_at_end(in_row => io_new_row);
-			         upd_appl_cols(in_new_row => io_new_row, in_old_row => in_old_row);
+			         IF l_update_mode = co_upd_all_cols THEN
+			            upd_all_cols(in_row => io_new_row);
+			         ELSE
+			            upd_changed_cols(in_new_row => io_new_row, in_old_row => in_old_row);
+			         END IF;
 			         merge_versions;
 			         IF changes_history() THEN
 			            save_latest;
