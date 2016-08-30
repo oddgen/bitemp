@@ -656,7 +656,13 @@ class CreateApiPackageBody {
 			   PROCEDURE save_versions IS
 			   BEGIN
 			      MERGE 
-			       INTO «model.historyTableName» t
+			       INTO (
+			               SELECT «FOR col : model.columnNames SEPARATOR ',' + System.lineSeparator + '       '»
+			                      	«col»
+			                      «ENDFOR»
+			                 FROM «model.historyTableName» «
+			                      »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
+			            ) t
 			      USING (
 			               SELECT NULL AS «operation»,
 			                      «FOR col : model.columnNames SEPARATOR ","»
@@ -873,28 +879,42 @@ class CreateApiPackageBody {
 			   -- set_tt
 			   --
 			   PROCEDURE set_tt (
-			      in_tt_at IN TIMESTAMP DEFAULT NULL
+			      in_at IN TIMESTAMP DEFAULT NULL
 			   ) IS
 			   BEGIN
 			      sys.dbms_flashback.disable;
-			      IF TO_CHAR(in_tt_at, 'YYYY-MM-DD HH24:MI:SS.FF2') != TO_CHAR(SYSTIMESTAMP, 'YYYY-MM-DD HH24:MI:SS.FF2') THEN
-			         sys.dbms_flashback.enable_at_time(query_time => in_tt_at);
+			      IF in_at IS NOT NULL AND NOT (in_at BETWEEN SYSTIMESTAMP - INTERVAL '1' SECOND AND SYSTIMESTAMP) THEN
+			         sys.dbms_flashback.enable_at_time(query_time => in_at);
 			      END IF;
 			   END set_tt;
+
+			   --
+			   -- set_scn
+			   --
+			   PROCEDURE set_scn (
+			      in_at IN INTEGER DEFAULT NULL
+			   ) IS
+			   BEGIN
+			      sys.dbms_flashback.disable;
+			      IF in_at IS NOT NULL THEN
+			         sys.dbms_flashback.enable_at_system_change_number(query_scn => in_at);
+			      END IF;
+			   END set_scn;
 
 			   --
 			   -- set_vt
 			   --
 			   PROCEDURE set_vt (
-			      in_vt_at IN TIMESTAMP DEFAULT NULL
+			      in_at IN TIMESTAMP DEFAULT NULL
 			   ) IS
 			   BEGIN
-			      IF in_vt_at IS NULL THEN
+			      sys.dbms_flashback_archive.disable_asof_valid_time;
+			      IF in_at IS NULL THEN
 			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'ALL');
-			      ELSIF TO_CHAR(in_vt_at, 'YYYY-MM-DD HH24:MI:SS.FF2') = TO_CHAR(SYSTIMESTAMP, 'YYYY-MM-DD HH24:MI:SS.FF2') THEN
+			      ELSIF in_at BETWEEN SYSTIMESTAMP - INTERVAL '1' SECOND AND SYSTIMESTAMP THEN
 			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'CURRENT');
 			      ELSE
-			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'ASOF', query_time => in_vt_at);
+			         sys.dbms_flashback_archive.enable_at_valid_time(level => 'ASOF', query_time => in_at);
 			      END IF;
 			   END set_vt;
 
