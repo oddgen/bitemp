@@ -98,7 +98,7 @@ class CreateFullHistoryView {
 					/
 				«ENDIF»
 				--
-				-- Create history view
+				-- Create full history view
 				--
 				CREATE OR REPLACE FORCE VIEW «model.fullHistoryViewName» (
 					«FOR col : model.columnNames»
@@ -111,16 +111,19 @@ class CreateFullHistoryView {
 				       »«ENDFOR»
 				«IF model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
 					«'  '»FROM «model.sourceTableName» VERSIONS BETWEEN SCN 0 AND MAXVALUE
-					«' '»WHERE VERSIONS_STARTSCN < VERSIONS_ENDSCN OR VERSIONS_STARTSCN IS NULL OR VERSIONS_ENDSCN IS NULL;
+					«' '»WHERE VERSIONS_STARTSCN < VERSIONS_ENDSCN OR VERSIONS_STARTSCN IS NULL OR VERSIONS_ENDSCN IS NULL
+					«'  '»WITH READ ONLY;
 				«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 					«'  '»FROM «model.sourceTableName» VERSIONS PERIOD FOR «
 					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
-					«' '»WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0;
+					«' '»WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0
+					«'  '»WITH READ ONLY;
 				«ELSE»
 					«'  '»FROM «model.sourceTableName» VERSIONS BETWEEN SCN 0 AND MAXVALUE VERSIONS PERIOD FOR «
 					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 					«' '»WHERE (VERSIONS_STARTSCN < VERSIONS_ENDSCN OR VERSIONS_STARTSCN IS NULL OR VERSIONS_ENDSCN IS NULL)
-					«' '»  AND («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0);
+					«' '»  AND («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0)
+					«'  '»WITH READ ONLY;
 				«ENDIF»
 			«ENDIF»
 		«ENDIF»		
