@@ -87,7 +87,6 @@ class CreateApiPackageBody {
 			!model.inputTable.primaryKeyConstraint.columnNames.contains(it.toUpperCase)
 		]
 	}
-
 	
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
@@ -165,7 +164,8 @@ class CreateApiPackageBody {
 			         sys.dbms_output.put_line(in_header);
 			      END IF;
 			      <<all_versions>>
-			      FOR i in 1..in_collection.COUNT() LOOP
+			      FOR i in 1..in_collection.COUNT()
+			      LOOP
 			         sys.dbms_output.put_line('row ' || i || ':');
 			         «FOR col : model.columnNames»
 			         	dbms_output.put_line('.. «String.format("%-30s", col)»: ' || in_collection(i).«col»);
@@ -341,6 +341,22 @@ class CreateApiPackageBody {
 			   END del_enclosed_versions;
 
 			   --
+			   -- upd_affected_version
+			   --
+			   PROCEDURE upd_affected_version (
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			   BEGIN
+			      <<all_versions>>
+			      FOR i IN 1..g_versions.COUNT() 
+			      LOOP
+			         IF g_versions(i).«validFrom» = in_row.«validFrom» THEN
+			            g_versions(i).«validFrom» := in_row.«validTo»;
+			         END IF;
+			      END LOOP all_versions;
+			   END upd_affected_version;
+
+			   --
 			   -- add_version
 			   --
 			   PROCEDURE add_version (
@@ -465,7 +481,8 @@ class CreateApiPackageBody {
 			      l_at «model.validTimeDataType»;
 			   BEGIN
 			      <<all_versions>>
-			      FOR i in 1..g_versions.COUNT() LOOP
+			      FOR i in 1..g_versions.COUNT()
+			      LOOP
 			         l_at := NVL(g_versions(i).«validFrom», co_minvalue);
 			         IF (in_row.«validFrom» IS NULL OR in_row.«validFrom» <= l_at)
 			            AND (in_row.«validTo» IS NULL OR in_row.«validTo» > l_at)
@@ -488,7 +505,8 @@ class CreateApiPackageBody {
 			      l_at «model.validTimeDataType»;
 			   BEGIN
 			      <<all_versions>>
-			      FOR i in 1..g_versions.COUNT() LOOP
+			      FOR i in 1..g_versions.COUNT()
+			      LOOP
 			         l_at := NVL(g_versions(i).«validFrom», co_minvalue);
 			         IF (in_new_row.«validFrom» IS NULL OR in_new_row.«validFrom» <= l_at)
 			            AND (in_new_row.«validTo» IS NULL OR in_new_row.«validTo» > l_at)
@@ -612,7 +630,8 @@ class CreateApiPackageBody {
 			         RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
 			              INTO «FOR col : model.pkColumnNames SEPARATOR ', '»l_latest_row.«col»«ENDFOR»;
 			         <<all_versions>>
-			         FOR i in 1..g_versions.COUNT() LOOP
+			         FOR i in 1..g_versions.COUNT()
+			         LOOP
 			            «FOR col : model.pkColumnNames»
 			            	g_versions(i).«col» := l_latest_row.«col»;
 			            «ENDFOR»
@@ -685,6 +704,7 @@ class CreateApiPackageBody {
 			      truncate_to_granularity(io_row => io_row);
 			      load_versions(in_row => io_row);
 			      del_enclosed_versions(in_row => io_row);
+			      upd_affected_version(in_row => io_row);
 			      split_version(in_row => io_row);
 			      add_version(in_row => io_row);
 			      add_first_version;
