@@ -350,7 +350,9 @@ class CreateApiPackageBody {
 			      <<all_versions>>
 			      FOR i IN 1..g_versions.COUNT() 
 			      LOOP
-			         IF g_versions(i).«validFrom» = in_row.«validFrom» THEN
+			         IF g_versions(i).«validFrom» >= in_row.«validFrom»
+			            AND g_versions(i).«validFrom» < NVL(in_row.«validTo», co_maxvalue)
+			         THEN
 			            g_versions(i).«validFrom» := in_row.«validTo»;
 			         END IF;
 			      END LOOP all_versions;
