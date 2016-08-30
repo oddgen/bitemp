@@ -20,11 +20,12 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
+import org.oddgen.bitemp.sqldev.templates.CreateApiPackageSpecification
+import org.oddgen.bitemp.sqldev.templates.CreateHistoryView
 import org.oddgen.bitemp.sqldev.templates.CreateLatestView
 import org.oddgen.bitemp.sqldev.templates.CreateLatestViewInsteadOfTrigger
-import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 import org.oddgen.bitemp.sqldev.templates.CreateObjectType
-import org.oddgen.bitemp.sqldev.templates.CreateApiPackageSpecification
+import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
 class CreateLatestViewInsteadOfTriggerTest extends AbstractJdbcTest {
 
@@ -102,6 +103,10 @@ class CreateLatestViewInsteadOfTriggerTest extends AbstractJdbcTest {
 			jdbcTemplate.execute(stmt)
 		}
 		Assert.assertEquals("VALID", getObjectStatus("PACKAGE", "T1_API"))
+		for (stmt : (new CreateHistoryView).compile(model).toString.statements) {
+			jdbcTemplate.execute(stmt)
+		}
+		Assert.assertEquals("VALID", getObjectStatus("VIEW", "T1_HV"))
 		for (stmt : (new CreateLatestView).compile(model).toString.statements) {
 			jdbcTemplate.execute(stmt)
 		}
