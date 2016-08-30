@@ -58,9 +58,10 @@ class CreateLatestViewInsteadOfTrigger {
 			   	     INTO l_«validFrom»
 			   	     FROM «model.historyViewName»
 			   	    WHERE «validTo» IS NULL
-			   	      «FOR col : model.inputTable.primaryKeyConstraint.columnNames AFTER ";"»
+			   	      «FOR col : model.inputTable.primaryKeyConstraint.columnNames»
 			   	       	AND «col» = :OLD.«col»
 			   	      «ENDFOR»
+			   	    ;
 			   	END IF;
 			   «ENDIF»
 			   --
