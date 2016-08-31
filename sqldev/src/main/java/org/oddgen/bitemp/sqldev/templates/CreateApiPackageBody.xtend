@@ -184,7 +184,7 @@ class CreateApiPackageBody {
 			         ELSE
 			            sys.dbms_output.put(' TRACE '); -- 7
 			         END IF;
-			         sys.dbms_output.put(substr(in_level, 1, 19) || ': '); -- 21
+			         sys.dbms_output.put(substr(in_proc, 1, 19) || ': '); -- 21
 			         sys.dbms_output.put_line(substr(in_line, 1, 210)); -- 210
 			      END IF;
 			   END print_line;
@@ -304,7 +304,7 @@ class CreateApiPackageBody {
 			             »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»
 			         FOR UPDATE;
-			      print_line(in_proc => 'load_version', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows loaded.');
+			      print_line(in_proc => 'load_version', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows locked and loaded.');
 			      g_versions := g_versions_original;
 			      print_collection(in_proc => 'load_version', in_collection => g_versions);
 			   END load_versions;
