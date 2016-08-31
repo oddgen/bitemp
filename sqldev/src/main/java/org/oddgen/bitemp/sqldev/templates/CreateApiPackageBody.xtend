@@ -108,6 +108,11 @@ class CreateApiPackageBody {
 			   e_hook_body_missing EXCEPTION;
 			   PRAGMA exception_init(e_hook_body_missing, -6508);
 
+			   --
+			   -- Debugging output level
+			   --
+			   g_debug_output_level dbms_output_level_type := co_off;
+
 			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			   --
 			   -- valid time constants, implicitely truncated to the granularity of «model.params.get(BitempRemodeler.GRANULARITY)»
@@ -160,24 +165,46 @@ class CreateApiPackageBody {
 			   --
 			   g_versions_original «model.collectionTypeName»;
 
+			   «ENDIF»
+			   --
+			   -- print_line
+			   --
+			   PROCEDURE print_line (
+			      in_proc VARCHAR2,
+			      in_level dbms_output_level_type,
+			      in_line VARCHAR2
+			   ) IS
+			   BEGIN
+			      IF in_level <= g_debug_output_level THEN
+			         sys.dbms_output.put(to_char(systimestamp, 'HH24:MI:SS.FF6')); -- 12
+			         IF in_level = co_info THEN
+			            sys.dbms_output.put(' INFO  '); -- 7
+			         ELSIF in_level = co_debug THEN
+			            sys.dbms_output.put(' DEBUG '); -- 7
+			         ELSE
+			            sys.dbms_output.put(' TRACE '); -- 7
+			         END IF;
+			         sys.dbms_output.put(substr(in_level, 1, 19) || ': '); -- 21
+			         sys.dbms_output.put_line(substr(in_line, 1, 210)); -- 210
+			      END IF;
+			   END print_line;
+
+			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			   --
 			   -- print_collection
 			   --
 			   PROCEDURE print_collection (
-			      in_collection IN «model.collectionTypeName»,
-			      in_header IN VARCHAR2 DEFAULT NULL
+			      in_proc VARCHAR2,
+			      in_collection IN «model.collectionTypeName»
 			   )
 			   IS
 			   BEGIN
-			      IF in_header IS NOT NULL THEN
-			         sys.dbms_output.put_line(in_header);
-			      END IF;
 			      <<all_versions>>
 			      FOR i in 1..in_collection.COUNT()
 			      LOOP
-			         sys.dbms_output.put_line('row ' || i || ':');
+			         print_line(in_proc => in_proc, in_level => co_trace, in_line => 'row ' || i || ':');
 			         «FOR col : model.columnNames»
-			         	dbms_output.put_line('.. «String.format("%-30s", col)»: ' || in_collection(i).«col»);
+			         	print_line(in_proc => in_proc, in_level => co_trace, in_line => '   - «String.format("%-30s", col)»: ' || in_collection(i).«col»);
 			         «ENDFOR»
 			      END LOOP all_versions;
 			   END print_collection;
@@ -265,6 +292,7 @@ class CreateApiPackageBody {
 			   PROCEDURE load_versions (
 			      in_row IN «model.objectTypeName»
 			   ) IS
+			      l_start TIMESTAMP := SYSTIMESTAMP;
 			   BEGIN
 			      SELECT «model.objectTypeName» (
 			                «FOR col : model.columnNames SEPARATOR ','»
@@ -276,7 +304,9 @@ class CreateApiPackageBody {
 			             »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»
 			         FOR UPDATE;
+			      print_line(in_proc => 'load_version', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows loaded.');
 			      g_versions := g_versions_original;
+			      print_collection(in_proc => 'load_version', in_collection => g_versions);
 			   END load_versions;
 
 			   --
@@ -303,6 +333,7 @@ class CreateApiPackageBody {
 			             ) v
 			       WHERE (v.version.«validFrom» IS NULL OR v.version.«validFrom» <= in_at)
 			         AND (v.version.«validTo» IS NULL OR v.version.«validTo» > in_at);
+			      print_line(in_proc => 'get_version_at', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows found at ' || to_char(in_at, co_format));
 			      RETURN l_version;
 			   EXCEPTION
 			      WHEN NO_DATA_FOUND THEN
@@ -343,6 +374,7 @@ class CreateApiPackageBody {
 			        INTO l_diff_count
 			        FROM diff
 			       WHERE ROWNUM = 1;
+			     print_line(in_proc => 'changes_history', in_level => co_debug, in_line => SQL%ROWCOUNT || ' differences found.');
 			     RETURN l_diff_count > 0;
 			   END changes_history;
 
@@ -365,6 +397,7 @@ class CreateApiPackageBody {
 			       			NVL(«validFrom», co_minvalue) >= NVL(in_row.«validFrom», co_minvalue) 
 			       			AND NVL(«validTo», co_maxvalue) <= NVL(in_row.«validTo», co_maxvalue)
 			       	     );
+			       print_line(in_proc => 'del_enclosed_versions', in_level => co_debug, in_line => g_versions.COUNT() - l_versions.COUNT() || ' enclosed periods deleted.');
 			       g_versions := l_versions;
 			   END del_enclosed_versions;
 
@@ -382,6 +415,7 @@ class CreateApiPackageBody {
 			            AND g_versions(i).«validFrom» < NVL(in_row.«validTo», co_maxvalue)
 			         THEN
 			            g_versions(i).«validFrom» := in_row.«validTo»;
+			            print_line(in_proc => 'upd_affected_version', in_level => co_debug, in_line => 'updated affected period.');
 			         END IF;
 			      END LOOP all_versions;
 			   END upd_affected_version;
@@ -416,6 +450,7 @@ class CreateApiPackageBody {
 			               l_copy := l_version;
 			               l_copy.«validFrom» := in_row.«validTo»;
 			               add_version(in_row => l_copy);
+			               print_line(in_proc => 'split_version', in_level => co_debug, in_line => 'splitted version at '|| TO_CHAR(in_row.«validTo», co_format) || '.');
 			            END IF;
 			         END IF;
 			      END IF;
@@ -441,6 +476,7 @@ class CreateApiPackageBody {
 			         l_version.«validFrom» := NULL;
 			         l_version.«isDeleted» := 1;
 			         add_version(in_row => l_version);
+			         print_line(in_proc => 'add_first_version', in_level => co_debug, in_line => 'first period added.');
 			      END IF;
 			   END add_first_version;
 
@@ -465,6 +501,7 @@ class CreateApiPackageBody {
 			         l_version.«validTo» := NULL;
 			         l_version.«isDeleted» := 1;
 			         add_version(in_row => l_version);
+			         print_line(in_proc => 'add_last_version', in_level => co_debug, in_line => 'last period added.');
 			      END IF;
 			   END add_last_version;
 			   
@@ -481,6 +518,7 @@ class CreateApiPackageBody {
 			         IF l_version.«validFrom» != in_row.«validFrom» OR l_version.«validFrom» IS NULL THEN
 			            l_version.«validFrom» := in_row.«validFrom»;
 			            add_version(in_row => l_version);
+			            print_line(in_proc => 'add_version_at_start', in_level => co_debug, in_line => 'added period at start');
 			         END IF;
 			      END IF;
 			   END add_version_at_start;
@@ -498,6 +536,7 @@ class CreateApiPackageBody {
 			         IF l_version.«validFrom» != in_row.«validTo» OR l_version.«validFrom» IS NULL THEN
 			            l_version.«validFrom» := in_row.«validTo»;
 			            add_version(in_row => l_version);
+			            print_line(in_proc => 'add_version_at_end', in_level => co_debug, in_line => 'added period at end');
 			         END IF;
 			      END IF;
 			   END add_version_at_end;
@@ -521,6 +560,7 @@ class CreateApiPackageBody {
 			            «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo]»
 			            	g_versions(i).«col» := in_row.«col»;
 			            «ENDFOR»
+			            print_line(in_proc => 'upd_all_cols', in_level => co_debug, in_line => 'all columns updated.');
 			         END IF;
 			      END LOOP all_versions;
 			   END upd_all_cols;
@@ -551,6 +591,7 @@ class CreateApiPackageBody {
 			            	   g_versions(i).«col» := in_new_row.«col»;
 			            	END IF;
 			            «ENDFOR»
+			            print_line(in_proc => 'upd_changed_cols', in_level => co_debug, in_line => 'all changed columns updated.');
 			         END IF;
 			      END LOOP all_versions;
 			   END upd_changed_cols;
@@ -635,6 +676,7 @@ class CreateApiPackageBody {
 			             )
 			        BULK COLLECT INTO l_merged
 			        FROM merged;
+			       print_line(in_proc => 'merge_versions', in_level => co_debug, in_line => g_versions.COUNT() - l_merged.COUNT() || ' periods merged.');
 			       g_versions := l_merged;
 			   END merge_versions;
 
@@ -660,12 +702,14 @@ class CreateApiPackageBody {
 			         RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
 			              INTO «FOR col : model.pkColumnNames SEPARATOR ', '»l_latest_row.«col»«ENDFOR»;
 			         <<all_versions>>
+			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => '1 row inserted.');
 			         FOR i in 1..g_versions.COUNT()
 			         LOOP
 			            «FOR col : model.pkColumnNames»
 			            	g_versions(i).«col» := l_latest_row.«col»;
 			            «ENDFOR»
 			         END LOOP all_versions;
+			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => 'set primary key for all periods.');
 			      ELSE
 			         UPDATE «model.latestTableName»
 			            SET «FOR col : model.updateableLatestColumnNames SEPARATOR ',' + System.lineSeparator + '    '»«col» = l_latest_row.«col»«ENDFOR»
@@ -675,6 +719,7 @@ class CreateApiPackageBody {
 			                    	(«col» != l_latest_row.«col» OR «col» IS NULL AND l_latest_row.«col» IS NOT NULL OR «col» IS NOT NULL AND l_latest_row.«col» IS NULL)
 			                    «ENDFOR»
 			                );
+			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows updated.');
 			      END IF;
 			   END save_latest;
 
@@ -683,6 +728,7 @@ class CreateApiPackageBody {
 			   --
 			   PROCEDURE save_versions IS
 			   BEGIN
+			      print_collection(in_proc => 'save_versions', in_collection => g_versions);
 			      MERGE 
 			       INTO (
 			               SELECT «FOR col : model.columnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
@@ -726,6 +772,7 @@ class CreateApiPackageBody {
 			                         	s.«col»
 			                         «ENDFOR»
 			                      );
+			      print_line(in_proc => 'save_versions', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows merged.');
 			   END save_versions;
 
 			   --
@@ -801,7 +848,53 @@ class CreateApiPackageBody {
 			      do_upd(io_new_row => l_new_row, in_old_row => l_old_row);
 			   END do_del;
 
+			   --
+			   -- create_load_tables
+			   --
+			   PROCEDURE create_load_tables (
+			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
+			      in_drop_existing IN BOOLEAN DEFAULT TRUE
+			   ) IS
+			   BEGIN
+			      raise_application_error(-20501, 'create_load_tables is not yet implemented');
+			   END create_load_tables;
+			   
+			   --
+			   -- init_load
+			   --
+			   PROCEDURE init_load (
+			      in_owner IN VARCHAR2 DEFAULT USER,
+			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
+			   ) IS
+			   BEGIN
+			      raise_application_error(-20501, 'create_load_tables is not yet implemented');
+			   END init_load;
+
+			   --
+			   -- upd_load
+			   --
+			   PROCEDURE upd_load (
+			      in_owner IN VARCHAR2 DEFAULT USER,
+			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
+			   ) IS
+			   BEGIN
+			      raise_application_error(-20501, 'create_load_tables is not yet implemented');
+			   END upd_load;
+
 			   «ENDIF»
+			   --
+			   -- set_debug_output
+			   --
+			   PROCEDURE set_debug_output (
+			      in_level IN dbms_output_level_type DEFAULT co_off
+			   ) IS
+			   BEGIN
+			      g_debug_output_level := in_level;
+			   END set_debug_output;
+
 			   --
 			   -- ins
 			   --
@@ -810,6 +903,7 @@ class CreateApiPackageBody {
 			   ) IS
 			      l_new_row «model.objectTypeName»;
 			   BEGIN
+			      print_line(in_proc => 'ins', in_level => co_info, in_line => 'started.');
 			      l_new_row := in_new_row;
 			      <<trap_pre_ins>>
 			      BEGIN
@@ -838,6 +932,7 @@ class CreateApiPackageBody {
 			         WHEN e_hook_body_missing THEN
 			            NULL;
 			      END trap_post_ins;
+			      print_line(in_proc => 'ins', in_level => co_info, in_line => 'completed.');
 			   END ins;
 
 			   --
@@ -849,6 +944,7 @@ class CreateApiPackageBody {
 			   ) IS
 			      l_new_row «model.objectTypeName»;
 			   BEGIN
+			      print_line(in_proc => 'upd', in_level => co_info, in_line => 'started.');
 			      l_new_row := in_new_row;
 			      <<trap_pre_upd>>
 			      BEGIN
@@ -871,6 +967,7 @@ class CreateApiPackageBody {
 			         WHEN e_hook_body_missing THEN
 			            NULL;
 			      END trap_post_upd;
+			      print_line(in_proc => 'upd', in_level => co_info, in_line => 'completed.');
 			   END upd;
 
 			   --
@@ -880,6 +977,7 @@ class CreateApiPackageBody {
 			      in_old_row IN «model.objectTypeName»
 			   ) IS
 			   BEGIN
+			      print_line(in_proc => 'del', in_level => co_info, in_line => 'started.');
 			      <<trap_pre_del>>
 			      BEGIN
 			         «model.hookPackageName».pre_del(in_old_row => in_old_row);
@@ -901,6 +999,7 @@ class CreateApiPackageBody {
 			         WHEN e_hook_body_missing THEN
 			            NULL;
 			      END trap_post_del;
+			      print_line(in_proc => 'del', in_level => co_info, in_line => 'completed.');
 			   END del;
 
 			END «model.apiPackageName»;
