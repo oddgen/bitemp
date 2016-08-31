@@ -116,22 +116,31 @@ class CreateApiPackageBody {
 			   co_maxvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('9999-12-31 23:59:59.999999999', 'YYYY-MM-DD HH24:MI:SS.FF9');
 			   «IF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_YEAR")»
 			   	co_granule CONSTANT INTERVAL YEAR TO MONTH := INTERVAL '1' YEAR;
+			   	co_format CONSTANT VARCHAR2(4) := 'YYYY';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MONTH")»
 			   	co_granule CONSTANT INTERVAL YEAR TO MONTH := INTERVAL '1' MONTH;
+			   	co_format CONSTANT VARCHAR2(7) := 'YYYY-MM';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_WEEK")»
 			   	co_granule CONSTANT INTERVAL DAY(1) TO SECOND(0) := INTERVAL '7' DAY;
+			   	co_format CONSTANT VARCHAR2(10) := 'YYYY-MM-DD';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_DAY")»
 			   	co_granule CONSTANT INTERVAL DAY(1) TO SECOND(0) := INTERVAL '1' DAY;
+			   	co_format CONSTANT VARCHAR2(10) := 'YYYY-MM-DD';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_SECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(0) := INTERVAL '1' SECOND;
+			   	co_format CONSTANT VARCHAR2(22) := 'YYYY-MM-DD HH24:MI:SS';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_CENTISECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(2) := INTERVAL '1' SECOND / 1E2 ;
+			   	co_format CONSTANT VARCHAR2(26) := 'YYYY-MM-DD HH24:MI:SS.FF2';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MILLIISECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(3) := INTERVAL '1' SECOND / 1E3 ;
+			   	co_format CONSTANT VARCHAR2(26) := 'YYYY-MM-DD HH24:MI:SS.FF3';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MICROSECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(6) := INTERVAL '1' SECOND / 1E6 ;
+			   	co_format CONSTANT VARCHAR2(26) := 'YYYY-MM-DD HH24:MI:SS.FF6';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_NANOSECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(9) := INTERVAL '1' SECOND / 1E9 ;
+			   	co_format CONSTANT VARCHAR2(26) := 'YYYY-MM-DD HH24:MI:SS.FF9';
 			   «ENDIF»
 
 			   --
@@ -230,6 +239,22 @@ class CreateApiPackageBody {
 			      	NULL;
 			      «ENDIF»
 			   END truncate_to_granularity;
+
+			   --
+			   -- check_period
+			   -- 
+			   PROCEDURE check_period (
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			   BEGIN
+			      IF NOT (NVL(in_row.«validFrom», co_minvalue) < NVL(in_row.«validTo», co_maxvalue)) THEN
+			         raise_application_error(-20501, 'Invalid period. «validFrom» (' 
+			            || CASE WHEN in_row.«validFrom» IS NULL THEN TO_CHAR(in_row.«validFrom», co_format) ELSE NULL END
+			            || ') must be less than «validTo» ('
+			            || CASE WHEN in_row.«validTo» IS NULL THEN TO_CHAR(in_row.«validTo», co_format) ELSE NULL END
+			            || ').');
+			      END IF;
+			   END check_period;
 
 			   --
 			   -- load_versions
@@ -708,6 +733,7 @@ class CreateApiPackageBody {
 			   ) IS
 			   BEGIN
 			      truncate_to_granularity(io_row => io_row);
+			      check_period(in_row => io_row);
 			      load_versions(in_row => io_row);
 			      del_enclosed_versions(in_row => io_row);
 			      upd_affected_version(in_row => io_row);
@@ -732,6 +758,7 @@ class CreateApiPackageBody {
 			      l_update_mode PLS_INTEGER;
 			   BEGIN
 			      truncate_to_granularity(io_row => io_new_row);
+			      check_period(in_row => io_new_row);
 			      l_update_mode := get_update_mode(in_new_row => io_new_row, in_old_row => in_old_row);
 			      IF l_update_mode IN (co_upd_all_cols, co_upd_changed_cols) THEN
 			         load_versions(in_row => in_old_row);
