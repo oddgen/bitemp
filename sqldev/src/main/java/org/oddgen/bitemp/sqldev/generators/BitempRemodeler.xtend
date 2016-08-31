@@ -63,6 +63,8 @@ class BitempRemodeler implements OddgenGenerator {
 	public static String HISTORY_ID_COL_NAME = "HIST_ID$"
 	public static String VALID_TIME_PERIOD_NAME = "VT$"
 	public static String INDEX_SUFFIX_PATTERN = "_I%d$"
+	public static String STAGING_TABLE_SUFFIX = "_STA$"
+	public static String LOGGING_TABLE_SUFFIX = "_LOG$"
 	public static String IS_DELETED_COL_NAME = "IS_DELETED$"
 	public static String OPERATION_COL_NAME = "OPERATION$"
 	public static String GROUP_COLS_COL_NAME = "GROUP_COLS$"
