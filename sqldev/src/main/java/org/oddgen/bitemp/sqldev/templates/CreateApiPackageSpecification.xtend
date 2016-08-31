@@ -17,6 +17,7 @@ package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
+import org.oddgen.bitemp.sqldev.model.generator.ApiType
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.bitemp.sqldev.resources.BitempResources
@@ -40,11 +41,81 @@ class CreateApiPackageSpecification {
 			   *
 			   * @headcom
 			   */
-			
+			   
+			   /**
+			   * DBMS_OUTPUT level for debugging 
+			   */
+			   SUBTYPE dbms_output_level_type IS SIMPLE_INTEGER RANGE 0..3;
+			   co_off   CONSTANT dbms_output_level_type := 0;
+			   co_info  CONSTANT dbms_output_level_type := 1;
+			   co_debug CONSTANT dbms_output_level_type := 1;
+			   co_trace CONSTANT dbms_output_level_type := 3;
+			   
+			   /**
+			   * Defines the level of debugging information printed via DBMS_OUTPUT.
+			   *
+			   * @param in_level debug level, valid are:
+			   *                    co_off   (0) - no output generated
+			   *                    co_info  (1) - prints basic processing information
+			   *                    co_debug (2) - prints short debugging messages
+			   *                    co_trace (3) - prints all messages, e.g. content of internal structures
+			   */
+			   PROCEDURE set_debug_output (
+			      in_level IN dbms_output_level_type DEFAULT co_off
+			   );
+
+			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
+			   /**
+			   * Create staging and logging table for bulk processing via init_load and upd_load.
+			   *
+			   * @param in_sta_table Name of the staging table
+			   * @param in_sta_table Name of the logging table
+			   * @param in_drop_existing Defines how to deal with existing staging and logging table
+			   *           TRUE = drops existing staging and logging table
+			   *           FALSE = throw an error if a staging or logging table exists
+			   */
+			   PROCEDURE create_load_tables (
+			      in_sta_table     IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table     IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
+			      in_drop_existing IN BOOLEAN  DEFAULT TRUE
+			   );
+			   
+			   /**
+			   * Initial load of latest and history table. Logs operations and errors in logging table.
+			   * 
+			   * Target tables «model.latestTableName» and «model.historyTableName» must be empty, otherwise an error will be thrown.
+			   * The initial load will bypass the hooks in «model.apiPackageName».
+			   * An initial load is not supported for tables with ALWAYS generated identity columns, since the primary key
+			   * in the staging table is a prerequisite for the initial load.
+			   *
+			   * @param in_owner Owner of the staging and logging table
+			   * @param in_sta_table Staging table containing all periods to be initially loaded
+			   * @param in_log_table Logging table for informational and error messages
+			   */
+			   PROCEDURE init_load (
+			      in_owner     IN VARCHAR2 DEFAULT USER,
+			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
+			   );
+
+			   /**
+			   * Identify changed rows and populate them via the upd procedure. Logs operations and errors in logging table.
+			   *
+			   * @param in_owner Owner of the staging and logging table
+			   * @param in_sta_table Staging table containing all periods to be initially loaded
+			   * @param in_log_table Logging table for informational and error messages
+			   */
+			   PROCEDURE upd_load (
+			      in_owner     IN VARCHAR2 DEFAULT USER,
+			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
+			   );
+
+			   «ENDIF»
 			   /**
 			   * Insert into «model.targetModel.apiTypeToString» table «tableName».
 			   *
-			   * @param in_new_row new Row to be inserted
+			   * @param in_new_row New row to be inserted
 			   */
 			   PROCEDURE ins (
 			      in_new_row IN «model.objectTypeName»
@@ -53,8 +124,8 @@ class CreateApiPackageSpecification {
 			   /**
 			   * Update «model.targetModel.apiTypeToString» table «tableName».
 			   *
-			   * @param in_new_row IN Row with updated column values
-			   * @param in_old_row IN Row with original column values
+			   * @param in_new_row Row with updated column values
+			   * @param in_old_row Row with original column values
 			   */
 			   PROCEDURE upd (
 			      in_new_row IN «model.objectTypeName»,
