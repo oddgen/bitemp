@@ -48,7 +48,7 @@ class CreateApiPackageSpecification {
 			   SUBTYPE dbms_output_level_type IS SIMPLE_INTEGER RANGE 0..3;
 			   co_off   CONSTANT dbms_output_level_type := 0;
 			   co_info  CONSTANT dbms_output_level_type := 1;
-			   co_debug CONSTANT dbms_output_level_type := 1;
+			   co_debug CONSTANT dbms_output_level_type := 2;
 			   co_trace CONSTANT dbms_output_level_type := 3;
 			   
 			   /**
