@@ -247,11 +247,14 @@ class CreateApiPackageBody {
 			      in_row IN «model.objectTypeName»
 			   ) IS
 			   BEGIN
-			      IF NOT (NVL(in_row.«validFrom», co_minvalue) < NVL(in_row.«validTo», co_maxvalue)) THEN
+			      IF NOT (in_row.«validFrom» < in_row.«validTo» 
+			              OR in_row.«validFrom» IS NULL AND in_row.«validTo» IS NOT NULL
+			              OR in_row.«validFrom» IS NOT NULL AND in_row.«validTo» IS NULL) 
+			      THEN
 			         raise_application_error(-20501, 'Invalid period. «validFrom» (' 
-			            || CASE WHEN in_row.«validFrom» IS NULL THEN TO_CHAR(in_row.«validFrom», co_format) ELSE NULL END
+			            || TO_CHAR(in_row.«validFrom», co_format)
 			            || ') must be less than «validTo» ('
-			            || CASE WHEN in_row.«validTo» IS NULL THEN TO_CHAR(in_row.«validTo», co_format) ELSE NULL END
+			            || TO_CHAR(in_row.«validTo», co_format)
 			            || ').');
 			      END IF;
 			   END check_period;
