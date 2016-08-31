@@ -121,6 +121,14 @@ class GeneratorModelTools {
 			}
 		}
 	}
+	
+	def getStagingTableName(GeneratorModel model) {
+		return '''«model.baseTableName»«BitempRemodeler.STAGING_TABLE_SUFFIX»'''
+	}
+
+	def getLoggingTableName(GeneratorModel model) {
+		return '''«model.baseTableName»«BitempRemodeler.LOGGING_TABLE_SUFFIX»'''
+	}
 
 	def getFullDataType(Column column) {
 		val result = '''
