@@ -918,7 +918,12 @@ class CreateApiPackageBody {
 			   BEGIN
 			      UPDATE «model.latestTableName»
 			         SET «FOR col : model.columnNames SEPARATOR ', ' + System.lineSeparator + '    '»«col» = io_new_row.«col»«ENDFOR»
-			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_old_row.«col»«ENDFOR»;
+			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_old_row.«col»«ENDFOR»
+			         AND (
+			                 «FOR col : model.updateableLatestColumnNames SEPARATOR " OR"»
+			                 	(«col» != io_new_row.«col» OR «col» IS NULL AND io_new_row.«col» IS NOT NULL OR «col» IS NOT NULL AND io_new_row.«col» IS NULL)
+			                 «ENDFOR»
+			             );
 			      print_line(in_proc => 'do_upd', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows updated.');
 			   END do_upd;
 
