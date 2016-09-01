@@ -688,19 +688,18 @@ class CreateApiPackageBody {
 			   BEGIN
 			      l_latest_row := get_version_at(in_at => co_maxvalue);
 			      IF g_versions_original.COUNT() = 0 THEN
-			            INSERT
-			              INTO «model.latestTableName» (
-			                      «FOR col : model.latestColumnNames SEPARATOR ','»
-			                      	«col»
-			                      «ENDFOR»
-			                   )
-			            VALUES (
-			                      «FOR col : model.latestColumnNames SEPARATOR ','»
-			                      	l_latest_row.«col»
-			                      «ENDFOR»
-			                   )
-			         RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
-			              INTO «FOR col : model.pkColumnNames SEPARATOR ', '»l_latest_row.«col»«ENDFOR»;
+			         INSERT INTO «model.latestTableName» (
+			                        «FOR col : model.latestColumnNames SEPARATOR ','»
+			                        	«col»
+			                        «ENDFOR»
+			                     )
+			              VALUES (
+			                        «FOR col : model.latestColumnNames SEPARATOR ','»
+			                         l_latest_row.«col»
+			                        «ENDFOR»
+			                     )
+			           RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
+			                INTO «FOR col : model.pkColumnNames SEPARATOR ', '»l_latest_row.«col»«ENDFOR»;
 			         <<all_versions>>
 			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => '1 row inserted.');
 			         FOR i in 1..g_versions.COUNT()
@@ -884,6 +883,58 @@ class CreateApiPackageBody {
 			      raise_application_error(-20501, 'create_load_tables is not yet implemented');
 			   END upd_load;
 
+			   «ELSE»
+
+			   --
+			   -- do_ins
+			   --
+			   PROCEDURE do_ins (
+			      io_row IN OUT «model.objectTypeName»
+			   ) IS
+			   BEGIN
+			      INSERT INTO «model.latestTableName» (
+			                     «FOR col : model.columnNames SEPARATOR ","»
+			                     	«col.toLowerCase»
+			                     «ENDFOR»
+			                  )
+			           VALUES (
+			                     «FOR col : model.columnNames SEPARATOR ","»
+			                        io_row.«col.toLowerCase»
+			                     «ENDFOR»
+			                  )
+			        RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
+			             INTO «FOR col : model.pkColumnNames SEPARATOR ', '»io_row.«col»«ENDFOR»;
+			      print_line(in_proc => 'do_ins', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows inserted.');
+			   END do_ins;
+
+			   --
+			   -- do_upd
+			   --
+			   PROCEDURE do_upd (
+			      io_new_row IN OUT «model.objectTypeName»,
+			      in_old_row IN «model.objectTypeName»
+			   ) IS
+			      l_update_mode PLS_INTEGER;
+			   BEGIN
+			      UPDATE «model.latestTableName»
+			         SET «FOR col : model.columnNames SEPARATOR ', ' + System.lineSeparator + '    '»«col» = io_new_row.«col»«ENDFOR»
+			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_old_row.«col»«ENDFOR»;
+			      print_line(in_proc => 'do_upd', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows updated.');
+			   END do_upd;
+
+			   --
+			   -- do_del
+			   --
+			   PROCEDURE do_del (
+			      in_row IN «model.objectTypeName»
+			   ) IS
+			   BEGIN
+			      DELETE 
+			        FROM «model.latestTableName»
+			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '   AND '»«col» = in_row.«col»«ENDFOR»;
+			      print_line(in_proc => 'do_del', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows deleted.');
+			   END do_del;
+
 			   «ENDIF»
 			   --
 			   -- ins
@@ -895,33 +946,21 @@ class CreateApiPackageBody {
 			   BEGIN
 			      print_line(in_proc => 'ins', in_level => co_info, in_line => 'started.');
 			      l_new_row := in_new_row;
-			      <<trap_pre_ins>>
+			      <<pre_ins>>
 			      BEGIN
 			         «model.hookPackageName».pre_ins(io_new_row => l_new_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
-			      END trap_pre_ins;
-			      «IF model.targetModel == ApiType.NON_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-			      	INSERT INTO «model.latestTableName» (
-			      	   «FOR col : model.columnNames SEPARATOR ","»
-			      	   	«col.toLowerCase»
-			      	   «ENDFOR»
-			      	) VALUES (
-			      	   «FOR col : model.columnNames SEPARATOR ","»
-			      	   	l_new_row.«col.toLowerCase»
-			      	   «ENDFOR»
-			      	);
-			      «ELSE»
-			      	do_ins(io_row => l_new_row);
-			      «ENDIF»
-			      <<trap_post_ins>>
+			      END pre_ins;
+			      do_ins(io_row => l_new_row);
+			      <<post_ins>>
 			      BEGIN
 			         «model.hookPackageName».post_ins(in_new_row => l_new_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
-			      END trap_post_ins;
+			      END post_ins;
 			      print_line(in_proc => 'ins', in_level => co_info, in_line => 'completed.');
 			   END ins;
 
@@ -936,27 +975,21 @@ class CreateApiPackageBody {
 			   BEGIN
 			      print_line(in_proc => 'upd', in_level => co_info, in_line => 'started.');
 			      l_new_row := in_new_row;
-			      <<trap_pre_upd>>
+			      <<pre_upd>>
 			      BEGIN
 			         «model.hookPackageName».pre_upd(io_new_row => l_new_row, in_old_row => in_new_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
-			      END trap_pre_upd;
-			      «IF model.targetModel == ApiType.NON_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-			      	UPDATE «model.latestTableName»
-			      	   SET «FOR col : model.columnNames SEPARATOR ', ' + System.lineSeparator + '    '»«col» = l_new_row.«col»«ENDFOR»
-			      	 WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_old_row.«col»«ENDFOR»;
-			      «ELSE»
-			      	do_upd(io_new_row => l_new_row, in_old_row => in_old_row);
-			      «ENDIF»
-			      <<trap_post_upd>>
+			      END pre_upd;
+			      do_upd(io_new_row => l_new_row, in_old_row => in_old_row);
+			      <<post_upd>>
 			      BEGIN
 			         «model.hookPackageName».post_upd(in_new_row => l_new_row, in_old_row => in_old_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
-			      END trap_post_upd;
+			      END post_upd;
 			      print_line(in_proc => 'upd', in_level => co_info, in_line => 'completed.');
 			   END upd;
 
@@ -968,27 +1001,21 @@ class CreateApiPackageBody {
 			   ) IS
 			   BEGIN
 			      print_line(in_proc => 'del', in_level => co_info, in_line => 'started.');
-			      <<trap_pre_del>>
+			      <<pre_del>>
 			      BEGIN
 			         «model.hookPackageName».pre_del(in_old_row => in_old_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
-			      END trap_pre_del;
-			      «IF model.targetModel == ApiType.NON_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-			      	DELETE 
-			      	  FROM «model.latestTableName»
-			      	 WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '   AND '»«col» = in_old_row.«col»«ENDFOR»;
-			      «ELSE»
-			      	do_del(in_row => in_old_row);
-			      «ENDIF»
-			      <<trap_post_del>>
+			      END pre_del;
+			      do_del(in_row => in_old_row);
+			      <<post_del>>
 			      BEGIN
 			         «model.hookPackageName».post_del(in_old_row => in_old_row);
 			      EXCEPTION
 			         WHEN e_hook_body_missing THEN
 			            NULL;
-			      END trap_post_del;
+			      END post_del;
 			      print_line(in_proc => 'del', in_level => co_info, in_line => 'completed.');
 			   END del;
 
