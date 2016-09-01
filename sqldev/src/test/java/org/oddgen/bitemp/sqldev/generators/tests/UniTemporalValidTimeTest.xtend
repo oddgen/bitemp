@@ -101,8 +101,51 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60 and is_deleted$ IS NULL"))
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60"))
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60 AND is_deleted$ IS NULL"))
-
-
+	}
+	
+	@Test
+	def alwaysGeneratedIdentityColumn() {
+		jdbcTemplate.execute('''
+			CREATE TABLE D3 (
+			   c1 INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
+			   c2 VARCHAR2(20)
+			)
+		''')
+		val gen = new BitempRemodeler
+		val params = gen.getParams(dataSource.connection, "TABLE", "D3")
+		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "0")
+		params.put(BitempRemodeler.GEN_VALID_TIME, "1")
+		val script = gen.generate(dataSource.connection, "TABLE", "D3", params)
+		for (stmt : script.statements) {
+			jdbcTemplate.execute(stmt)
+		}
+		val invalids = jdbcTemplate.queryForObject('''
+			SELECT COUNT(*)
+			  FROM user_objects
+			 WHERE status != 'VALID'
+			   AND object_name LIKE 'D3%'
+		''', Integer)
+		Assert.assertEquals(0, invalids)
+		jdbcTemplate.execute('''
+			INSERT 
+			  INTO d3_hv 
+			VALUES (NULL, NULL, 200 /* ignored */, 'Text')
+		''')
+		Assert.assertEquals(1, getCount("D3", ""))
+		Assert.assertEquals(1, getCount("D3_HT", ""))
+		jdbcTemplate.execute('''
+			UPDATE d3_hv
+			   SET c2 = 'Text updated'
+			 WHERE c2 = 'Text'
+		''')
+		Assert.assertEquals(1, getCount("D3", "WHERE c2 = 'Text updated'"))
+		Assert.assertEquals(1, getCount("D3_HT", "WHERE c2 = 'Text updated'"))
+		jdbcTemplate.execute('''
+			DELETE
+			  FROM d3_hv
+		''')
+		Assert.assertEquals(0, getCount("D3_LV", ""))
+		Assert.assertEquals(0, getCount("D3_HV", ""))
 	}
 
 	@BeforeClass
@@ -150,6 +193,46 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		}
 		try {
 			jdbcTemplate.execute("DROP TYPE d2_ot")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("ALTER TABLE d3_ht NO FLASHBACK ARCHIVE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TABLE d3_ht PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TABLE d3 PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP VIEW d3_fhv")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP VIEW d3_hv")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP VIEW d3_lv")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP PACKAGE d3_api")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP PACKAGE d3_hook")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TYPE d3_ct")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TYPE d3_ot")
 		} catch (Exception e) {
 		}
 
