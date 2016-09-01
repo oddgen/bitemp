@@ -85,6 +85,8 @@ class PreferencePanel extends DefaultTraversablePanel {
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_MONTH"))
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_WEEK"))
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_DAY"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_HOUR"))
+		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_MINUTE"))
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_SECOND"))
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_CENTISECOND"))
 		granularityModel.addElement(BitempResources.getString("PREF_GRANULARITY_MILLISECOND"))

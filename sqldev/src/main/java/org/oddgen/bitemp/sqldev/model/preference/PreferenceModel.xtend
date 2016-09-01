@@ -137,6 +137,8 @@ class PreferenceModel extends HashStructureAdapter {
 		validGranularities.add(BitempResources.getString("PREF_GRANULARITY_WEEK"))
 		validGranularities.add(BitempResources.getString("PREF_GRANULARITY_DAY"))
 		validGranularities.add(BitempResources.getString("PREF_GRANULARITY_SECOND"))
+		validGranularities.add(BitempResources.getString("PREF_GRANULARITY_HOUR"))
+		validGranularities.add(BitempResources.getString("PREF_GRANULARITY_SECOND"))
 		validGranularities.add(BitempResources.getString("PREF_GRANULARITY_CENTISECOND"))
 		validGranularities.add(BitempResources.getString("PREF_GRANULARITY_MILLISECOND"))
 		validGranularities.add(BitempResources.getString("PREF_GRANULARITY_MICROSECOND"))

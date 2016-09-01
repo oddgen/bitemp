@@ -162,6 +162,8 @@ class BitempRemodeler implements OddgenGenerator {
 					BitempResources.getString("PREF_GRANULARITY_MONTH"),
 					BitempResources.getString("PREF_GRANULARITY_WEEK"),
 					BitempResources.getString("PREF_GRANULARITY_DAY"),
+					BitempResources.getString("PREF_GRANULARITY_HOUR"),
+					BitempResources.getString("PREF_GRANULARITY_MINUTE"),
 					BitempResources.getString("PREF_GRANULARITY_SECOND"),
 					BitempResources.getString("PREF_GRANULARITY_CENTISECOND"),
 					BitempResources.getString("PREF_GRANULARITY_MILLISECOND"),
