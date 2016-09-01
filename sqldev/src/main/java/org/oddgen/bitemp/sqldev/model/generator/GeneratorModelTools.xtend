@@ -155,7 +155,7 @@ class GeneratorModelTools {
 	def getDefaultClause(
 		Column column) {
 		val result = '''
-			«IF column.dataDefault != null»DEFAULT«IF column.defaultOnNull == "YES"» ON NULL«ENDIF» «column.dataDefault»«ENDIF»
+			«IF column.dataDefault != null && column.identityColumn == "NO"»DEFAULT«IF column.defaultOnNull == "YES"» ON NULL«ENDIF» «column.dataDefault»«ENDIF»
 		'''
 		return result.toString.trim
 	}
