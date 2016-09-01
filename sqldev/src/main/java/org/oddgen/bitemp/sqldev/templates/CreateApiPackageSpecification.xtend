@@ -50,19 +50,6 @@ class CreateApiPackageSpecification {
 			   co_info  CONSTANT dbms_output_level_type := 1;
 			   co_debug CONSTANT dbms_output_level_type := 2;
 			   co_trace CONSTANT dbms_output_level_type := 3;
-			   
-			   /**
-			   * Defines the level of debugging information printed via DBMS_OUTPUT.
-			   *
-			   * @param in_level debug level, valid are:
-			   *                    co_off   (0) - no output generated
-			   *                    co_info  (1) - prints basic processing information
-			   *                    co_debug (2) - prints short debugging messages
-			   *                    co_trace (3) - prints all messages, e.g. content of internal structures
-			   */
-			   PROCEDURE set_debug_output (
-			      in_level IN dbms_output_level_type DEFAULT co_off
-			   );
 
 			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			   /**
@@ -151,6 +138,19 @@ class CreateApiPackageSpecification {
 			   */
 			   PROCEDURE del (
 			      in_old_row IN «model.objectTypeName»
+			   );
+
+			   /**
+			   * Defines the level of debugging information printed via DBMS_OUTPUT.
+			   *
+			   * @param in_level debug level, valid are:
+			   *                    co_off   (0) - no output generated
+			   *                    co_info  (1) - prints basic processing information
+			   *                    co_debug (2) - prints short debugging messages
+			   *                    co_trace (3) - prints all messages, e.g. content of internal structures
+			   */
+			   PROCEDURE set_debug_output (
+			      in_level IN dbms_output_level_type DEFAULT co_off
 			   );
 
 			END «model.apiPackageName»;

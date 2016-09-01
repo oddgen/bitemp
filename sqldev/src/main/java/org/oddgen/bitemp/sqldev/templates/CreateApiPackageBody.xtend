@@ -886,16 +886,6 @@ class CreateApiPackageBody {
 
 			   «ENDIF»
 			   --
-			   -- set_debug_output
-			   --
-			   PROCEDURE set_debug_output (
-			      in_level IN dbms_output_level_type DEFAULT co_off
-			   ) IS
-			   BEGIN
-			      g_debug_output_level := in_level;
-			   END set_debug_output;
-
-			   --
 			   -- ins
 			   --
 			   PROCEDURE ins (
@@ -1001,6 +991,16 @@ class CreateApiPackageBody {
 			      END trap_post_del;
 			      print_line(in_proc => 'del', in_level => co_info, in_line => 'completed.');
 			   END del;
+
+			   --
+			   -- set_debug_output
+			   --
+			   PROCEDURE set_debug_output (
+			      in_level IN dbms_output_level_type DEFAULT co_off
+			   ) IS
+			   BEGIN
+			      g_debug_output_level := in_level;
+			   END set_debug_output;
 
 			END «model.apiPackageName»;
 			/
