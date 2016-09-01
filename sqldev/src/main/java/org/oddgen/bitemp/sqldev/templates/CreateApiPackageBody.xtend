@@ -28,6 +28,23 @@ import org.oddgen.sqldev.LoggableConstants
 class CreateApiPackageBody {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 	
+	def getAllColumnNames(GeneratorModel model) {
+		val cols = new ArrayList<String>
+		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {
+			cols.add(BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase)
+			cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase)
+			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase)
+			cols.add(BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase)
+		}
+		for (col : model.inputTable.columns.values.filter [
+			it.virtualColumn == "NO" && !cols.contains(it.columnName) &&
+				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
+		]) {
+			cols.add(col.columnName.toLowerCase)
+		}
+		return cols
+	}
+
 	def getColumnNames(GeneratorModel model) {
 		val cols = new ArrayList<String>
 		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {
@@ -45,7 +62,7 @@ class CreateApiPackageBody {
 		}
 		return cols
 	}
-	
+
 	def getPkColumnNames(GeneratorModel model) {
 		val cols = new ArrayList<String>
 		for (col : model.inputTable.primaryKeyConstraint.columnNames) {
@@ -55,13 +72,13 @@ class CreateApiPackageBody {
 	}
 	
 	def getUpdateableColumnNames(GeneratorModel model) {
-		return model.columnNames.filter[
+		return model.allColumnNames.filter[
 			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase
 		]
 	}
 	
 	def getMergeColumnNames(GeneratorModel model) {
-		return model.columnNames.filter[
+		return model.allColumnNames.filter[
 			it != BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase &&
 			it != model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase	&&
 			it != model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase
@@ -121,31 +138,37 @@ class CreateApiPackageBody {
 			   co_maxvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('9999-12-31 23:59:59.999999999', 'YYYY-MM-DD HH24:MI:SS.FF9');
 			   «IF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_YEAR")»
 			   	co_granule CONSTANT INTERVAL YEAR TO MONTH := INTERVAL '1' YEAR;
-			   	co_format CONSTANT VARCHAR2(4) := 'YYYY';
+			   	co_format CONSTANT VARCHAR2(5) := 'SYYYY';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MONTH")»
 			   	co_granule CONSTANT INTERVAL YEAR TO MONTH := INTERVAL '1' MONTH;
-			   	co_format CONSTANT VARCHAR2(7) := 'YYYY-MM';
+			   	co_format CONSTANT VARCHAR2(8) := 'SYYYY-MM';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_WEEK")»
 			   	co_granule CONSTANT INTERVAL DAY(1) TO SECOND(0) := INTERVAL '7' DAY;
-			   	co_format CONSTANT VARCHAR2(10) := 'YYYY-MM-DD';
+			   	co_format CONSTANT VARCHAR2(11) := 'SYYYY-MM-DD';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_DAY")»
 			   	co_granule CONSTANT INTERVAL DAY(1) TO SECOND(0) := INTERVAL '1' DAY;
-			   	co_format CONSTANT VARCHAR2(10) := 'YYYY-MM-DD';
+			   	co_format CONSTANT VARCHAR2(11) := 'SYYYY-MM-DD';
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_HOUR")»
+			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(0) := INTERVAL '1' HOUR;
+			   	co_format CONSTANT VARCHAR2(16) := 'SYYYY-MM-DD HH24';
+			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MINUTE")»
+			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(0) := INTERVAL '1' MINUTE;
+			   	co_format CONSTANT VARCHAR2(19) := 'SYYYY-MM-DD HH24:MI';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_SECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(0) := INTERVAL '1' SECOND;
-			   	co_format CONSTANT VARCHAR2(22) := 'YYYY-MM-DD HH24:MI:SS';
+			   	co_format CONSTANT VARCHAR2(22) := 'SYYYY-MM-DD HH24:MI:SS';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_CENTISECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(2) := INTERVAL '1' SECOND / 1E2 ;
-			   	co_format CONSTANT VARCHAR2(26) := 'YYYY-MM-DD HH24:MI:SS.FF2';
+			   	co_format CONSTANT VARCHAR2(26) := 'SYYYY-MM-DD HH24:MI:SS.FF2';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MILLIISECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(3) := INTERVAL '1' SECOND / 1E3 ;
-			   	co_format CONSTANT VARCHAR2(26) := 'YYYY-MM-DD HH24:MI:SS.FF3';
+			   	co_format CONSTANT VARCHAR2(26) := 'SYYYY-MM-DD HH24:MI:SS.FF3';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MICROSECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(6) := INTERVAL '1' SECOND / 1E6 ;
-			   	co_format CONSTANT VARCHAR2(26) := 'YYYY-MM-DD HH24:MI:SS.FF6';
+			   	co_format CONSTANT VARCHAR2(26) := 'SYYYY-MM-DD HH24:MI:SS.FF6';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_NANOSECOND")»
 			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(9) := INTERVAL '1' SECOND / 1E9 ;
-			   	co_format CONSTANT VARCHAR2(26) := 'YYYY-MM-DD HH24:MI:SS.FF9';
+			   	co_format CONSTANT VARCHAR2(26) := 'SYYYY-MM-DD HH24:MI:SS.FF9';
 			   «ENDIF»
 
 			   --
@@ -203,7 +226,7 @@ class CreateApiPackageBody {
 			      FOR i in 1..in_collection.COUNT()
 			      LOOP
 			         print_line(in_proc => in_proc, in_level => co_trace, in_line => 'row ' || i || ':');
-			         «FOR col : model.columnNames»
+			         «FOR col : model.allColumnNames»
 			         	print_line(in_proc => in_proc, in_level => co_trace, in_line => '   - «String.format("%-30s", col)»: ' || in_collection(i).«col»);
 			         «ENDFOR»
 			      END LOOP all_versions;
@@ -295,7 +318,7 @@ class CreateApiPackageBody {
 			      l_start TIMESTAMP := SYSTIMESTAMP;
 			   BEGIN
 			      SELECT «model.objectTypeName» (
-			                «FOR col : model.columnNames SEPARATOR ','»
+			                «FOR col : model.allColumnNames SEPARATOR ','»
 			                	«col»
 			                «ENDFOR»
 			             )
@@ -321,7 +344,7 @@ class CreateApiPackageBody {
 			        INTO l_version
 			        FROM (
 			                SELECT «model.objectTypeName» (
-			                          «FOR col : model.columnNames SEPARATOR ","»
+			                          «FOR col : model.allColumnNames SEPARATOR ","»
 			                          	«IF col == validTo»
 			                          		LEAD («validFrom», 1, valid_to) OVER (ORDER BY «validFrom» NULLS FIRST)
 			                          	«ELSE»
@@ -387,7 +410,7 @@ class CreateApiPackageBody {
 			      l_versions «model.collectionTypeName»;
 			   BEGIN
 			      SELECT «model.objectTypeName» (
-			             «FOR col : model.columnNames SEPARATOR ","»
+			             «FOR col : model.allColumnNames SEPARATOR ","»
 			             	«col»
 			             «ENDFOR»
 			             )
@@ -465,7 +488,7 @@ class CreateApiPackageBody {
 			      l_version := get_version_at(in_at => co_minvalue);
 			      IF l_version IS NULL THEN
 			         SELECT «model.objectTypeName» (
-			                   «FOR col : model.columnNames SEPARATOR ","»
+			                   «FOR col : model.allColumnNames SEPARATOR ","»
 			                   	«col»
 			                   «ENDFOR»
 			                ) version
@@ -489,7 +512,7 @@ class CreateApiPackageBody {
 			      l_version := get_version_at(in_at => co_maxvalue);
 			      IF l_version IS NULL THEN
 			         SELECT «model.objectTypeName» (
-			                   «FOR col : model.columnNames SEPARATOR ","»
+			                   «FOR col : model.allColumnNames SEPARATOR ","»
 			                   	«col»
 			                   «ENDFOR»
 			                ) version
@@ -701,7 +724,7 @@ class CreateApiPackageBody {
 			           RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
 			                INTO «FOR col : model.pkColumnNames SEPARATOR ', '»l_latest_row.«col»«ENDFOR»;
 			         <<all_versions>>
-			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => '1 row inserted.');
+			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => SQL%ROWCOUNT || ' row inserted.');
 			         FOR i in 1..g_versions.COUNT()
 			         LOOP
 			            «FOR col : model.pkColumnNames»
@@ -730,13 +753,13 @@ class CreateApiPackageBody {
 			      print_collection(in_proc => 'save_versions', in_collection => g_versions);
 			      MERGE 
 			       INTO (
-			               SELECT «FOR col : model.columnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			               SELECT «FOR col : model.allColumnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
 			                 FROM «model.historyTableName» «
 			                      »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			            ) t
 			      USING (
 			               SELECT NULL AS «operation»,
-			                      «FOR col : model.columnNames SEPARATOR ","»
+			                      «FOR col : model.allColumnNames SEPARATOR ","»
 			                      	«IF col == validTo»
 			                      		LEAD («validFrom», 1, NULL) OVER (ORDER BY «validFrom» NULLS FIRST) AS «validTo»
 			                      	«ELSE»
@@ -746,7 +769,7 @@ class CreateApiPackageBody {
 			                 FROM TABLE(g_versions)
 			               UNION ALL
 			               SELECT 'D' AS «operation», -- NOSONAR, PL/SQL Cop guideline 27, false positive
-			                      «FOR col : model.columnNames SEPARATOR ","»
+			                      «FOR col : model.allColumnNames SEPARATOR ","»
 			                      	o.«col»
 			                      «ENDFOR»
 			                 FROM TABLE(g_versions_original) o
