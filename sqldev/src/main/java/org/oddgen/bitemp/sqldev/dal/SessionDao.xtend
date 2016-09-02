@@ -96,6 +96,20 @@ class SessionDao {
 		}
 	}
 
+	def boolean hasDirectPrivilege(String privilegeName) {
+		if (conn.metaData.userName == "SYS") {
+			return true
+		} else {
+			val sql = '''
+				SELECT count(*)
+				  FROM user_sys_privs
+				 WHERE privilege = ?
+			'''
+			val result = jdbcTemplate.queryForObject(sql, Integer, #[privilegeName])
+			return result == 1
+		}
+	}
+
 	def boolean hasExecuteRights(String objectName) {
 		if (conn.metaData.userName == "SYS") {
 			return true
@@ -212,6 +226,9 @@ class SessionDao {
 
 	def getMissingInstallPrerequisites() {
 		val result = new ArrayList<String>
+		if (! "CREATE TABLE".hasDirectPrivilege) {
+			result.add(BitempResources.get("ERROR_CREATE_TABLE_REQUIRED"))
+		}
 		if (! "CREATE VIEW".hasPrivilege) {
 			result.add(BitempResources.get("ERROR_CREATE_VIEW_REQUIRED"))
 		}
