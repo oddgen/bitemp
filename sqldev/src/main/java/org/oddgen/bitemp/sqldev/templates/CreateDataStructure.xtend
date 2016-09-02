@@ -72,12 +72,9 @@ class CreateDataStructure {
 			«createHistoryTable.compile(model)»
 			«setFlashbackArchiveContextLevel.compile(model)»
 			«addFlashbackArchive.compile(model.newHistTable, model)»
-			«IF model.originModel == ApiType.NON_TEMPORAL»
-				«initializeHistory.compile(model)»
-			«ELSEIF model.originModel == ApiType.UNI_TEMPORAL_TRANSACTION_TIME»
-				«initializeHistory.compile(model)»
-				«populateFlashbackArchive.compile(model)»
-			«ENDIF»
+			«initializeHistory.compile(model)»
+			«initializeHistory.compile(model)»
+			«populateFlashbackArchive.compile(model)»
 			«removeFlashbackArchive.compile(model.inputTable)»
 		«ENDIF»
 	'''
