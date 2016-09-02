@@ -73,7 +73,6 @@ class CreateDataStructure {
 			«setFlashbackArchiveContextLevel.compile(model)»
 			«addFlashbackArchive.compile(model.newHistTable, model)»
 			«initializeHistory.compile(model)»
-			«initializeHistory.compile(model)»
 			«populateFlashbackArchive.compile(model)»
 			«removeFlashbackArchive.compile(model.inputTable)»
 		«ENDIF»
