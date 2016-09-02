@@ -302,6 +302,28 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 	@AfterClass
 	def static void tearDown() {
 		try {
+			jdbcTemplate.execute('''
+				BEGIN
+				   dbms_flashback_archive.reassociate_fba(
+				      owner_name => USER, 
+				      table_name => 'T1_HT'
+				   );
+				END;
+			''')
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute('''
+				BEGIN
+				   dbms_flashback_archive.reassociate_fba(
+				      owner_name => USER, 
+				      table_name => 'T1_LT'
+				   );
+				END;
+			''')
+		} catch (Exception e) {
+		}
+		try {
 			jdbcTemplate.execute("ALTER TABLE t1_ht NO FLASHBACK ARCHIVE")
 		} catch (Exception e) {
 		}
@@ -315,6 +337,28 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		}
 		try {
 			jdbcTemplate.execute("DROP TABLE t1_lt PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute('''
+				BEGIN
+				   dbms_flashback_archive.reassociate_fba(
+				      owner_name => USER, 
+				      table_name => 'T2_HT'
+				   );
+				END;
+			''')
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute('''
+				BEGIN
+				   dbms_flashback_archive.reassociate_fba(
+				      owner_name => USER, 
+				      table_name => 'T2_LT'
+				   );
+				END;
+			''')
 		} catch (Exception e) {
 		}
 		try {
