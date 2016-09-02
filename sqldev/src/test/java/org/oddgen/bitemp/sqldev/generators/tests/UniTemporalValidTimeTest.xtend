@@ -181,7 +181,9 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		val staCols = dao.getTable("D2_STA$").columns.keySet.toList
 		Assert.assertEquals(#["VT_START", "VT_END", "IS_DELETED$", "DEPTNO", "DNAME"], staCols)
 		val logCols = dao.getTable("D2_LOG$").columns.keySet.toList
-		Assert.assertEquals(#["LOG_TIME", "LOG_TYPE", "STA_RID", "MSG", "STMT"], logCols)
+		Assert.assertEquals(
+			#["ORA_ERR_NUMBER$", "ORA_ERR_MESG$", "ORA_ERR_ROWID$", "ORA_ERR_OPTYP$", "ORA_ERR_TAG$", "HIST_ID$", "VT_START",
+				"VT_END", "IS_DELETED$", "DEPTNO", "DNAME"], logCols)
 
 	}
 

@@ -944,17 +944,10 @@ class CreateApiPackageBody {
 			      --
 			      PROCEDURE create_log_table IS
 			      BEGIN
-			         l_stmt := q'[
-			            CREATE TABLE ]' || in_log_table || q'[ (
-			               log_time TIMESTAMP(6)        NOT NULL,
-			               log_type VARCHAR2(5 CHAR)    NOT NULL,
-			               CHECK (log_type IN ('INFO', 'DEBUG', 'TRACE', 'ERROR')),
-			               sta_rid  ROWID               NULL,
-			               msg      VARCHAR2(2000 CHAR) NOT NULL,
-			               stmt     CLOB                NULL
-			            )
-			         ]';
-			         exec_stmt;
+			         sys.dbms_errlog.create_error_log(
+			            dml_table_name     => '«model.historyTableName»',
+			            err_log_table_name => in_log_table, 
+			            skip_unsupported   => TRUE);
 			         print_line(in_proc => 'create_load_tables.create_log_table', in_level => co_debug, in_line => in_log_table || ' created.');
 			      END create_log_table;
 			   BEGIN
