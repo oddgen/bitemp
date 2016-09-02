@@ -84,8 +84,8 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 			--     - Flashback data archive name           : FBA1
 			--     - Flashback archive context level       : Keep current level
 			--     - Granularity                           : Day
-			--     - Column name for valid from            : valid_from
-			--     - Column name for valid to              : valid_to
+			--     - Column name for valid from            : vt_start
+			--     - Column name for valid to              : vt_end
 			--     - Suffix for view with latest content   : _lv
 			--     - Suffix for history table              : _ht
 			--     - Suffix for history view               : _hv

@@ -365,7 +365,7 @@ class CreateApiPackageBody {
 			                SELECT «model.objectTypeName» (
 			                          «FOR col : model.allColumnNames SEPARATOR ","»
 			                          	«IF col == validTo»
-			                          		LEAD («validFrom», 1, valid_to) OVER (ORDER BY «validFrom» NULLS FIRST)
+			                          		LEAD («validFrom», 1, «validTo») OVER (ORDER BY «validFrom» NULLS FIRST)
 			                          	«ELSE»
 			                          		«col»
 			                          	«ENDIF»
@@ -648,7 +648,7 @@ class CreateApiPackageBody {
 			         base AS (
 			            SELECT «histId»,
 			                   NVL(«validFrom», co_minvalue) AS «validFrom»,
-			                   NVL(LEAD («validFrom», 1, valid_to) OVER (ORDER BY «validFrom» NULLS FIRST), co_maxvalue) AS «validTo»,
+			                   NVL(LEAD («validFrom», 1, «validTo») OVER (ORDER BY «validFrom» NULLS FIRST), co_maxvalue) AS «validTo»,
 			                   (
 			                      «FOR col : model.mergeColumnNames SEPARATOR " || ',' || "»
 			                      	«col»

@@ -60,14 +60,14 @@ class CreateHistoryViewTest extends AbstractJdbcTest {
 		jdbcTemplate.execute('''
 			CREATE TABLE t1_ht (
 			   hist_id$ INTEGER GENERATED ALWAYS AS IDENTITY (CACHE 1000) NOT NULL PRIMARY KEY,
-			   valid_from DATE NULL,
-			   valid_to DATE NULL,
+			   vt_start DATE NULL,
+			   vt_end DATE NULL,
 			   is_deleted$ NUMBER(1,0) NULL,
 			   CHECK (is_deleted$ IN (0,1)),
-			   PERIOD FOR vt$ (valid_from, valid_to),
+			   PERIOD FOR vt$ (vt_start, vt_end),
 			   c1 INTEGER,
 			   c2 VARCHAR2(20),
-			   UNIQUE (c1, valid_from),
+			   UNIQUE (c1, vt_start),
 			   FOREIGN KEY (c1) REFERENCES t1
 			)
 		''')

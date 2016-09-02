@@ -93,7 +93,7 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		''')
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60 and is_deleted$ IS NULL"))
 		Assert.assertEquals(2, getCount("D2_HT", "WHERE deptno = 60"))
-		Assert.assertEquals(1, getCount("D2_HT", "WHERE deptno = 60 AND is_deleted$ = 1 AND valid_to < SYSDATE"))
+		Assert.assertEquals(1, getCount("D2_HT", "WHERE deptno = 60 AND is_deleted$ = 1 AND vt_end < SYSDATE"))
 		jdbcTemplate.execute('''
 			INSERT 
 			  INTO d2_hv 
@@ -179,7 +179,7 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		''')
 		val dao = new TableDao(dataSource.connection)
 		val staCols = dao.getTable("D2_STA$").columns.keySet.toList
-		Assert.assertEquals(#["VALID_FROM", "VALID_TO", "IS_DELETED$", "DEPTNO", "DNAME"], staCols)
+		Assert.assertEquals(#["VT_START", "VT_END", "IS_DELETED$", "DEPTNO", "DNAME"], staCols)
 		val logCols = dao.getTable("D2_LOG$").columns.keySet.toList
 		Assert.assertEquals(#["LOG_TIME", "LOG_TYPE", "STA_RID", "MSG", "STMT"], logCols)
 

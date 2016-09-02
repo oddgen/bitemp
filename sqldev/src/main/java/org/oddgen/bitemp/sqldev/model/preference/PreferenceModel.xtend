@@ -156,7 +156,7 @@ class PreferenceModel extends HashStructureAdapter {
 	}
 
 	def getValidFromColName() {
-		return getHashStructure.getString(PreferenceModel.KEY_VALID_FROM_COL_NAME, "valid_from")
+		return getHashStructure.getString(PreferenceModel.KEY_VALID_FROM_COL_NAME, "vt_start")
 	}
 
 	def setValidFromColName(String validFromColName) {
@@ -165,7 +165,7 @@ class PreferenceModel extends HashStructureAdapter {
 	}
 
 	def getValidToColName() {
-		return getHashStructure.getString(PreferenceModel.KEY_VALID_TO_COL_NAME, "valid_to")
+		return getHashStructure.getString(PreferenceModel.KEY_VALID_TO_COL_NAME, "vt_end")
 	}
 
 	def setValidToColName(String validToColName) {
