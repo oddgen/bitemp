@@ -15,10 +15,11 @@
  */
 package org.oddgen.bitemp.sqldev.generators.tests
 
-import org.junit.AfterClass
+import org.junit.After
 import org.junit.Assert
-import org.junit.BeforeClass
+import org.junit.Before
 import org.junit.Test
+import org.oddgen.bitemp.sqldev.dal.TableDao
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
 
@@ -102,7 +103,7 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60"))
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60 AND is_deleted$ IS NULL"))
 	}
-	
+
 	@Test
 	def alwaysGeneratedIdentityColumn() {
 		jdbcTemplate.execute('''
@@ -148,13 +149,49 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		Assert.assertEquals(0, getCount("D3_HV", ""))
 	}
 
-	@BeforeClass
-	def static void setup() {
+	@Test
+	def genBulkLoad() {
+		jdbcTemplate.execute('''
+			CREATE TABLE d2 (
+			   deptno NUMBER(10,0) NOT NULL PRIMARY KEY,
+			   dname  VARCHAR2(14) NOT NULL
+			)
+		''')
+		val gen = new BitempRemodeler
+		val params = gen.getParams(dataSource.connection, "TABLE", "D2")
+		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "0")
+		params.put(BitempRemodeler.GEN_VALID_TIME, "1")
+		val script = gen.generate(dataSource.connection, "TABLE", "D2", params)
+		for (stmt : script.statements) {
+			jdbcTemplate.execute(stmt)
+		}
+		val invalids = jdbcTemplate.queryForObject('''
+			SELECT COUNT(*)
+			  FROM user_objects
+			 WHERE status != 'VALID'
+			   AND object_name LIKE 'D2%'
+		''', Integer)
+		Assert.assertEquals(0, invalids)
+		jdbcTemplate.execute('''
+			BEGIN
+			   d2_api.create_load_tables();
+			END;
+		''')
+		val dao = new TableDao(dataSource.connection)
+		val staCols = dao.getTable("D2_STA$").columns.keySet.toList
+		Assert.assertEquals(#["VALID_FROM", "VALID_TO", "IS_DELETED$", "DEPTNO", "DNAME"], staCols)
+		val logCols = dao.getTable("D2_LOG$").columns.keySet.toList
+		Assert.assertEquals(#["LOG_TIME", "LOG_TYPE", "STA_RID", "MSG", "STMT"], logCols)
+
+	}
+
+	@Before
+	def void setup() {
 		tearDown();
 	}
 
-	@AfterClass
-	def static void tearDown() {
+	@After
+	def void tearDown() {
 		try {
 			jdbcTemplate.execute("ALTER TABLE d2_ht NO FLASHBACK ARCHIVE")
 		} catch (Exception e) {
