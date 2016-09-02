@@ -199,18 +199,38 @@ class CreateApiPackageBody {
 			   ) IS
 			   BEGIN
 			      IF in_level <= g_debug_output_level THEN
-			         sys.dbms_output.put(to_char(systimestamp, 'HH24:MI:SS.FF6')); -- 12
+			         sys.dbms_output.put(to_char(systimestamp, 'HH24:MI:SS.FF6'));
 			         IF in_level = co_info THEN
-			            sys.dbms_output.put(' INFO  '); -- 7
+			            sys.dbms_output.put(' INFO  ');
 			         ELSIF in_level = co_debug THEN
-			            sys.dbms_output.put(' DEBUG '); -- 7
+			            sys.dbms_output.put(' DEBUG ');
 			         ELSE
-			            sys.dbms_output.put(' TRACE '); -- 7
+			            sys.dbms_output.put(' TRACE ');
 			         END IF;
-			         sys.dbms_output.put(substr(in_proc, 1, 19) || ': '); -- 21
-			         sys.dbms_output.put_line(substr(in_line, 1, 210)); -- 210
+			         sys.dbms_output.put(substr(in_proc, 1, 19) || ': ');
+			         sys.dbms_output.put_line(substr(in_line, 1, 210));
 			      END IF;
 			   END print_line;
+
+			   --
+			   -- print_lines
+			   --
+			   PROCEDURE print_lines (
+			      in_proc VARCHAR2,
+			      in_level dbms_output_level_type,
+			      in_lines CLOB
+			   ) IS
+			   BEGIN
+			      IF in_level <= g_debug_output_level THEN
+			         FOR r_line IN (
+			            SELECT regexp_substr(in_lines, '[^' || chr(10) || ']+', 1, level) AS line       
+			              FROM dual
+			           CONNECT BY instr(in_lines, chr(10), 1, level - 1) BETWEEN 1 AND length(in_lines) - 1
+			         ) LOOP
+			            print_line(in_proc => in_proc, in_level => in_level, in_line => r_line.line);
+			         END LOOP;
+			      END IF;
+			   END print_lines;
 
 			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			   --
@@ -219,8 +239,7 @@ class CreateApiPackageBody {
 			   PROCEDURE print_collection (
 			      in_proc VARCHAR2,
 			      in_collection IN «model.collectionTypeName»
-			   )
-			   IS
+			   ) IS
 			   BEGIN
 			      <<all_versions>>
 			      FOR i in 1..in_collection.COUNT()
@@ -878,10 +897,81 @@ class CreateApiPackageBody {
 			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
 			      in_drop_existing IN BOOLEAN DEFAULT TRUE
 			   ) IS
+			      l_stmt CLOB;
+			      --
+			      FUNCTION exist_table (in_table IN VARCHAR2) RETURN BOOLEAN IS
+			         l_found PLS_INTEGER;
+			      BEGIN
+			         SELECT COUNT(*)
+			           INTO l_found
+			           FROM user_tables
+			          WHERE table_name = UPPER(in_table);
+			         RETURN l_found > 0;
+			      END exist_table;
+			      --
+			      PROCEDURE exec_stmt IS
+			      BEGIN
+			         print_lines(in_proc => 'create_load_tables.exec_stmt', in_level => co_trace, in_lines => l_stmt);
+			         EXECUTE IMMEDIATE l_stmt;
+			      END exec_stmt;
+			      --
+			      PROCEDURE drop_table (in_table IN VARCHAR2) IS
+			      BEGIN
+			         l_stmt := 'DROP TABLE ' || in_table;
+			         exec_stmt;
+			         print_line(in_proc => 'create_load_tables.drop_table', in_level => co_debug, in_line => in_table || ' dropped.');
+			      END drop_table;
+			      --
+			      PROCEDURE create_sta_table IS
+			      BEGIN
+			         l_stmt := q'[
+			            CREATE TABLE ]' || in_sta_table || q'[ (
+			               «model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
+			               «model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
+			               «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» NUMBER(1,0) NULL,
+			               CHECK («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 1),
+			               «FOR col : model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && 
+			               	it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase && it.virtualColumn == "NO"
+			               ] SEPARATOR ","»
+			               	«col.columnName.toLowerCase» «col.fullDataType»«
+			               	»«IF !col.defaultClause.empty» «col.defaultClause»«ENDIF» «col.notNull»
+			               «ENDFOR»
+			            )
+			         ]';
+			         exec_stmt;
+			         print_line(in_proc => 'create_load_tables.create_sta_table', in_level => co_debug, in_line => in_sta_table || ' created.');
+			      END create_sta_table;
+			      --
+			      PROCEDURE create_log_table IS
+			      BEGIN
+			         l_stmt := q'[
+			            CREATE TABLE ]' || in_log_table || q'[ (
+			               log_time TIMESTAMP(6)        NOT NULL,
+			               log_type VARCHAR2(5 CHAR)    NOT NULL,
+			               CHECK (log_type IN ('INFO', 'DEBUG', 'TRACE', 'ERROR')),
+			               sta_rid  ROWID               NULL,
+			               msg      VARCHAR2(2000 CHAR) NOT NULL,
+			               stmt     CLOB                NULL
+			            )
+			         ]';
+			         exec_stmt;
+			         print_line(in_proc => 'create_load_tables.create_log_table', in_level => co_debug, in_line => in_log_table || ' created.');
+			      END create_log_table;
 			   BEGIN
-			      raise_application_error(-20501, 'create_load_tables is not yet implemented');
+			      print_line(in_proc => 'create_load_tables', in_level => co_info, in_line => 'started.');
+			      IF in_drop_existing THEN
+			         IF exist_table(in_sta_table) THEN
+			            drop_table(in_table => in_sta_table);
+			         END IF;
+			         IF exist_table(in_log_table) THEN
+			            drop_table(in_table => in_log_table);
+			         END IF;
+			      END IF;
+			      create_sta_table;
+			      create_log_table;
+			      print_line(in_proc => 'create_load_tables', in_level => co_info, in_line => 'completed.');
 			   END create_load_tables;
-			   
+
 			   --
 			   -- init_load
 			   --
