@@ -57,6 +57,17 @@ class MissingPrerequisiteSolutionTest extends AbstractJdbcTest {
 	}
 
 	@Test
+	def createTableRequired() {
+		val template = new MissingPrerequisiteSolution
+		val expected = '''
+			-- to solve "«BitempResources.get("ERROR_CREATE_TABLE_REQUIRED")»" run the following statement as SYS:
+			GRANT CREATE TABLE TO SCOTT;
+		'''
+		val actual = template.compile(dataSource.connection, BitempResources.get("ERROR_CREATE_TABLE_REQUIRED"))
+		Assert.assertEquals(expected, actual)
+	}
+
+	@Test
 	def createViewRequired() {
 		val template = new MissingPrerequisiteSolution
 		val expected = '''

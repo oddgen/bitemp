@@ -48,6 +48,11 @@ class MissingPrerequisiteSolution {
 						GRANT FLASHBACK ARCHIVE ON fba TO «conn.metaData.userName»;
 					«ENDIF»
 				'''
+			case BitempResources.get("ERROR_CREATE_TABLE_REQUIRED"):
+				'''
+					-- to solve "«BitempResources.get("ERROR_CREATE_TABLE_REQUIRED")»" run the following statement as SYS:
+					GRANT CREATE TABLE TO «conn.metaData.userName»;
+				'''
 			case BitempResources.get("ERROR_CREATE_VIEW_REQUIRED"):
 				'''
 					-- to solve "«BitempResources.get("ERROR_CREATE_VIEW_REQUIRED")»" run the following statement as SYS:
