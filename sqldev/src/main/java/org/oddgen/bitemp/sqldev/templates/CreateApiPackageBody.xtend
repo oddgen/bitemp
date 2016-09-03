@@ -1133,8 +1133,18 @@ class CreateApiPackageBody {
 			                          model.latestTableName»') REJECT LIMIT ]' || in_reject_limit || q'[
 			            WITH
 			               active AS (
-			                  SELECT «FOR col : model.columnNames.filter[it != histId] 
-			                          SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			                  «IF model.granularityRequiresTruncation»
+			                  	SELECT TRUNC(«validFrom», '«model.granuarityTruncationFormat»') AS «validFrom»,
+			                  	       TRUNC(«validTo», '«model.granuarityTruncationFormat»') AS «validTo»,
+			                  «ELSE»
+			                  	SELECT «validFrom»,
+			                  	       «validTo»,
+			                  «ENDIF»
+			                         «FOR col : model.columnNames.filter[
+			                         	it != histId && it != validFrom && it != validTo
+			                         ] SEPARATOR ","»
+			                          «col»
+			                         «ENDFOR»
 			                    FROM ]' || in_sta_table || q'[
 			                   WHERE «isDeleted» IS NULL
 			               ),
@@ -1185,8 +1195,7 @@ class CreateApiPackageBody {
 			                         	«col»
 			                         «ENDFOR»
 			                    FROM merged
-			                   WHERE «validFrom» IS NOT NULL
-			                     AND «validTo» IS NOT NULL AND «gapStart» IS NULL
+			                   WHERE «validFrom» IS NOT NULL AND «gapStart» IS NULL
 			                  UNION ALL
 			                  -- deleted non-starting periods
 			                  SELECT «validTo» AS «validFrom»,
