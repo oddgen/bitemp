@@ -184,6 +184,48 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		Assert.assertEquals(
 			#["ORA_ERR_NUMBER$", "ORA_ERR_MESG$", "ORA_ERR_ROWID$", "ORA_ERR_OPTYP$", "ORA_ERR_TAG$", "HIST_ID$", "VT_START",
 				"VT_END", "IS_DELETED$", "DEPTNO", "DNAME"], logCols)
+		jdbcTemplate.execute('''
+			DECLARE
+			   PROCEDURE ins (
+			      in_vt_start    DATE,
+			      in_vt_end      DATE,
+			      in_is_deleted$ INTEGER,
+			      in_deptno      VARCHAR2,
+			      in_dname       VARCHAR2
+			   ) IS
+			   BEGIN
+			      INSERT INTO d2_sta$ (
+			                     vt_start,
+			                     vt_end,
+			                     is_deleted$,
+			                     deptno,
+			                     dname
+			                  )
+			           VALUES (
+			                    in_vt_start,
+			                    in_vt_end,
+			                    in_is_deleted$,
+			                    in_deptno,
+			                    in_dname
+			                  );
+			   END ins;
+			BEGIN
+			   ins(null, null, null, 10, 'ACCOUNTING');
+			   ins(null, DATE '2016-01-01', null, 20, 'RESEARCH');
+			   ins(DATE '2016-01-01', null, null, 20, 'Research');
+			   ins(DATE '2016-01-01', DATE '3000-01-01', null, 30, 'SALES');
+			   ins(DATE '2016-01-01', DATE '2018-01-01', null, 40, 'OPERATIONS');
+			   ins(DATE '2010-01-01', DATE '2012-01-01', null, 40, 'OPS BETA');
+			END; 
+		''')
+		Assert.assertEquals(6, getCount("D2_STA$", ""))
+		jdbcTemplate.execute('''
+			BEGIN
+				d2_api.init_load;
+			END;
+		''')
+		Assert.assertEquals(4, getCount("D2", ""))
+		Assert.assertEquals(9, getCount("D2_HT", ""))
 
 	}
 
@@ -194,6 +236,14 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 
 	@After
 	def void tearDown() {
+		try {
+			jdbcTemplate.execute("DROP TABLE d2_sta$ PURGE")
+		} catch (Exception e) {
+		}
+		try {
+			jdbcTemplate.execute("DROP TABLE d2_log$ PURGE")
+		} catch (Exception e) {
+		}
 		try {
 			jdbcTemplate.execute("ALTER TABLE d2_ht NO FLASHBACK ARCHIVE")
 		} catch (Exception e) {
