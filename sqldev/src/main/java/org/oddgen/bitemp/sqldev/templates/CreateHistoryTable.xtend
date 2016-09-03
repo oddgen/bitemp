@@ -61,8 +61,11 @@ class CreateHistoryTable {
 				   	»«ENDIF»
 				   «ENDFOR»
 				);
-				ALTER TABLE «model.historyTableName» ADD UNIQUE («FOR col : model.historyUkColumnNames SEPARATOR ", "»«col»«ENDFOR») INITIALLY DEFERRED;
-				ALTER TABLE «model.historyTableName» ADD FOREIGN KEY («FOR col : model.latestPkColumnNames SEPARATOR ", "»«col»«ENDFOR») REFERENCES «model.latestTableName»;
+				ALTER TABLE «model.historyTableName» ADD UNIQUE («
+				FOR col : model.historyUkColumnNames SEPARATOR ", "»«col»«ENDFOR») DEFERRABLE INITIALLY DEFERRED;
+				ALTER TABLE «model.historyTableName» ADD FOREIGN KEY («
+				FOR col : model.latestPkColumnNames SEPARATOR ", "»«col»«ENDFOR») REFERENCES «
+				model.latestTableName» DEFERRABLE INITIALLY IMMEDIATE;
 				«var int index = 1»
 				«FOR fk : model.inputTable.foreignKeyConstraints»
 					CREATE INDEX «model.historyTableName»«String.format(BitempRemodeler.INDEX_SUFFIX_PATTERN, index++).toLowerCase» ON «model.historyTableName» («FOR col : fk.columnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR»);
