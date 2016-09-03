@@ -225,7 +225,7 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 			END;
 		''')
 		Assert.assertEquals(4, getCount("D2", ""))
-		Assert.assertEquals(9, getCount("D2_HT", ""))
+		Assert.assertEquals(11, getCount("D2_HT", ""))
 
 	}
 
