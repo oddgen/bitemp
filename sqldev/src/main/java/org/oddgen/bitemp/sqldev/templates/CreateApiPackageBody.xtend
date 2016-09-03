@@ -119,6 +119,8 @@ class CreateApiPackageBody {
 				«val groupCols = BitempRemodeler.GROUP_COLS_COL_NAME.toLowerCase»
 				«val newGroup = BitempRemodeler.NEW_GROUP_COL_NAME.toLowerCase»
 				«val groupNo = BitempRemodeler.GROUP_NO_COL_NAME.toLowerCase»
+				«val gapEnd = BitempRemodeler.GROUP_NO_COL_NAME.toLowerCase»
+				«val errorNumber = -20501»
 			   --
 			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«model.conn.metaData.userName».«model.hookPackageName.toUpperCase»"'
 			   --
@@ -273,7 +275,8 @@ class CreateApiPackageBody {
 			         l_valid_time_range_changed := TRUE;
 			      END IF;
 			      IF (
-			            «FOR col : model.updateableLatestColumnNames.filter[it != validFrom && it != validTo] SEPARATOR System.lineSeparator + 'OR'»
+			            «FOR col : model.updateableLatestColumnNames.filter[it != validFrom && it != validTo] 
+			             SEPARATOR System.lineSeparator + 'OR'»
 			            	(in_new_row.«col» != in_old_row.«col» 
 			            	 OR in_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
 			            	 OR in_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL)
@@ -320,7 +323,7 @@ class CreateApiPackageBody {
 			              OR in_row.«validFrom» IS NULL AND in_row.«validTo» IS NOT NULL
 			              OR in_row.«validFrom» IS NOT NULL AND in_row.«validTo» IS NULL) 
 			      THEN
-			         raise_application_error(-20501, 'Invalid period. «validFrom» (' 
+			         raise_application_error(«errorNumber», 'Invalid period. «validFrom» (' 
 			            || TO_CHAR(in_row.«validFrom», co_format)
 			            || ') must be less than «validTo» ('
 			            || TO_CHAR(in_row.«validTo», co_format)
@@ -346,7 +349,11 @@ class CreateApiPackageBody {
 			             »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»
 			         FOR UPDATE;
-			      print_line(in_proc => 'load_version', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows locked and loaded.');
+			      print_line(
+			         in_proc  => 'load_version',
+			         in_level => co_debug,
+			         in_line  => SQL%ROWCOUNT || ' rows locked and loaded.'
+			      );
 			      g_versions := g_versions_original;
 			      print_collection(in_proc => 'load_version', in_collection => g_versions);
 			   END load_versions;
@@ -439,7 +446,11 @@ class CreateApiPackageBody {
 			       			NVL(«validFrom», co_minvalue) >= NVL(in_row.«validFrom», co_minvalue) 
 			       			AND NVL(«validTo», co_maxvalue) <= NVL(in_row.«validTo», co_maxvalue)
 			       	     );
-			       print_line(in_proc => 'del_enclosed_versions', in_level => co_debug, in_line => g_versions.COUNT() - l_versions.COUNT() || ' enclosed periods deleted.');
+			       print_line(
+			          in_proc  => 'del_enclosed_versions', 
+			          in_level => co_debug, 
+			          in_line  => g_versions.COUNT() - l_versions.COUNT() || ' enclosed periods deleted.'
+			       );
 			       g_versions := l_versions;
 			   END del_enclosed_versions;
 
@@ -492,7 +503,11 @@ class CreateApiPackageBody {
 			               l_copy := l_version;
 			               l_copy.«validFrom» := in_row.«validTo»;
 			               add_version(in_row => l_copy);
-			               print_line(in_proc => 'split_version', in_level => co_debug, in_line => 'splitted version at '|| TO_CHAR(in_row.«validTo», co_format) || '.');
+			               print_line(
+			                  in_proc  => 'split_version', 
+			                  in_level => co_debug, 
+			                  in_line => 'splitted version at '|| TO_CHAR(in_row.«validTo», co_format) || '.'
+			               );
 			            END IF;
 			         END IF;
 			      END IF;
@@ -718,7 +733,11 @@ class CreateApiPackageBody {
 			             )
 			        BULK COLLECT INTO l_merged
 			        FROM merged;
-			       print_line(in_proc => 'merge_versions', in_level => co_debug, in_line => g_versions.COUNT() - l_merged.COUNT() || ' periods merged.');
+			       print_line(
+			          in_proc => 'merge_versions',
+			          in_level => co_debug,
+			          in_line => g_versions.COUNT() - l_merged.COUNT() || ' periods merged.'
+			       );
 			       g_versions := l_merged;
 			   END merge_versions;
 
@@ -753,14 +772,23 @@ class CreateApiPackageBody {
 			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => 'set primary key for all periods.');
 			      ELSE
 			         UPDATE «model.latestTableName»
-			            SET «FOR col : model.updateableLatestColumnNames SEPARATOR ',' + System.lineSeparator + '    '»«col» = l_latest_row.«col»«ENDFOR»
-			          WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = l_latest_row.«col»«ENDFOR»
+			            SET «FOR col : model.updateableLatestColumnNames SEPARATOR ',' + System.lineSeparator + '    '»«
+			                	col» = l_latest_row.«col»«
+			                ENDFOR»
+			          WHERE «FOR col : model.pkColumnNames 
+			                 SEPARATOR System.lineSeparator + '  AND '»«col» = l_latest_row.«col»«ENDFOR»
 			            AND (
 			                    «FOR col : model.updateableLatestColumnNames SEPARATOR " OR"»
-			                    	(«col» != l_latest_row.«col» OR «col» IS NULL AND l_latest_row.«col» IS NOT NULL OR «col» IS NOT NULL AND l_latest_row.«col» IS NULL)
+			                    	(«col» != l_latest_row.«col» OR «
+			                    	col» IS NULL AND l_latest_row.«col» IS NOT NULL OR «
+			                    	col» IS NOT NULL AND l_latest_row.«col» IS NULL)
 			                    «ENDFOR»
 			                );
-			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows updated.');
+			         print_line(
+			            in_proc  => 'save_latest', 
+			            in_level => co_debug, 
+			            in_line  => SQL%ROWCOUNT || ' rows updated.'
+			         );
 			      END IF;
 			   END save_latest;
 
@@ -799,7 +827,8 @@ class CreateApiPackageBody {
 			         ON (s.«histId» = t.«histId»)
 			       WHEN MATCHED THEN
 			               UPDATE
-			                  SET «FOR col : model.updateableColumnNames SEPARATOR ',' + System.lineSeparator + '    '»t.«col» = s.«col»«ENDFOR»
+			                  SET «FOR col : model.updateableColumnNames
+			                       SEPARATOR ',' + System.lineSeparator + '    '»t.«col» = s.«col»«ENDFOR»
 			               DELETE
 			                WHERE «operation» = 'D'
 			       WHEN NOT MATCHED THEN
@@ -813,7 +842,11 @@ class CreateApiPackageBody {
 			                         	s.«col»
 			                         «ENDFOR»
 			                      );
-			      print_line(in_proc => 'save_versions', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows merged.');
+			      print_line(
+			         in_proc  => 'save_versions', 
+			         in_level => co_debug, 
+			         in_line  => SQL%ROWCOUNT || ' rows merged.'
+			      );
 			   END save_versions;
 
 			   --
@@ -890,6 +923,22 @@ class CreateApiPackageBody {
 			   END do_del;
 
 			   --
+			   -- table_exists
+			   --
+			   FUNCTION table_exists (
+			      in_owner IN VARCHAR2,
+			      in_table IN VARCHAR2
+			   ) RETURN BOOLEAN IS
+			      l_found PLS_INTEGER;
+			   BEGIN
+			      SELECT COUNT(*)
+			        INTO l_found
+			        FROM user_tables
+			       WHERE table_name = UPPER(in_table);
+			      RETURN l_found > 0;
+			   END table_exists;
+
+			   --
 			   -- create_load_tables
 			   --
 			   PROCEDURE create_load_tables (
@@ -898,16 +947,6 @@ class CreateApiPackageBody {
 			      in_drop_existing IN BOOLEAN DEFAULT TRUE
 			   ) IS
 			      l_stmt CLOB;
-			      --
-			      FUNCTION exist_table (in_table IN VARCHAR2) RETURN BOOLEAN IS
-			         l_found PLS_INTEGER;
-			      BEGIN
-			         SELECT COUNT(*)
-			           INTO l_found
-			           FROM user_tables
-			          WHERE table_name = UPPER(in_table);
-			         RETURN l_found > 0;
-			      END exist_table;
 			      --
 			      PROCEDURE exec_stmt IS
 			      BEGIN
@@ -919,7 +958,11 @@ class CreateApiPackageBody {
 			      BEGIN
 			         l_stmt := 'DROP TABLE ' || in_table;
 			         exec_stmt;
-			         print_line(in_proc => 'create_load_tables.drop_table', in_level => co_debug, in_line => in_table || ' dropped.');
+			         print_line(
+			            in_proc  => 'create_load_tables.drop_table', 
+			            in_level => co_debug, 
+			            in_line  => in_table || ' dropped.'
+			         );
 			      END drop_table;
 			      --
 			      PROCEDURE create_sta_table IS
@@ -939,7 +982,11 @@ class CreateApiPackageBody {
 			            )
 			         ]';
 			         exec_stmt;
-			         print_line(in_proc => 'create_load_tables.create_sta_table', in_level => co_debug, in_line => in_sta_table || ' created.');
+			         print_line(
+			            in_proc => 'create_load_tables.create_sta_table', 
+			            in_level => co_debug, 
+			            in_line => in_sta_table || ' created.'
+			         );
 			      END create_sta_table;
 			      --
 			      PROCEDURE create_log_table IS
@@ -948,15 +995,19 @@ class CreateApiPackageBody {
 			            dml_table_name     => '«model.historyTableName»',
 			            err_log_table_name => in_log_table, 
 			            skip_unsupported   => TRUE);
-			         print_line(in_proc => 'create_load_tables.create_log_table', in_level => co_debug, in_line => in_log_table || ' created.');
+			         print_line(
+			            in_proc  => 'create_load_tables.create_log_table', 
+			            in_level => co_debug, 
+			            in_line  => in_log_table || ' created.'
+			         );
 			      END create_log_table;
 			   BEGIN
 			      print_line(in_proc => 'create_load_tables', in_level => co_info, in_line => 'started.');
 			      IF in_drop_existing THEN
-			         IF exist_table(in_sta_table) THEN
+			         IF table_exists(in_owner => USER, in_table => in_sta_table) THEN
 			            drop_table(in_table => in_sta_table);
 			         END IF;
-			         IF exist_table(in_log_table) THEN
+			         IF table_exists(in_owner => USER, in_table => in_log_table) THEN
 			            drop_table(in_table => in_log_table);
 			         END IF;
 			      END IF;
@@ -969,12 +1020,185 @@ class CreateApiPackageBody {
 			   -- init_load
 			   --
 			   PROCEDURE init_load (
-			      in_owner IN VARCHAR2 DEFAULT USER,
-			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
-			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
+			      in_owner        IN VARCHAR2 DEFAULT USER,
+			      in_sta_table    IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table    IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
+			      in_reject_limit IN VARCHAR2 DEFAULT 'UNLIMITED'
 			   ) IS
+			      --
+			      -- init_load.check_prerequisites
+			      --
+			      PROCEDURE check_prerequisites IS
+			         l_rows_found   PLS_INTEGER;
+			         l_reject_limit VARCHAR2(100 CHAR);
+			      BEGIN
+			         IF NOT table_exists(in_owner => in_owner, in_table => in_sta_table) THEN
+			            raise_application_error(«errorNumber
+			            	», 'staging table ' || in_owner || '.' || in_sta_table || ' not found.'
+			            );
+			         END IF;
+			         IF NOT table_exists(in_owner => in_owner, in_table => in_log_table) THEN
+			            raise_application_error(«errorNumber
+			            	», 'logging table ' || in_owner || '.' || in_log_table || ' not found.'
+			            );
+			         END IF;
+			         SELECT COUNT(*) 
+			           INTO l_rows_found
+			           FROM «model.latestTableName»
+			          WHERE ROWNUM = 1;
+			         IF l_rows_found > 0 THEN
+			            raise_application_error(«errorNumber
+			            	», 'latest table «model.latestTableName» is not empty.'
+			            );
+			         END IF;
+			         SELECT COUNT(*) 
+			           INTO l_rows_found
+			           FROM «model.historyTableName»
+			          WHERE ROWNUM = 1;
+			         IF l_rows_found > 0 THEN
+			            raise_application_error(«errorNumber
+			            	», 'history table «model.historyTableName» is not empty.'
+			            );
+			         END IF;
+			         IF in_reject_limit IS NULL THEN
+			            raise_application_error(«errorNumber
+			            	», 'in_reject_limit must not be NULL.'
+			            );
+			         END IF;
+			         l_reject_limit := regexp_replace(UPPER(substr(in_reject_limit,1,100)), '[0-9]+', '');
+			         IF NOT (l_reject_limit IS NULL OR l_reject_limit = 'UNLIMITED') THEN
+			            raise_application_error(«errorNumber
+			            	», 'invalid value for in_reject_limit defined. '
+			               || 'Valid is any integer value and UNLIMITED.');
+			         END IF;
+			      END check_prerequisites;
+			      --
+			      -- enable_deferred_constraints
+			      --
+			      PROCEDURE enable_deferred_constraints IS
+			      BEGIN
+			         EXECUTE IMMEDIATE 'ALTER SESSION SET CONSTRAINTS = DEFERRED';
+			      END enable_deferred_constraints;
+			      --
+			      -- disable_deferred_constraints
+			      --
+			      PROCEDURE disable_deferred_constraints IS
+			      BEGIN
+			         EXECUTE IMMEDIATE 'ALTER SESSION SET CONSTRAINTS = IMMEDIATE';
+			      END disable_deferred_constraints;
+			      --
+			      -- init_load.do
+			      --
+			      PROCEDURE do IS
+			         l_stmt CLOB;
+			      BEGIN
+			         l_stmt := q'[
+			            INSERT ALL
+			               WHEN 1=1 THEN
+			                    INTO «model.historyTableName» (
+			                            «FOR col : model.columnNames.filter[it != histId] SEPARATOR ","»
+			                            	«col»
+			                            «ENDFOR»
+			                         )
+			                  VALUES (
+			                            «FOR col : model.columnNames.filter[it != histId] SEPARATOR ","»
+			                            	«col»
+			                            «ENDFOR»
+			                         )
+			                     LOG ERRORS INTO ]' || in_log_table || q'[ ('«
+			                         model.historyTableName»') REJECT LIMIT ]' || in_reject_limit || q'[
+			               WHEN «validTo» IS NULL THEN
+			                    INTO «model.latestTableName» (
+			                           «FOR col : model.latestColumnNames SEPARATOR ","»
+			                           	«col»
+			                           «ENDFOR»
+			                         ) 
+			                  VALUES (
+			                           «FOR col : model.latestColumnNames SEPARATOR ","»
+			                           	«col»
+			                           «ENDFOR»
+			                          )
+			                      LOG ERRORS INTO ]' || in_log_table || q'[ ('«
+			                          model.latestTableName»') REJECT LIMIT ]' || in_reject_limit || q'[
+			            WITH
+			               active AS (
+			                  SELECT «FOR col : model.columnNames.filter[it != histId] 
+			                          SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			                    FROM ]' || in_sta_table || q'[
+			                   WHERE «isDeleted» IS NULL
+			               ),
+			               merged AS (
+			                  SELECT «validFrom»,
+			                         «validTo»,
+			                         LEAD («validFrom», 1, NULL) OVER (PARTITION BY «
+			                         	FOR col : model.pkColumnNames 
+			                         	SEPARATOR ", "»«col»«ENDFOR» ORDER BY «validFrom» NULLS FIRST) AS «gapEnd»,
+			                         «FOR col : model.columnNames.filter[
+			                         	it != validFrom && it != validTo && it != histId
+			                         ] SEPARATOR ","»
+			                         	«col»
+			                         «ENDFOR»
+			                    FROM active
+			                         MATCH_RECOGNIZE (
+			                            PARTITION BY «FOR col : model.columnNames.filter[it != validFrom && it != validTo && it != histId] 
+			                                          SEPARATOR ", "»«col»«ENDFOR»
+			                            ORDER BY «validFrom» NULLS FIRST
+			                            MEASURES FIRST(«validFrom») AS «validFrom», LAST(«validTo») AS «validTo»
+			                            ONE ROW PER MATCH
+			                            PATTERN ( strt nxt* )
+			                            DEFINE nxt AS «validFrom» = PREV(«validTo»)
+			                         )
+			               ),
+			               combined AS (
+			                  -- active periods
+			                  SELECT «validFrom»,
+			                         «validTo»,
+			                         NULL AS «isDeleted»,
+			                         «FOR col : model.columnNames.filter[
+			                         	it != validFrom && it != validTo && it != isDeleted && it != histId
+			                         ] SEPARATOR ","»
+			                         	«col»
+			                         «ENDFOR»
+			                    FROM merged
+			                  UNION ALL
+			                  -- deleted periods
+			                  SELECT «validTo» AS «validFrom»,
+			                         «gapEnd» as «validTo»,
+			                         1 AS «isDeleted»,
+			                         «FOR col : model.columnNames.filter[
+			                         	it != validFrom && it != validTo && it != isDeleted && it != histId
+			                         ] SEPARATOR ","»
+			                         	«col»
+			                         «ENDFOR»
+			                    FROM merged
+			                   WHERE «validTo» != «gapEnd» 
+			                      OR «validTo» IS NULL AND «gapEnd» IS NOT NULL
+			                      OR «validTo» IS NOT NULL AND «gapEnd» IS NULL
+			               )
+			            -- main
+			            SELECT «FOR col : model.columnNames.filter[it != histId] 
+			                    SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			              FROM combined
+			         ]';
+			         print_lines(
+			            in_proc  => 'init_load.do',
+			            in_level => co_trace, 
+			            in_lines => l_stmt
+			         );
+			         EXECUTE IMMEDIATE l_stmt;
+			         print_line(
+			            in_proc  => 'init_load.do',
+			            in_level => co_debug,
+			            in_line  => SQL%ROWCOUNT || ' rows inserted.'
+			         );
+			      END do;
 			   BEGIN
-			      raise_application_error(-20501, 'create_load_tables is not yet implemented');
+			      print_line(in_proc => 'init_load', in_level => co_info, in_line => 'started.');
+			      check_prerequisites;
+			      enable_deferred_constraints;
+			      do;
+			      disable_deferred_constraints;
+			      print_line(in_proc => 'init_load', in_level => co_info, in_line => 'completed.');
 			   END init_load;
 
 			   --
@@ -986,7 +1210,9 @@ class CreateApiPackageBody {
 			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
 			   ) IS
 			   BEGIN
-			      raise_application_error(-20501, 'create_load_tables is not yet implemented');
+			      raise_application_error(«errorNumber
+			      	», 'create_load_tables is not yet implemented'
+			      );
 			   END upd_load;
 
 			   «ELSE»
@@ -1010,7 +1236,11 @@ class CreateApiPackageBody {
 			                  )
 			        RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
 			             INTO «FOR col : model.pkColumnNames SEPARATOR ', '»io_row.«col»«ENDFOR»;
-			      print_line(in_proc => 'do_ins', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows inserted.');
+			      print_line(
+			         in_proc  => 'do_ins', 
+			         in_level => co_debug, 
+			         in_line  => SQL%ROWCOUNT || ' rows inserted.'
+			      );
 			   END do_ins;
 
 			   --
@@ -1023,14 +1253,22 @@ class CreateApiPackageBody {
 			      l_update_mode PLS_INTEGER;
 			   BEGIN
 			      UPDATE «model.latestTableName»
-			         SET «FOR col : model.columnNames SEPARATOR ', ' + System.lineSeparator + '    '»«col» = io_new_row.«col»«ENDFOR»
-			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_old_row.«col»«ENDFOR»
+			         SET «FOR col : model.columnNames 
+			              SEPARATOR ', ' + System.lineSeparator + '    '»«col» = io_new_row.«col»«ENDFOR»
+			       WHERE «FOR col : model.pkColumnNames 
+			              SEPARATOR System.lineSeparator + '  AND '»«col» = in_old_row.«col»«ENDFOR»
 			         AND (
 			                 «FOR col : model.updateableLatestColumnNames SEPARATOR " OR"»
-			                 	(«col» != io_new_row.«col» OR «col» IS NULL AND io_new_row.«col» IS NOT NULL OR «col» IS NOT NULL AND io_new_row.«col» IS NULL)
+			                 	(«col» != io_new_row.«col» OR «
+			                 	col» IS NULL AND io_new_row.«col» IS NOT NULL OR «
+			                 	col» IS NOT NULL AND io_new_row.«col» IS NULL)
 			                 «ENDFOR»
 			             );
-			      print_line(in_proc => 'do_upd', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows updated.');
+			      print_line(
+			         in_proc  => 'do_upd', 
+			         in_level => co_debug, 
+			         in_line  => SQL%ROWCOUNT || ' rows updated.'
+			      );
 			   END do_upd;
 
 			   --
@@ -1042,8 +1280,13 @@ class CreateApiPackageBody {
 			   BEGIN
 			      DELETE 
 			        FROM «model.latestTableName»
-			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '   AND '»«col» = in_row.«col»«ENDFOR»;
-			      print_line(in_proc => 'do_del', in_level => co_debug, in_line => SQL%ROWCOUNT || ' rows deleted.');
+			       WHERE «FOR col : model.pkColumnNames 
+			              SEPARATOR System.lineSeparator + '   AND '»«col» = in_row.«col»«ENDFOR»;
+			      print_line(
+			         in_proc  => 'do_del', 
+			         in_level => co_debug, 
+			         in_line  => SQL%ROWCOUNT || ' rows deleted.'
+			      );
 			   END do_del;
 
 			   «ENDIF»
