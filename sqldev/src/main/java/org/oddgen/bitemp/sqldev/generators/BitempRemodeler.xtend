@@ -70,6 +70,7 @@ class BitempRemodeler implements OddgenGenerator {
 	public static String GROUP_COLS_COL_NAME = "GROUP_COLS$"
 	public static String NEW_GROUP_COL_NAME = "NEW_GROUP$"
 	public static String GROUP_NO_COL_NAME = "GROUP_NOS$"
+	public static String GAP_END_COL_NAME = "GAP_END$"
 
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 	private PrerequisiteModel prerequisiteModel = new PrerequisiteModel
