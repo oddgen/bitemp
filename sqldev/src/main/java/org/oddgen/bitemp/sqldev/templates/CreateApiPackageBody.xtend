@@ -1036,6 +1036,11 @@ class CreateApiPackageBody {
 			      in_log_table    IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
 			      in_reject_limit IN VARCHAR2 DEFAULT 'UNLIMITED'
 			   ) IS
+			      CURSOR c_fk IS
+			         SELECT constraint_name 
+			           FROM user_constraints 
+			          WHERE table_name = '«model.historyTableName.toUpperCase»'
+			            AND constraint_type = 'R';
 			      --
 			      -- init_load.check_prerequisites
 			      --
@@ -1084,19 +1089,38 @@ class CreateApiPackageBody {
 			         END IF;
 			      END check_prerequisites;
 			      --
-			      -- enable_deferred_constraints
+			      -- disable_fk_constraints
 			      --
-			      PROCEDURE enable_deferred_constraints IS
+			      PROCEDURE disable_fk_constraints IS
 			      BEGIN
-			         EXECUTE IMMEDIATE 'ALTER SESSION SET CONSTRAINTS = DEFERRED';
-			      END enable_deferred_constraints;
+			         -- "ALTER SESSION SET SET CONSTRAINTS = DEFERRED" becomes slow on large datasets
+			         <<all_fk_constraints>>
+			         FOR r_fk IN c_fk LOOP
+			            EXECUTE IMMEDIATE 'ALTER TABLE «model.historyTableName» MODIFY CONSTRAINT "' 
+			               || r_fk.constraint_name || '" DISABLE';
+			            print_line(
+			               in_proc  => 'init_load.enable_fk_constraints', 
+			               in_level => co_debug, 
+			               in_line  => r_fk.constraint_name || ' disabled.'
+			            );
+			         END LOOP all_fk_constraints;
+			      END disable_fk_constraints;
 			      --
-			      -- disable_deferred_constraints
+			      -- enable_fk_constraints
 			      --
-			      PROCEDURE disable_deferred_constraints IS
+			      PROCEDURE enable_fk_constraints IS
 			      BEGIN
-			         EXECUTE IMMEDIATE 'ALTER SESSION SET CONSTRAINTS = IMMEDIATE';
-			      END disable_deferred_constraints;
+			         <<all_fk_constraints>>
+			         FOR r_fk IN c_fk LOOP
+			            EXECUTE IMMEDIATE 'ALTER TABLE «model.historyTableName» MODIFY CONSTRAINT "' 
+			               || r_fk.constraint_name || '" ENABLE';
+			            print_line(
+			               in_proc  => 'init_load.enable_fk_constraints', 
+			               in_level => co_debug, 
+			               in_line  => r_fk.constraint_name || ' enabled.'
+			            );
+			         END LOOP all_fk_constraints;
+			      END enable_fk_constraints;
 			      --
 			      -- init_load.do
 			      --
@@ -1231,9 +1255,9 @@ class CreateApiPackageBody {
 			   BEGIN
 			      print_line(in_proc => 'init_load', in_level => co_info, in_line => 'started.');
 			      check_prerequisites;
-			      enable_deferred_constraints;
+			      disable_fk_constraints;
 			      do;
-			      disable_deferred_constraints;
+			      enable_fk_constraints;
 			      print_line(in_proc => 'init_load', in_level => co_info, in_line => 'completed.');
 			   END init_load;
 
