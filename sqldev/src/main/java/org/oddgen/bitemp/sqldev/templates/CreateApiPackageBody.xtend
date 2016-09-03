@@ -111,16 +111,27 @@ class CreateApiPackageBody {
 			-- Create API package body
 			--
 			CREATE OR REPLACE PACKAGE BODY «model.apiPackageName» AS
-				«val validFrom = model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase»
-				«val validTo = model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»
-				«val isDeleted = BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»
-				«val histId = BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»
-				«val operation = BitempRemodeler.OPERATION_COL_NAME.toLowerCase»
-				«val groupCols = BitempRemodeler.GROUP_COLS_COL_NAME.toLowerCase»
-				«val newGroup = BitempRemodeler.NEW_GROUP_COL_NAME.toLowerCase»
-				«val groupNo = BitempRemodeler.GROUP_NO_COL_NAME.toLowerCase»
-				«val gapEnd = BitempRemodeler.GROUP_NO_COL_NAME.toLowerCase»
-				«val errorNumber = -20501»
+			   «val validFrom = model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase»
+			   «val validTo = model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»
+			   «val isDeleted = BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»
+			   «val histId = BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»
+			   «val operation = BitempRemodeler.OPERATION_COL_NAME.toLowerCase»
+			   «val groupCols = BitempRemodeler.GROUP_COLS_COL_NAME.toLowerCase»
+			   «val newGroup = BitempRemodeler.NEW_GROUP_COL_NAME.toLowerCase»
+			   «val groupNo = BitempRemodeler.GROUP_NO_COL_NAME.toLowerCase»
+			   «val gapStart = BitempRemodeler.GAP_START_COL_NAME.toLowerCase»
+			   «val gapEnd = BitempRemodeler.GAP_END_COL_NAME.toLowerCase»
+			   «val errorNumber = -20501»
+			   --
+			   -- Note: SQL Developer 4.1.3 cannot produce a complete outline of this package body, because it cannot handle
+			   --       the complete flashback_query_clause. The following expression breaks SQL Developer:
+			   --
+			   --          VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
+			   --
+			   --       It's expected that future versions will be able to handel the flashback_query_clause accordingly.
+			   --       PL/SQL Developer 11.0.6 for instance produces a complete outline.
+			   --
+
 			   --
 			   -- Declarations to handle 'ORA-06508: PL/SQL: could not find program unit being called: "«model.conn.metaData.userName».«model.hookPackageName.toUpperCase»"'
 			   --
@@ -860,8 +871,8 @@ class CreateApiPackageBody {
 			      check_period(in_row => io_row);
 			      load_versions(in_row => io_row);
 			      del_enclosed_versions(in_row => io_row);
-			      upd_affected_version(in_row => io_row);
 			      split_version(in_row => io_row);
+			      upd_affected_version(in_row => io_row);
 			      add_version(in_row => io_row);
 			      add_first_version;
 			      add_last_version;
@@ -1129,6 +1140,9 @@ class CreateApiPackageBody {
 			               ),
 			               merged AS (
 			                  SELECT «validFrom»,
+			                         LAG («validTo», 1, NULL) OVER (PARTITION BY «
+			                            FOR col : model.pkColumnNames 
+			                         	SEPARATOR ", "»«col»«ENDFOR» ORDER BY «validFrom» NULLS FIRST) AS «gapStart»,
 			                         «validTo»,
 			                         LEAD («validFrom», 1, NULL) OVER (PARTITION BY «
 			                         	FOR col : model.pkColumnNames 
@@ -1161,7 +1175,20 @@ class CreateApiPackageBody {
 			                         «ENDFOR»
 			                    FROM merged
 			                  UNION ALL
-			                  -- deleted periods
+			                  -- deleted start periods
+			                  SELECT «gapStart» AS «validFrom»,
+			                         «validFrom» as «validTo»,
+			                         1 AS «isDeleted»,
+			                         «FOR col : model.columnNames.filter[
+			                         	it != validFrom && it != validTo && it != isDeleted && it != histId
+			                         ] SEPARATOR ","»
+			                         	«col»
+			                         «ENDFOR»
+			                    FROM merged
+			                   WHERE «validFrom» IS NOT NULL
+			                     AND «validTo» IS NOT NULL AND «gapStart» IS NULL
+			                  UNION ALL
+			                  -- deleted non-starting periods
 			                  SELECT «validTo» AS «validFrom»,
 			                         «gapEnd» as «validTo»,
 			                         1 AS «isDeleted»,
