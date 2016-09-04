@@ -286,7 +286,7 @@ class CreateApiPackageBody {
 			         l_valid_time_range_changed := TRUE;
 			      END IF;
 			      IF (
-			            «FOR col : model.updateableLatestColumnNames.filter[it != validFrom && it != validTo] 
+			            «FOR col : model.updateableLatestColumnNames.filter[it != validFrom && it != validTo && it != isDeleted] 
 			             SEPARATOR System.lineSeparator + 'OR'»
 			            	(in_new_row.«col» != in_old_row.«col» 
 			            	 OR in_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
@@ -585,6 +585,7 @@ class CreateApiPackageBody {
 			         l_version := get_version_at(in_at => in_row.«validFrom»);
 			         IF l_version.«validFrom» != in_row.«validFrom» OR l_version.«validFrom» IS NULL THEN
 			            l_version.«validFrom» := in_row.«validFrom»;
+			            l_version.«isDeleted» := NULL;
 			            add_version(in_row => l_version);
 			            print_line(in_proc => 'add_version_at_start', in_level => co_debug, in_line => 'added period at start');
 			         END IF;
@@ -645,21 +646,23 @@ class CreateApiPackageBody {
 			      <<all_versions>>
 			      FOR i in 1..g_versions.COUNT()
 			      LOOP
-			         l_at := NVL(g_versions(i).«validFrom», co_minvalue);
-			         IF (in_new_row.«validFrom» IS NULL OR in_new_row.«validFrom» <= l_at)
-			            AND (in_new_row.«validTo» IS NULL OR in_new_row.«validTo» > l_at)
-			         THEN
-			            -- update period
-			            «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo]»
-			            	IF in_new_row.«col» != in_old_row.«col» 
-			            	   OR in_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
-			            	   OR in_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
-			            	THEN
-			            	   -- update changed column
-			            	   g_versions(i).«col» := in_new_row.«col»;
-			            	END IF;
-			            «ENDFOR»
-			            print_line(in_proc => 'upd_changed_cols', in_level => co_debug, in_line => 'all changed columns updated.');
+			         IF g_versions(i).«isDeleted» IS NULL THEN
+			            l_at := NVL(g_versions(i).«validFrom», co_minvalue);
+			            IF (in_new_row.«validFrom» IS NULL OR in_new_row.«validFrom» <= l_at)
+			               AND (in_new_row.«validTo» IS NULL OR in_new_row.«validTo» > l_at)
+			            THEN
+			               -- update period
+			               «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo && it != isDeleted]»
+			               	IF in_new_row.«col» != in_old_row.«col» 
+			               	   OR in_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			               	   OR in_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
+			               	THEN
+			               	   -- update changed column
+			               	   g_versions(i).«col» := in_new_row.«col»;
+			               	END IF;
+			               «ENDFOR»
+			               print_line(in_proc => 'upd_changed_cols', in_level => co_debug, in_line => 'all changed columns updated.');
+			            END IF;
 			         END IF;
 			      END LOOP all_versions;
 			   END upd_changed_cols;
@@ -897,7 +900,6 @@ class CreateApiPackageBody {
 			      l_update_mode := get_update_mode(in_new_row => io_new_row, in_old_row => in_old_row);
 			      IF l_update_mode IN (co_upd_all_cols, co_upd_changed_cols) THEN
 			         load_versions(in_row => in_old_row);
-			         split_version(in_row => io_new_row);
 			         add_version_at_start(in_row => io_new_row);
 			         add_version_at_end(in_row => io_new_row);
 			         IF l_update_mode = co_upd_all_cols THEN
@@ -919,18 +921,44 @@ class CreateApiPackageBody {
 			   PROCEDURE do_del (
 			      in_row IN «model.objectTypeName»
 			   ) IS
-			      l_new_row «model.objectTypeName»;
-			      l_old_row «model.objectTypeName»;
+			      l_row «model.objectTypeName»;
+			      --
+			      -- do_del.set_deleted
+			      --
+			      PROCEDURE set_deleted IS
+			         l_at «model.validTimeDataType»;
+			      BEGIN
+			         <<all_versions>>
+			         FOR i in 1..g_versions.COUNT()
+			         LOOP
+			            IF g_versions(i).«isDeleted» IS NULL THEN
+			               l_at := NVL(g_versions(i).«validFrom», co_minvalue);
+			               IF (in_row.«validFrom» IS NULL OR in_row.«validFrom» <= l_at)
+			                  AND (in_row.«validTo» IS NULL OR in_row.«validTo» > l_at)
+			               THEN
+			                  -- update period
+			                  g_versions(i).«isDeleted» := 1;
+			                  print_line(
+			                     in_proc  => 'do_del.set_deleted',
+			                     in_level => co_debug,
+			                     in_line  => 'period starting at "' 
+			                                 || TO_CHAR(g_versions(i).«validFrom», co_format)
+			                                 || '" deleted.'
+			                  );
+			               END IF;
+			            END IF;
+			         END LOOP all_versions;
+			      END set_deleted;
 			   BEGIN
-			      l_new_row := NEW «model.objectTypeName»();
-			      l_new_row.«validFrom» := in_row.«validFrom»;
-			      l_new_row.«validTo» := in_row.«validTo»;
-			      «FOR col : model.pkColumnNames»
-			      	l_new_row.«col» := in_row.«col»;
-			      «ENDFOR»
-			      l_old_row := l_new_row;
-			      l_new_row.«isDeleted» := 1;
-			      do_upd(io_new_row => l_new_row, in_old_row => l_old_row);
+			      load_versions(in_row => in_row);
+			      add_version_at_start(in_row => in_row);
+			      add_version_at_end(in_row => in_row);
+			      set_deleted;
+			      merge_versions;
+			      IF changes_history() THEN
+			         save_latest;
+			         save_versions;
+			      END IF;
 			   END do_del;
 
 			   --
@@ -1093,7 +1121,7 @@ class CreateApiPackageBody {
 			      --
 			      PROCEDURE disable_fk_constraints IS
 			      BEGIN
-			         -- "ALTER SESSION SET SET CONSTRAINTS = DEFERRED" becomes slow on large datasets
+			         -- "ALTER SESSION SET CONSTRAINTS = DEFERRED" becomes slow on large datasets, e.g 78 vs. 14 seconds
 			         <<all_fk_constraints>>
 			         FOR r_fk IN c_fk LOOP
 			            EXECUTE IMMEDIATE 'ALTER TABLE «model.historyTableName» MODIFY CONSTRAINT "' 
@@ -1172,6 +1200,16 @@ class CreateApiPackageBody {
 			                    FROM ]' || in_sta_table || q'[
 			                   WHERE «isDeleted» IS NULL
 			               ),
+			               valid AS (
+			                  -- filter invalid periods, e.g. produced by truncation
+			                  SELECT «FOR col : model.columnNames.filter[it != histId] 
+			                          SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			                    FROM active
+			                   WHERE «validFrom» < «validTo»
+			                      OR «validFrom» IS NULL AND «validTo» IS NOT NULL
+			                      OR «validFrom» IS NOT NULL AND «validTo» IS NULL
+			                      OR «validFrom» IS NULL AND «validTo» IS NULL
+			               ),
 			               merged AS (
 			                  SELECT «validFrom»,
 			                         LAG («validTo», 1, NULL) OVER (PARTITION BY «
@@ -1186,7 +1224,7 @@ class CreateApiPackageBody {
 			                         ] SEPARATOR ","»
 			                         	«col»
 			                         «ENDFOR»
-			                    FROM active
+			                    FROM valid
 			                         MATCH_RECOGNIZE (
 			                            PARTITION BY «FOR col : model.columnNames.filter[it != validFrom && it != validTo && it != histId] 
 			                                          SEPARATOR ", "»«col»«ENDFOR»
