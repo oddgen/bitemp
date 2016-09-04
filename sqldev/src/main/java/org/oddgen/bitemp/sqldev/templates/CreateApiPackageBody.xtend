@@ -116,9 +116,6 @@ class CreateApiPackageBody {
 			   «val isDeleted = BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»
 			   «val histId = BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase»
 			   «val operation = BitempRemodeler.OPERATION_COL_NAME.toLowerCase»
-			   «val groupCols = BitempRemodeler.GROUP_COLS_COL_NAME.toLowerCase»
-			   «val newGroup = BitempRemodeler.NEW_GROUP_COL_NAME.toLowerCase»
-			   «val groupNo = BitempRemodeler.GROUP_NO_COL_NAME.toLowerCase»
 			   «val gapStart = BitempRemodeler.GAP_START_COL_NAME.toLowerCase»
 			   «val gapEnd = BitempRemodeler.GAP_END_COL_NAME.toLowerCase»
 			   «val errorNumber = -20501»
@@ -458,75 +455,49 @@ class CreateApiPackageBody {
 			   PROCEDURE merge_versions IS
 			      l_merged «model.collectionTypeName»;
 			   BEGIN
+			      print_collection(
+			         in_proc       => 'merge_versions',
+			         in_collection => g_versions
+			      );
 			      WITH
 			         base AS (
 			            SELECT «histId»,
-			                   NVL(«validFrom», co_minvalue) AS «validFrom»,
-			                   NVL(LEAD («validFrom», 1, «validTo») OVER (ORDER BY «validFrom» NULLS FIRST), co_maxvalue) AS «validTo»,
-			                   (
-			                      «FOR col : model.mergeColumnNames SEPARATOR " || ',' || "»
-			                      	«col»
-			                      «ENDFOR»
-			                   ) AS «groupCols»,
+			                   «validFrom»,
+			                   LEAD («validFrom», 1, «validTo») OVER (ORDER BY «validFrom» NULLS FIRST) AS «validTo»,
 			                   «FOR col : model.mergeColumnNames SEPARATOR ","»
 			                   	«col»
 			                   «ENDFOR»
 			              FROM TABLE(g_versions)
 			         ),
-			         group_no_base AS (
-			            SELECT «histId»,
-			                   «validFrom»,
-			                   «validTo»,
-			                   CASE
-			                      WHEN LAG(«groupCols», 1, «groupCols») OVER (ORDER BY «validFrom») = «groupCols» THEN
-			                         0
-			                      ELSE
-			                         1
-			                   END AS «newGroup»,
-			                   «FOR col : model.mergeColumnNames SEPARATOR ","»
-			                   	«col»
-			                   «ENDFOR»
+			         valid AS (
+			            -- filter invalid periods, e.g. produced by truncation
+			            SELECT «FOR col : model.allColumnNames 
+			                    SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
 			              FROM base
-			         ),
-			         group_no AS (
-			            SELECT «histId»,
-			                   «validFrom»,
-			                   «validTo»,
-			                   SUM(«newGroup») OVER (ORDER BY «validFrom») AS «groupNo»,
-			                   «FOR col : model.mergeColumnNames SEPARATOR ","»
-			                   	«col»
-			                   «ENDFOR»
-			              FROM group_no_base
+			             WHERE «validFrom» < «validTo»
+			                OR «validFrom» IS NULL AND «validTo» IS NOT NULL
+			                OR «validFrom» IS NOT NULL AND «validTo» IS NULL
+			                OR «validFrom» IS NULL AND «validTo» IS NULL
 			         ),
 			         merged AS (
-			            SELECT MAX(«histId») AS «histId»,
-			                   MIN(«validFrom») AS «validFrom»,
-			                   MAX(«validTo») AS «validTo»,
-			                   «FOR col : model.mergeColumnNames SEPARATOR ","»
-			                   	«col»
-			                   «ENDFOR»
-			              FROM group_no
-			             GROUP BY «groupNo»,
-			                      «FOR col : model.mergeColumnNames SEPARATOR ","»
-			                      	«col»
-			                      «ENDFOR»
+			            SELECT «FOR col : model.allColumnNames 
+			                    SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			              FROM valid
+			                   MATCH_RECOGNIZE (
+			                      PARTITION BY «FOR col : model.mergeColumnNames
+			                                    SEPARATOR ", "»«col»«ENDFOR»
+			                      ORDER BY «validFrom» NULLS FIRST
+			                      MEASURES «histId» AS «histId»,
+			                               FIRST(«validFrom») AS «validFrom»,
+			                               LAST(«validTo») AS «validTo»
+			                      ONE ROW PER MATCH
+			                      PATTERN ( strt nxt* )
+			                      DEFINE nxt AS «validFrom» = PREV(«validTo»)
+			                   )
 			         )
 			      -- main
 			      SELECT «model.objectTypeName» (
-			                «histId»,
-			                CASE 
-			                   WHEN «validFrom» = co_minvalue THEN
-			                      NULL
-			                   ELSE
-			                      «validFrom»
-			                END,
-			                CASE
-			                   WHEN «validTo» = co_maxvalue THEN
-			                      NULL
-			                   ELSE
-			                      «validTo»
-			                END,
-			                «FOR col : model.mergeColumnNames SEPARATOR ","»
+			                «FOR col : model.allColumnNames SEPARATOR ","»
 			                	«col»
 			                «ENDFOR»
 			             )
