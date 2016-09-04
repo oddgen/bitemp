@@ -57,7 +57,7 @@ class CreateFullHistoryViewTest extends AbstractJdbcTest {
 				c1 INTEGER PRIMARY KEY,
 				c2 VARCHAR2(20),
 				is_deleted$ NUMBER(1,0) NULL,
-				CHECK (is_deleted$ IN (0,1))
+				CHECK (is_deleted$ = 1)
 			)
 		''')
 		jdbcTemplate.execute('''
@@ -66,7 +66,7 @@ class CreateFullHistoryViewTest extends AbstractJdbcTest {
 			   vt_start DATE NULL,
 			   vt_end DATE NULL,
 			   is_deleted$ NUMBER(1,0) NULL,
-			   CHECK (is_deleted$ IN (0,1)),
+			   CHECK (is_deleted$ = 1),
 			   PERIOD FOR vt$ (vt_start, vt_end),
 			   c1 INTEGER,
 			   c2 VARCHAR2(20),

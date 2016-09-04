@@ -67,8 +67,7 @@ class CreateHistoryView {
 				       	»«col.toLowerCase»«
 				       »«ENDFOR»
 				  FROM «model.historyTableName»
-				 WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL«
-				» OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0;
+				 WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL;
 			«ENDIF»
 		«ENDIF»
 	'''

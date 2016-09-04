@@ -33,7 +33,7 @@ class AddDeletedIndicatorColumn {
 			--
 			ALTER TABLE «model.latestTableName» ADD (
 			   «isDeletedColumName.toLowerCase» NUMBER(1,0) NULL,
-			   CHECK («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IN (0,1))
+			   CHECK («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 1)
 			);
 		«ENDIF»
 	'''

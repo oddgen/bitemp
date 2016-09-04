@@ -52,7 +52,7 @@ class CreateHistoryTable {
 				   «model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
 				   «model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase» «model.validTimeDataType» NULL,
 				   «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» NUMBER(1,0) NULL,
-				   CHECK («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IN (0,1)),
+				   CHECK («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 1),
 				   PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» («model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase», «model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase»),
 				   «FOR col : model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase] SEPARATOR ","»
 				   	«col.columnName.toLowerCase» «col.fullDataType»«IF col.hiddenColumn == "YES"» INVISIBLE«ENDIF»«

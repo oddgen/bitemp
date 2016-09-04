@@ -116,13 +116,13 @@ class CreateFullHistoryView {
 				«ELSEIF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 					«'  '»FROM «model.sourceTableName» VERSIONS PERIOD FOR «
 					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
-					«' '»WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0
+					«' '»WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL
 					«'  '»WITH READ ONLY;
 				«ELSE»
 					«'  '»FROM «model.sourceTableName» VERSIONS BETWEEN SCN 0 AND MAXVALUE VERSIONS PERIOD FOR «
 					BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 					«' '»WHERE (VERSIONS_STARTSCN < VERSIONS_ENDSCN OR VERSIONS_STARTSCN IS NULL OR VERSIONS_ENDSCN IS NULL)
-					«' '»  AND («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL OR «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» = 0)
+					«' '»  AND («BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL)
 					«'  '»WITH READ ONLY;
 				«ENDIF»
 			«ENDIF»
