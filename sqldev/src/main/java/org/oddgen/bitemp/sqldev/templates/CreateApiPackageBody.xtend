@@ -213,8 +213,8 @@ class CreateApiPackageBody {
 			         ELSE
 			            sys.dbms_output.put(' TRACE ');
 			         END IF;
-			         sys.dbms_output.put(substr(in_proc, 1, 19) || ': ');
-			         sys.dbms_output.put_line(substr(in_line, 1, 210));
+			         sys.dbms_output.put(substr(rpad(in_proc,27), 1, 27) || ' ');
+			         sys.dbms_output.put_line(substr(in_line, 1, 250));
 			      END IF;
 			   END print_line;
 
@@ -251,8 +251,20 @@ class CreateApiPackageBody {
 			      FOR i in 1..in_collection.COUNT()
 			      LOOP
 			         print_line(in_proc => in_proc, in_level => co_trace, in_line => 'row ' || i || ':');
+			         «val dates = model.inputTable.columns.filter[
+			         	k, v| v.dataType == "DATE" || v.dataType == "TIMESTAMP"
+			         ]»
 			         «FOR col : model.allColumnNames»
-			         	print_line(in_proc => in_proc, in_level => co_trace, in_line => '   - «String.format("%-30s", col)»: ' || in_collection(i).«col»);
+			         	print_line(
+			         	   in_proc  => in_proc,
+			         	   in_level => co_trace,
+			         	   in_line => '   - «String.format("%-30s", col)»: ' || «
+			         	      IF col == validFrom || col == validTo || dates.get(col.toUpperCase) != null
+			         	      	»TO_CHAR(in_collection(i).«col», co_format)«
+			         	      ELSE
+			         	      	»in_collection(i).«col
+			         	      »«ENDIF»
+			         	);
 			         «ENDFOR»
 			      END LOOP all_versions;
 			   END print_collection;
