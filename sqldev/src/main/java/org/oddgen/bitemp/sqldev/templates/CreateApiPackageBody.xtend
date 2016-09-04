@@ -185,13 +185,6 @@ class CreateApiPackageBody {
 			   «ENDIF»
 
 			   --
-			   -- update modes evaluated based on old and new values
-			   --
-			   co_upd_no_change CONSTANT PLS_INTEGER := 0; -- no update necessary since no changes have been made
-			   co_upd_all_cols CONSTANT PLS_INTEGER := 1; -- updates all columns in chosen valid time range
-			   co_upd_changed_cols CONSTANT PLS_INTEGER := 2; -- updates changed columns in chosen valid time range
-
-			   --
 			   -- working copy of history rows
 			   --
 			   g_versions «model.collectionTypeName»;
@@ -263,48 +256,6 @@ class CreateApiPackageBody {
 			         «ENDFOR»
 			      END LOOP all_versions;
 			   END print_collection;
-
-			   --
-			   -- get_update_mode
-			   --
-			   FUNCTION get_update_mode (
-			      in_new_row IN «model.objectTypeName»,
-			      in_old_row IN «model.objectTypeName»
-			   ) RETURN PLS_INTEGER IS
-			      l_valid_time_range_changed BOOLEAN := FALSE;
-			      l_appl_items_changed BOOLEAN := FALSE;
-			      l_update_mode PLS_INTEGER;
-			   BEGIN
-			      IF (in_new_row.«validFrom» != in_old_row.«validFrom» 
-			          OR in_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL 
-			          OR in_new_row.«validFrom» IS NOT NULL AND in_old_row.«validFrom» IS NULL)
-			         OR
-			         (in_new_row.«validTo» != in_old_row.«validTo»
-			          OR in_new_row.«validTo» IS NULL AND in_old_row.«validTo» IS NOT NULL 
-			          OR in_new_row.«validTo» IS NOT NULL AND in_old_row.«validTo» IS NULL)
-			      THEN
-			         l_valid_time_range_changed := TRUE;
-			      END IF;
-			      IF (
-			            «FOR col : model.updateableLatestColumnNames.filter[it != validFrom && it != validTo && it != isDeleted] 
-			             SEPARATOR System.lineSeparator + 'OR'»
-			            	(in_new_row.«col» != in_old_row.«col» 
-			            	 OR in_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
-			            	 OR in_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL)
-			            «ENDFOR»
-			         ) 
-			      THEN
-			         l_appl_items_changed := TRUE;
-			      END IF;
-			      IF l_appl_items_changed THEN
-			         l_update_mode := co_upd_changed_cols;
-			      ELSIF l_valid_time_range_changed THEN
-			         l_update_mode := co_upd_all_cols;
-			      ELSE
-			         l_update_mode := co_upd_no_change;
-			      END IF;
-			      RETURN l_update_mode;
-			   END get_update_mode;
 
 			   --
 			   -- truncate_to_granularity
@@ -439,52 +390,6 @@ class CreateApiPackageBody {
 			   END changes_history;
 
 			   --
-			   -- del_enclosed_versions
-			   --
-			   PROCEDURE del_enclosed_versions (
-			      in_row IN «model.objectTypeName»
-			   ) IS
-			      l_versions «model.collectionTypeName»;
-			   BEGIN
-			      SELECT «model.objectTypeName» (
-			             «FOR col : model.allColumnNames SEPARATOR ","»
-			             	«col»
-			             «ENDFOR»
-			             )
-			        BULK COLLECT INTO l_versions
-			        FROM TABLE(g_versions)
-			       WHERE NOT (
-			       			NVL(«validFrom», co_minvalue) >= NVL(in_row.«validFrom», co_minvalue) 
-			       			AND NVL(«validTo», co_maxvalue) <= NVL(in_row.«validTo», co_maxvalue)
-			       	     );
-			       print_line(
-			          in_proc  => 'del_enclosed_versions', 
-			          in_level => co_debug, 
-			          in_line  => g_versions.COUNT() - l_versions.COUNT() || ' enclosed periods deleted.'
-			       );
-			       g_versions := l_versions;
-			   END del_enclosed_versions;
-
-			   --
-			   -- upd_affected_version
-			   --
-			   PROCEDURE upd_affected_version (
-			      in_row IN «model.objectTypeName»
-			   ) IS
-			   BEGIN
-			      <<all_versions>>
-			      FOR i IN 1..g_versions.COUNT() 
-			      LOOP
-			         IF g_versions(i).«validFrom» >= in_row.«validFrom»
-			            AND g_versions(i).«validFrom» < NVL(in_row.«validTo», co_maxvalue)
-			         THEN
-			            g_versions(i).«validFrom» := in_row.«validTo»;
-			            print_line(in_proc => 'upd_affected_version', in_level => co_debug, in_line => 'updated affected period.');
-			         END IF;
-			      END LOOP all_versions;
-			   END upd_affected_version;
-
-			   --
 			   -- add_version
 			   --
 			   PROCEDURE add_version (
@@ -498,81 +403,6 @@ class CreateApiPackageBody {
 			      g_versions(g_versions.last()) := l_row;
 			   END add_version;
 
-			   --
-			   -- split_version
-			   --
-			   PROCEDURE split_version (
-			      in_row IN «model.objectTypeName»
-			   ) IS
-			      l_version «model.objectTypeName»;
-			      l_copy «model.objectTypeName»;
-			   BEGIN
-			      IF in_row.«validTo» IS NOT NULL THEN
-			         l_version := get_version_at(in_at => NVL(in_row.«validFrom», co_minvalue));
-			         IF l_version IS NOT NULL THEN
-			            IF NVL(l_version.«validTo», co_maxvalue) > in_row.«validTo» THEN
-			               l_copy := l_version;
-			               l_copy.«validFrom» := in_row.«validTo»;
-			               add_version(in_row => l_copy);
-			               print_line(
-			                  in_proc  => 'split_version', 
-			                  in_level => co_debug, 
-			                  in_line => 'splitted version at '|| TO_CHAR(in_row.«validTo», co_format) || '.'
-			               );
-			            END IF;
-			         END IF;
-			      END IF;
-			   END split_version;
-
-			   --
-			   -- add_first_version
-			   --
-			   PROCEDURE add_first_version IS
-			      l_version «model.objectTypeName»;
-			   BEGIN
-			      l_version := get_version_at(in_at => co_minvalue);
-			      IF l_version IS NULL THEN
-			         SELECT «model.objectTypeName» (
-			                   «FOR col : model.allColumnNames SEPARATOR ","»
-			                   	«col»
-			                   «ENDFOR»
-			                ) version
-			           INTO l_version
-			           FROM TABLE(g_versions)
-			          ORDER BY «validFrom» NULLS FIRST
-			          FETCH FIRST ROW ONLY;
-			         l_version.«validFrom» := NULL;
-			         l_version.«isDeleted» := 1;
-			         add_version(in_row => l_version);
-			         print_line(in_proc => 'add_first_version', in_level => co_debug, in_line => 'first period added.');
-			      END IF;
-			   END add_first_version;
-
-			   --
-			   -- add_last_version
-			   --
-			   PROCEDURE add_last_version IS
-			      l_version «model.objectTypeName»;
-			   BEGIN
-			      l_version := get_version_at(in_at => co_maxvalue);
-			      IF l_version IS NULL THEN
-			         SELECT «model.objectTypeName» (
-			                   «FOR col : model.allColumnNames SEPARATOR ","»
-			                   	«col»
-			                   «ENDFOR»
-			                ) version
-			           INTO l_version
-			           FROM TABLE(g_versions)
-			          ORDER BY «validFrom» DESC NULLS LAST
-			          FETCH FIRST ROW ONLY;
-			         l_version.«validFrom» := l_version.«validTo»;
-			         l_version.«validTo» := NULL;
-			         l_version.«isDeleted» := 1;
-			         add_version(in_row => l_version);
-			         print_line(in_proc => 'add_last_version', in_level => co_debug, in_line => 'last period added.');
-			      END IF;
-			   END add_last_version;
-			   
 			   --
 			   -- add_version_at_start
 			   --
@@ -609,63 +439,6 @@ class CreateApiPackageBody {
 			         END IF;
 			      END IF;
 			   END add_version_at_end;
-
-			   --
-			   -- upd_all_cols
-			   --
-			   PROCEDURE upd_all_cols (
-			      in_row IN «model.objectTypeName»
-			   ) IS
-			      l_at «model.validTimeDataType»;
-			   BEGIN
-			      <<all_versions>>
-			      FOR i in 1..g_versions.COUNT()
-			      LOOP
-			         l_at := NVL(g_versions(i).«validFrom», co_minvalue);
-			         IF (in_row.«validFrom» IS NULL OR in_row.«validFrom» <= l_at)
-			            AND (in_row.«validTo» IS NULL OR in_row.«validTo» > l_at)
-			         THEN
-			            -- update period 
-			            «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo]»
-			            	g_versions(i).«col» := in_row.«col»;
-			            «ENDFOR»
-			            print_line(in_proc => 'upd_all_cols', in_level => co_debug, in_line => 'all columns updated.');
-			         END IF;
-			      END LOOP all_versions;
-			   END upd_all_cols;
-
-			   --
-			   -- upd_changed_cols
-			   --
-			   PROCEDURE upd_changed_cols (
-			      in_new_row IN «model.objectTypeName»,
-			      in_old_row IN «model.objectTypeName»
-			   ) IS
-			      l_at «model.validTimeDataType»;
-			   BEGIN
-			      <<all_versions>>
-			      FOR i in 1..g_versions.COUNT()
-			      LOOP
-			         IF g_versions(i).«isDeleted» IS NULL THEN
-			            l_at := NVL(g_versions(i).«validFrom», co_minvalue);
-			            IF (in_new_row.«validFrom» IS NULL OR in_new_row.«validFrom» <= l_at)
-			               AND (in_new_row.«validTo» IS NULL OR in_new_row.«validTo» > l_at)
-			            THEN
-			               -- update period
-			               «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo && it != isDeleted]»
-			               	IF in_new_row.«col» != in_old_row.«col» 
-			               	   OR in_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
-			               	   OR in_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
-			               	THEN
-			               	   -- update changed column
-			               	   g_versions(i).«col» := in_new_row.«col»;
-			               	END IF;
-			               «ENDFOR»
-			               print_line(in_proc => 'upd_changed_cols', in_level => co_debug, in_line => 'all changed columns updated.');
-			            END IF;
-			         END IF;
-			      END LOOP all_versions;
-			   END upd_changed_cols;
 
 			   --
 			   -- merge_versions
@@ -869,13 +642,135 @@ class CreateApiPackageBody {
 			   PROCEDURE do_ins (
 			      io_row IN OUT «model.objectTypeName»
 			   ) IS
+			      --
+			      -- do_ins.del_enclosed_versions
+			      --
+			      PROCEDURE del_enclosed_versions IS
+			         l_versions «model.collectionTypeName»;
+			      BEGIN
+			         SELECT «model.objectTypeName» (
+			                «FOR col : model.allColumnNames SEPARATOR ","»
+			                	«col»
+			                «ENDFOR»
+			                )
+			           BULK COLLECT INTO l_versions
+			           FROM TABLE(g_versions)
+			          WHERE NOT (
+			                       NVL(«validFrom», co_minvalue) >= NVL(io_row.«validFrom», co_minvalue) 
+			                       AND NVL(«validTo», co_maxvalue) <= NVL(io_row.«validTo», co_maxvalue)
+			                    );
+			         print_line(
+			            in_proc  => 'do_ins.del_enclosed_versions', 
+			            in_level => co_debug, 
+			            in_line  => g_versions.COUNT() - l_versions.COUNT() || ' enclosed periods deleted.'
+			         );
+			         g_versions := l_versions;
+			     END del_enclosed_versions;
+			      --
+			      -- do_ins.split_version
+			      --
+			      PROCEDURE split_version IS
+			         l_version «model.objectTypeName»;
+			         l_copy «model.objectTypeName»;
+			      BEGIN
+			         IF io_row.«validTo» IS NOT NULL THEN
+			            l_version := get_version_at(in_at => NVL(io_row.«validFrom», co_minvalue));
+			            IF l_version IS NOT NULL THEN
+			               IF NVL(l_version.«validTo», co_maxvalue) > io_row.«validTo» THEN
+			                  l_copy := l_version;
+			                  l_copy.«validFrom» := io_row.«validTo»;
+			                  add_version(in_row => l_copy);
+			                  print_line(
+			                     in_proc  => 'do_ins.split_version', 
+			                     in_level => co_debug, 
+			                     in_line => 'splitted version at '|| TO_CHAR(io_row.«validTo», co_format) || '.'
+			                  );
+			               END IF;
+			            END IF;
+			         END IF;
+			      END split_version;
+			      --
+			      -- do_ins.upd_affected_version
+			      --
+			      PROCEDURE upd_affected_version IS
+			      BEGIN
+			         <<all_versions>>
+			         FOR i IN 1..g_versions.COUNT() 
+			         LOOP
+			            IF g_versions(i).«validFrom» >= io_row.«validFrom»
+			               AND g_versions(i).«validFrom» < NVL(io_row.«validTo», co_maxvalue)
+			            THEN
+			               g_versions(i).«validFrom» := io_row.«validTo»;
+			               print_line(
+			                  in_proc  => 'do_ins.upd_affected_version',
+			                  in_level => co_debug,
+			                  in_line  => 'updated affected period.'
+			               );
+			            END IF;
+			         END LOOP all_versions;
+			      END upd_affected_version;
+			      --
+			      -- do_ins.add_first_version
+			      --
+			      PROCEDURE add_first_version IS
+			         l_version «model.objectTypeName»;
+			      BEGIN
+			         l_version := get_version_at(in_at => co_minvalue);
+			         IF l_version IS NULL THEN
+			            SELECT «model.objectTypeName» (
+			                      «FOR col : model.allColumnNames SEPARATOR ","»
+			                      	«col»
+			                      «ENDFOR»
+			                   ) version
+			              INTO l_version
+			              FROM TABLE(g_versions)
+			             ORDER BY «validFrom» NULLS FIRST
+			             FETCH FIRST ROW ONLY;
+			            l_version.«validFrom» := NULL;
+			            l_version.«isDeleted» := 1;
+			            add_version(in_row => l_version);
+			            print_line(
+			               in_proc  => 'do_ins.add_first_version',
+			               in_level => co_debug, 
+			               in_line  => 'first period added.'
+			            );
+			         END IF;
+			      END add_first_version;
+			      --
+			      -- do_ins.add_last_version
+			      --
+			      PROCEDURE add_last_version IS
+			         l_version «model.objectTypeName»;
+			      BEGIN
+			         l_version := get_version_at(in_at => co_maxvalue);
+			         IF l_version IS NULL THEN
+			            SELECT «model.objectTypeName» (
+			                      «FOR col : model.allColumnNames SEPARATOR ","»
+			                      	«col»
+			                      «ENDFOR»
+			                   ) version
+			              INTO l_version
+			              FROM TABLE(g_versions)
+			             ORDER BY «validFrom» DESC NULLS LAST
+			             FETCH FIRST ROW ONLY;
+			            l_version.«validFrom» := l_version.«validTo»;
+			            l_version.«validTo» := NULL;
+			            l_version.«isDeleted» := 1;
+			            add_version(in_row => l_version);
+			            print_line(
+			               in_proc  => 'do_ins.add_last_version',
+			               in_level => co_debug,
+			               in_line  => 'last period added.'
+			            );
+			         END IF;
+			      END add_last_version;
 			   BEGIN
 			      truncate_to_granularity(io_row => io_row);
 			      check_period(in_row => io_row);
 			      load_versions(in_row => io_row);
-			      del_enclosed_versions(in_row => io_row);
-			      split_version(in_row => io_row);
-			      upd_affected_version(in_row => io_row);
+			      del_enclosed_versions;
+			      split_version;
+			      upd_affected_version;
 			      add_version(in_row => io_row);
 			      add_first_version;
 			      add_last_version;
@@ -894,18 +789,120 @@ class CreateApiPackageBody {
 			      in_old_row IN «model.objectTypeName»
 			   ) IS
 			      l_update_mode PLS_INTEGER;
+			      --
+			      -- update modes evaluated based on old and new values
+			      --
+			      co_upd_no_change CONSTANT PLS_INTEGER := 0; -- no update necessary since no changes have been made
+			      co_upd_all_cols CONSTANT PLS_INTEGER := 1; -- updates all columns in chosen valid time range
+			      co_upd_changed_cols CONSTANT PLS_INTEGER := 2; -- updates changed columns in chosen valid time range
+			      --
+			      -- get_update_mode
+			      --
+			      FUNCTION get_update_mode
+			      RETURN PLS_INTEGER IS
+			         l_valid_time_range_changed BOOLEAN := FALSE;
+			         l_appl_items_changed BOOLEAN := FALSE;
+			         l_update_mode PLS_INTEGER;
+			      BEGIN
+			         IF (io_new_row.«validFrom» != in_old_row.«validFrom» 
+			             OR io_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL 
+			             OR io_new_row.«validFrom» IS NOT NULL AND in_old_row.«validFrom» IS NULL)
+			            OR
+			            (io_new_row.«validTo» != in_old_row.«validTo»
+			             OR io_new_row.«validTo» IS NULL AND in_old_row.«validTo» IS NOT NULL 
+			             OR io_new_row.«validTo» IS NOT NULL AND in_old_row.«validTo» IS NULL)
+			         THEN
+			            l_valid_time_range_changed := TRUE;
+			         END IF;
+			         IF (
+			               «FOR col : model.updateableLatestColumnNames.filter[it != validFrom && it != validTo && it != isDeleted] 
+			                SEPARATOR System.lineSeparator + 'OR'»
+			               	(io_new_row.«col» != in_old_row.«col» 
+			               	 OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			               	 OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL)
+			               «ENDFOR»
+			            ) 
+			         THEN
+			            l_appl_items_changed := TRUE;
+			         END IF;
+			         IF l_appl_items_changed THEN
+			            l_update_mode := co_upd_changed_cols;
+			         ELSIF l_valid_time_range_changed THEN
+			            l_update_mode := co_upd_all_cols;
+			         ELSE
+			            l_update_mode := co_upd_no_change;
+			         END IF;
+			         RETURN l_update_mode;
+			      END get_update_mode;
+			      --
+			      -- do_upd.upd_all_cols
+			      --
+			      PROCEDURE upd_all_cols IS
+			         l_at «model.validTimeDataType»;
+			      BEGIN
+			         <<all_versions>>
+			         FOR i in 1..g_versions.COUNT()
+			         LOOP
+			            l_at := NVL(g_versions(i).«validFrom», co_minvalue);
+			            IF (io_new_row.«validFrom» IS NULL OR io_new_row.«validFrom» <= l_at)
+			               AND (io_new_row.«validTo» IS NULL OR io_new_row.«validTo» > l_at)
+			            THEN
+			               -- update period 
+			               «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo]»
+			               	g_versions(i).«col» := io_new_row.«col»;
+			               «ENDFOR»
+			               print_line(
+			                  in_proc  => 'do_upd.upd_all_cols',
+			                  in_level => co_debug,
+			                  in_line  => 'all columns updated.'
+			               );
+			            END IF;
+			         END LOOP all_versions;
+			      END upd_all_cols;
+			      --
+			      -- do_upd.upd_changed_cols
+			      --
+			      PROCEDURE upd_changed_cols IS
+			         l_at «model.validTimeDataType»;
+			      BEGIN
+			         <<all_versions>>
+			         FOR i in 1..g_versions.COUNT()
+			         LOOP
+			            IF g_versions(i).«isDeleted» IS NULL THEN
+			               l_at := NVL(g_versions(i).«validFrom», co_minvalue);
+			               IF (io_new_row.«validFrom» IS NULL OR io_new_row.«validFrom» <= l_at)
+			                  AND (io_new_row.«validTo» IS NULL OR io_new_row.«validTo» > l_at)
+			               THEN
+			                  -- update period
+			                  «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo && it != isDeleted]»
+			                  	IF io_new_row.«col» != in_old_row.«col» 
+			                  	   OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			                  	   OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
+			                  	THEN
+			                  	   -- update changed column
+			                  	   g_versions(i).«col» := io_new_row.«col»;
+			                  	END IF;
+			                  «ENDFOR»
+			                  print_line(
+			                     in_proc  => 'do_upd.upd_changed_cols',
+			                     in_level => co_debug,
+			                     in_line  => 'all changed columns updated.');
+			               END IF;
+			            END IF;
+			         END LOOP all_versions;
+			      END upd_changed_cols;
 			   BEGIN
 			      truncate_to_granularity(io_row => io_new_row);
 			      check_period(in_row => io_new_row);
-			      l_update_mode := get_update_mode(in_new_row => io_new_row, in_old_row => in_old_row);
+			      l_update_mode := get_update_mode;
 			      IF l_update_mode IN (co_upd_all_cols, co_upd_changed_cols) THEN
 			         load_versions(in_row => in_old_row);
 			         add_version_at_start(in_row => io_new_row);
 			         add_version_at_end(in_row => io_new_row);
 			         IF l_update_mode = co_upd_all_cols THEN
-			            upd_all_cols(in_row => io_new_row);
+			            upd_all_cols;
 			         ELSE
-			            upd_changed_cols(in_new_row => io_new_row, in_old_row => in_old_row);
+			            upd_changed_cols;
 			         END IF;
 			         merge_versions;
 			         IF changes_history() THEN
@@ -1117,7 +1114,7 @@ class CreateApiPackageBody {
 			         END IF;
 			      END check_prerequisites;
 			      --
-			      -- disable_fk_constraints
+			      -- init_load.disable_fk_constraints
 			      --
 			      PROCEDURE disable_fk_constraints IS
 			      BEGIN
@@ -1134,7 +1131,7 @@ class CreateApiPackageBody {
 			         END LOOP all_fk_constraints;
 			      END disable_fk_constraints;
 			      --
-			      -- enable_fk_constraints
+			      -- init_load.enable_fk_constraints
 			      --
 			      PROCEDURE enable_fk_constraints IS
 			      BEGIN
