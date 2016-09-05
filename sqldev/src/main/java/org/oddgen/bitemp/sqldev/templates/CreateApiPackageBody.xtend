@@ -155,38 +155,27 @@ class CreateApiPackageBody {
 			   co_minvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('-4712', 'SYYYY');
 			   co_maxvalue CONSTANT «model.validTimeDataType» := TO_TIMESTAMP('9999-12-31 23:59:59.999999999', 'YYYY-MM-DD HH24:MI:SS.FF9');
 			   «IF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_YEAR")»
-			   	co_granule CONSTANT INTERVAL YEAR TO MONTH := INTERVAL '1' YEAR;
-			   	co_format CONSTANT VARCHAR2(5) := 'SYYYY';
+			   	co_format CONSTANT VARCHAR2(5 CHAR) := 'SYYYY';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MONTH")»
-			   	co_granule CONSTANT INTERVAL YEAR TO MONTH := INTERVAL '1' MONTH;
-			   	co_format CONSTANT VARCHAR2(8) := 'SYYYY-MM';
+			   	co_format CONSTANT VARCHAR2(8 CHAR) := 'SYYYY-MM';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_WEEK")»
-			   	co_granule CONSTANT INTERVAL DAY(1) TO SECOND(0) := INTERVAL '7' DAY;
-			   	co_format CONSTANT VARCHAR2(11) := 'SYYYY-MM-DD';
+			   	co_format CONSTANT VARCHAR2(11 CHAR) := 'SYYYY-MM-DD';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_DAY")»
-			   	co_granule CONSTANT INTERVAL DAY(1) TO SECOND(0) := INTERVAL '1' DAY;
-			   	co_format CONSTANT VARCHAR2(11) := 'SYYYY-MM-DD';
+			   	co_format CONSTANT VARCHAR2(11 CHAR) := 'SYYYY-MM-DD';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_HOUR")»
-			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(0) := INTERVAL '1' HOUR;
-			   	co_format CONSTANT VARCHAR2(16) := 'SYYYY-MM-DD HH24';
+			   	co_format CONSTANT VARCHAR2(16 CHAR) := 'SYYYY-MM-DD HH24';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MINUTE")»
-			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(0) := INTERVAL '1' MINUTE;
-			   	co_format CONSTANT VARCHAR2(19) := 'SYYYY-MM-DD HH24:MI';
+			   	co_format CONSTANT VARCHAR2(19 CHAR) := 'SYYYY-MM-DD HH24:MI';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_SECOND")»
-			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(0) := INTERVAL '1' SECOND;
-			   	co_format CONSTANT VARCHAR2(22) := 'SYYYY-MM-DD HH24:MI:SS';
+			   	co_format CONSTANT VARCHAR2(22 CHAR) := 'SYYYY-MM-DD HH24:MI:SS';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_CENTISECOND")»
-			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(2) := INTERVAL '1' SECOND / 1E2 ;
-			   	co_format CONSTANT VARCHAR2(26) := 'SYYYY-MM-DD HH24:MI:SS.FF2';
+			   	co_format CONSTANT VARCHAR2(26 CHAR) := 'SYYYY-MM-DD HH24:MI:SS.FF2';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MILLIISECOND")»
-			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(3) := INTERVAL '1' SECOND / 1E3 ;
-			   	co_format CONSTANT VARCHAR2(26) := 'SYYYY-MM-DD HH24:MI:SS.FF3';
+			   	co_format CONSTANT VARCHAR2(26 CHAR) := 'SYYYY-MM-DD HH24:MI:SS.FF3';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_MICROSECOND")»
-			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(6) := INTERVAL '1' SECOND / 1E6 ;
-			   	co_format CONSTANT VARCHAR2(26) := 'SYYYY-MM-DD HH24:MI:SS.FF6';
+			   	co_format CONSTANT VARCHAR2(26 CHAR) := 'SYYYY-MM-DD HH24:MI:SS.FF6';
 			   «ELSEIF model.params.get(BitempRemodeler.GRANULARITY) == BitempResources.getString("PREF_GRANULARITY_NANOSECOND")»
-			   	co_granule CONSTANT INTERVAL DAY(0) TO SECOND(9) := INTERVAL '1' SECOND / 1E9 ;
-			   	co_format CONSTANT VARCHAR2(26) := 'SYYYY-MM-DD HH24:MI:SS.FF9';
+			   	co_format CONSTANT VARCHAR2(26 CHAR) := 'SYYYY-MM-DD HH24:MI:SS.FF9';
 			   «ENDIF»
 
 			   --
@@ -204,20 +193,21 @@ class CreateApiPackageBody {
 			   -- print_line
 			   --
 			   PROCEDURE print_line (
-			      in_proc VARCHAR2,
-			      in_level dbms_output_level_type,
-			      in_line VARCHAR2
+			      in_proc  IN VARCHAR2,
+			      in_level IN dbms_output_level_type,
+			      in_line  IN VARCHAR2
 			   ) IS
 			   BEGIN
 			      IF in_level <= g_debug_output_level THEN
 			         sys.dbms_output.put(to_char(systimestamp, 'HH24:MI:SS.FF6'));
-			         IF in_level = co_info THEN
-			            sys.dbms_output.put(' INFO  ');
-			         ELSIF in_level = co_debug THEN
-			            sys.dbms_output.put(' DEBUG ');
-			         ELSE
-			            sys.dbms_output.put(' TRACE ');
-			         END IF;
+			         CASE in_level
+			            WHEN co_info THEN
+			               sys.dbms_output.put(' INFO  ');
+			            WHEN co_debug THEN
+			               sys.dbms_output.put(' DEBUG ');
+			            ELSE
+			               sys.dbms_output.put(' TRACE ');
+			         END CASE;
 			         sys.dbms_output.put(substr(rpad(in_proc,27), 1, 27) || ' ');
 			         sys.dbms_output.put_line(substr(in_line, 1, 250));
 			      END IF;
@@ -227,19 +217,20 @@ class CreateApiPackageBody {
 			   -- print_lines
 			   --
 			   PROCEDURE print_lines (
-			      in_proc VARCHAR2,
-			      in_level dbms_output_level_type,
-			      in_lines CLOB
+			      in_proc  IN VARCHAR2,
+			      in_level IN dbms_output_level_type,
+			      in_lines IN CLOB
 			   ) IS
 			   BEGIN
 			      IF in_level <= g_debug_output_level THEN
+			         <<all_lines>>
 			         FOR r_line IN (
 			            SELECT regexp_substr(in_lines, '[^' || chr(10) || ']+', 1, level) AS line       
 			              FROM dual
 			           CONNECT BY instr(in_lines, chr(10), 1, level - 1) BETWEEN 1 AND length(in_lines) - 1
 			         ) LOOP
 			            print_line(in_proc => in_proc, in_level => in_level, in_line => r_line.line);
-			         END LOOP;
+			         END LOOP all_lines;
 			      END IF;
 			   END print_lines;
 
@@ -248,7 +239,7 @@ class CreateApiPackageBody {
 			   -- print_collection
 			   --
 			   PROCEDURE print_collection (
-			      in_proc VARCHAR2,
+			      in_proc       IN VARCHAR2,
 			      in_collection IN «model.collectionTypeName»
 			   ) IS
 			   BEGIN
@@ -316,7 +307,6 @@ class CreateApiPackageBody {
 			   PROCEDURE load_versions (
 			      in_row IN «model.objectTypeName»
 			   ) IS
-			      l_start TIMESTAMP := SYSTIMESTAMP;
 			   BEGIN
 			      -- use VERSIONS PERIOD FOR to ensure no periods of the target table are filtered 
 			      -- on session level by DBMS_FLASHBACK_ARCHIVE.ENABLE_AT_VALID_TIME
@@ -546,8 +536,8 @@ class CreateApiPackageBody {
 			                     )
 			           RETURNING «FOR col : model.pkColumnNames SEPARATOR ', '»«col»«ENDFOR»
 			                INTO «FOR col : model.pkColumnNames SEPARATOR ', '»l_latest_row.«col»«ENDFOR»;
-			         <<all_versions>>
 			         print_line(in_proc => 'save_latest', in_level => co_debug, in_line => SQL%ROWCOUNT || ' row inserted.');
+			         <<all_versions>>
 			         FOR i in 1..g_versions.COUNT()
 			         LOOP
 			            «FOR col : model.pkColumnNames»
@@ -792,17 +782,15 @@ class CreateApiPackageBody {
 			      --
 			      -- update modes evaluated based on old and new values
 			      --
-			      co_upd_no_change CONSTANT PLS_INTEGER := 0; -- no update necessary since no changes have been made
-			      co_upd_all_cols CONSTANT PLS_INTEGER := 1; -- updates all columns in chosen valid time range
+			      co_upd_no_change    CONSTANT PLS_INTEGER := 0; -- no update necessary since no changes have been made
+			      co_upd_all_cols     CONSTANT PLS_INTEGER := 1; -- updates all columns in chosen valid time range
 			      co_upd_changed_cols CONSTANT PLS_INTEGER := 2; -- updates changed columns in chosen valid time range
 			      --
-			      -- get_update_mode
+			      -- do_upd.set_update_mode
 			      --
-			      FUNCTION get_update_mode
-			      RETURN PLS_INTEGER IS
+			      PROCEDURE set_update_mode IS
 			         l_valid_time_range_changed BOOLEAN := FALSE;
 			         l_appl_items_changed BOOLEAN := FALSE;
-			         l_update_mode PLS_INTEGER;
 			      BEGIN
 			         IF (io_new_row.«validFrom» != in_old_row.«validFrom» 
 			             OR io_new_row.«validFrom» IS NULL AND in_old_row.«validFrom» IS NOT NULL 
@@ -832,8 +820,7 @@ class CreateApiPackageBody {
 			         ELSE
 			            l_update_mode := co_upd_no_change;
 			         END IF;
-			         RETURN l_update_mode;
-			      END get_update_mode;
+			      END set_update_mode;
 			      --
 			      -- do_upd.upd_all_cols
 			      --
@@ -894,7 +881,7 @@ class CreateApiPackageBody {
 			   BEGIN
 			      truncate_to_granularity(io_row => io_new_row);
 			      check_period(in_row => io_new_row);
-			      l_update_mode := get_update_mode;
+			      set_update_mode;
 			      IF l_update_mode IN (co_upd_all_cols, co_upd_changed_cols) THEN
 			         load_versions(in_row => in_old_row);
 			         add_version_at_start(in_row => io_new_row);
@@ -1008,7 +995,7 @@ class CreateApiPackageBody {
 			            », 'in_reject_limit must not be NULL.'
 			         );
 			      END IF;
-			      l_reject_limit := regexp_replace(UPPER(substr(in_reject_limit,1,100)), '[0-9]+', '');
+			      l_reject_limit := regexp_replace(UPPER(substr(in_reject_limit,1,100)), '[0-9]+', NULL);
 			      IF NOT (l_reject_limit IS NULL OR l_reject_limit = 'UNLIMITED') THEN
 			         raise_application_error(«errorNumber
 			            », 'invalid value for in_reject_limit defined. '
@@ -1371,13 +1358,13 @@ class CreateApiPackageBody {
 			                        )
 			         ]';
 			         EXECUTE IMMEDIATE l_log_err_stmt
-			                     USING in_ora_err_number$,
-			                           in_ora_err_mesg$,
-			                           in_ora_err_rowid$,
-			                           in_ora_err_optyp$,
+			                     USING IN in_ora_err_number$,
+			                           IN in_ora_err_mesg$,
+			                           IN in_ora_err_rowid$,
+			                           IN in_ora_err_optyp$,
 			                           «model.getErrTagExpr("delta_load", "in_sta_table", "l_start_at")»,
 			                           «FOR col : model.columnNames 
-			                            SEPARATOR "," + System.lineSeparator»in_row.«col»«ENDFOR»;
+			                            SEPARATOR "," + System.lineSeparator»IN in_row.«col»«ENDFOR»;
 			         COMMIT;
 			      END log_error;
 			      --
@@ -1391,8 +1378,8 @@ class CreateApiPackageBody {
 			         l_reject_limit PLS_INTEGER := 2**31-1;
 			         l_new_row      «model.objectTypeName»;
 			         l_old_row      «model.objectTypeName»;
-			         l_«operation»  VARCHAR2(1);
-			         l_rowid        VARCHAR2(100);
+			         l_«operation»  VARCHAR2(1 CHAR);
+			         l_rowid        VARCHAR2(100 CHAR);
 			      BEGIN
 			         IF UPPER(in_reject_limit) != 'UNLIMITED' THEN
 			            l_reject_limit := TO_NUMBER(in_reject_limit);
@@ -1496,7 +1483,7 @@ class CreateApiPackageBody {
 			         <<all_updates>>
 			         LOOP
 			            FETCH c_sta INTO l_new_row, l_old_row, l_rowid, l_«operation»;
-			            EXIT WHEN c_sta%NOTFOUND;
+			            EXIT all_updates WHEN c_sta%NOTFOUND;
 			            <<dml_trap>>
 			            BEGIN
 			               CASE l_«operation» 
@@ -1587,7 +1574,6 @@ class CreateApiPackageBody {
 			      io_new_row IN OUT «model.objectTypeName»,
 			      in_old_row IN «model.objectTypeName»
 			   ) IS
-			      l_update_mode PLS_INTEGER;
 			   BEGIN
 			      UPDATE «model.latestTableName»
 			         SET «FOR col : model.columnNames 
