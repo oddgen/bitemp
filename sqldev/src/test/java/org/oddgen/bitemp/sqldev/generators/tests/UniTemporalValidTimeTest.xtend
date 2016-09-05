@@ -226,7 +226,49 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		''')
 		Assert.assertEquals(4, getCount("D2", ""))
 		Assert.assertEquals(11, getCount("D2_HT", ""))
-
+		jdbcTemplate.execute('''
+			DECLARE
+			   PROCEDURE ins (
+			      in_vt_start    DATE,
+			      in_vt_end      DATE,
+			      in_is_deleted$ INTEGER,
+			      in_deptno      VARCHAR2,
+			      in_dname       VARCHAR2
+			   ) IS
+			   BEGIN
+			      INSERT INTO d2_sta$ (
+			                     vt_start,
+			                     vt_end,
+			                     is_deleted$,
+			                     deptno,
+			                     dname
+			                  )
+			           VALUES (
+			                    in_vt_start,
+			                    in_vt_end,
+			                    in_is_deleted$,
+			                    in_deptno,
+			                    in_dname
+			                  );
+			   END ins;
+			BEGIN
+			   DELETE FROM d2_sta$;
+			   ins(null, null, null, 10, 'ACCOUNTING');
+			   ins(null, DATE '2016-01-01', null, 20, 'RESEARCH');
+			   ins(DATE '2016-01-01', null, null, 20, 'Research2');
+			   ins(DATE '2016-01-01', DATE '3000-01-01', null, 30, 'SALES');
+			   ins(DATE '2016-01-02', DATE '2017-01-01', null, 40, 'OPERATIONS1');
+			   ins(DATE '2010-01-01', DATE '2012-01-01', null, 40, 'OPS BETA');
+			END; 
+		''')
+		Assert.assertEquals(6, getCount("D2_STA$", ""))
+		jdbcTemplate.execute('''
+			BEGIN
+				d2_api.upd_load;
+			END;
+		''')
+		Assert.assertEquals(4, getCount("D2", ""))
+		Assert.assertEquals(13, getCount("D2_HT", ""))
 	}
 
 	@Before

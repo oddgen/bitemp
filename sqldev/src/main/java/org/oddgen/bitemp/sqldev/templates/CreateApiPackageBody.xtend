@@ -119,6 +119,8 @@ class CreateApiPackageBody {
 			   «val gapStart = BitempRemodeler.GAP_START_COL_NAME.toLowerCase»
 			   «val gapEnd = BitempRemodeler.GAP_END_COL_NAME.toLowerCase»
 			   «val errorNumber = -20501»
+			   «val minDate = "TO_TIMESTAMP('-4712', 'SYYYY')"»
+			   «val maxDate = "TO_TIMESTAMP('9999-12-31 23:59:59.999999999', 'YYYY-MM-DD HH24:MI:SS.FF9')"»
 			   --
 			   -- Note: SQL Developer 4.1.3 cannot produce a complete outline of this package body, because it cannot handle
 			   --       the complete flashback_query_clause. The following expression breaks SQL Developer:
@@ -798,7 +800,7 @@ class CreateApiPackageBody {
 			            l_valid_time_range_changed := TRUE;
 			         END IF;
 			         IF (
-			               «FOR col : model.updateableLatestColumnNames.filter[it != validFrom && it != validTo && it != isDeleted] 
+			               «FOR col : model.updateableLatestColumnNames.filter[it != isDeleted] 
 			                SEPARATOR System.lineSeparator + 'OR'»
 			               	(io_new_row.«col» != in_old_row.«col» 
 			               	 OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
@@ -958,6 +960,27 @@ class CreateApiPackageBody {
 			   END table_exists;
 
 			   --
+			   -- check_table_prerequisites
+			   --
+			   PROCEDURE check_table_prerequisites (
+			      in_owner     IN VARCHAR2,
+			      in_sta_table IN VARCHAR2,
+			      in_log_table IN VARCHAR2
+			   ) IS
+			   BEGIN
+			      IF NOT table_exists(in_owner => in_owner, in_table => in_sta_table) THEN
+			         raise_application_error(«errorNumber
+			            », 'staging table ' || in_owner || '.' || in_sta_table || ' not found.'
+			         );
+			      END IF;
+			      IF NOT table_exists(in_owner => in_owner, in_table => in_log_table) THEN
+			         raise_application_error(«errorNumber
+			            », 'logging table ' || in_owner || '.' || in_log_table || ' not found.'
+			         );
+			      END IF;
+			   END check_table_prerequisites;
+
+			   --
 			   -- create_load_tables
 			   --
 			   PROCEDURE create_load_tables (
@@ -1050,29 +1073,18 @@ class CreateApiPackageBody {
 			          WHERE table_name = '«model.historyTableName.toUpperCase»'
 			            AND constraint_type = 'R';
 			      --
-			      -- init_load.check_prerequisites
+			      -- init_load.check_tables_empty
 			      --
-			      PROCEDURE check_prerequisites IS
-			         l_rows_found   PLS_INTEGER;
-			         l_reject_limit VARCHAR2(100 CHAR);
+			      PROCEDURE check_tables_empty IS
+			         l_rows_found PLS_INTEGER;
 			      BEGIN
-			         IF NOT table_exists(in_owner => in_owner, in_table => in_sta_table) THEN
-			            raise_application_error(«errorNumber
-			            	», 'staging table ' || in_owner || '.' || in_sta_table || ' not found.'
-			            );
-			         END IF;
-			         IF NOT table_exists(in_owner => in_owner, in_table => in_log_table) THEN
-			            raise_application_error(«errorNumber
-			            	», 'logging table ' || in_owner || '.' || in_log_table || ' not found.'
-			            );
-			         END IF;
 			         SELECT COUNT(*) 
 			           INTO l_rows_found
 			           FROM «model.latestTableName»
 			          WHERE ROWNUM = 1;
 			         IF l_rows_found > 0 THEN
 			            raise_application_error(«errorNumber
-			            	», 'latest table «model.latestTableName» is not empty.'
+			               », 'latest table «model.latestTableName» is not empty.'
 			            );
 			         END IF;
 			         SELECT COUNT(*) 
@@ -1081,9 +1093,16 @@ class CreateApiPackageBody {
 			          WHERE ROWNUM = 1;
 			         IF l_rows_found > 0 THEN
 			            raise_application_error(«errorNumber
-			            	», 'history table «model.historyTableName» is not empty.'
+			               », 'history table «model.historyTableName» is not empty.'
 			            );
 			         END IF;
+			      END check_tables_empty;
+			      --
+			      -- init_load.check_reject_limit
+			      --
+			      PROCEDURE check_reject_limit IS
+			         l_reject_limit VARCHAR2(100 CHAR);
+			      BEGIN
 			         IF in_reject_limit IS NULL THEN
 			            raise_application_error(«errorNumber
 			            	», 'in_reject_limit must not be NULL.'
@@ -1095,7 +1114,7 @@ class CreateApiPackageBody {
 			            	», 'invalid value for in_reject_limit defined. '
 			               || 'Valid is any integer value and UNLIMITED.');
 			         END IF;
-			      END check_prerequisites;
+			      END check_reject_limit;
 			      --
 			      -- init_load.disable_fk_constraints
 			      --
@@ -1272,7 +1291,13 @@ class CreateApiPackageBody {
 			      END do;
 			   BEGIN
 			      print_line(in_proc => 'init_load', in_level => co_info, in_line => 'started.');
-			      check_prerequisites;
+			      check_table_prerequisites(
+			         in_owner => in_owner,
+			         in_sta_table => in_sta_table,
+			         in_log_table => in_log_table
+			      );
+			      check_tables_empty;
+			      check_reject_limit;
 			      disable_fk_constraints;
 			      do;
 			      enable_fk_constraints;
@@ -1287,10 +1312,123 @@ class CreateApiPackageBody {
 			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
 			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
 			   ) IS
+			      --
+			      -- upd_load.log_error
+			      --
+			      PROCEDURE log_error (
+			         in_row   IN «model.objectTypeName»,
+			         in_error IN VARCHAR2
+			      ) IS
+			         PRAGMA AUTONOMOUS_TRANSACTION;
+			      BEGIN
+			         NULL;
+			      END log_error;
+			      --
+			      -- upd_load.do
+			      --
+			      PROCEDURE do IS
+			         l_stmt CLOB;
+			         c_sta  SYS_REFCURSOR;
+			         l_new_row «model.objectTypeName»;
+			         l_old_row «model.objectTypeName»;
+			         l_ok      PLS_INTEGER := 0;
+			      BEGIN
+			         l_stmt := q'[
+			            WITH
+			               active AS (
+			                  «IF model.granularityRequiresTruncation»
+			                  	SELECT TRUNC(«validFrom», '«model.granuarityTruncationFormat»') AS «validFrom»,
+			                  	       TRUNC(«validTo», '«model.granuarityTruncationFormat»') AS «validTo»,
+			                  «ELSE»
+			                  	SELECT «validFrom»,
+			                  	       «validTo»,
+			                  «ENDIF»
+			                         «FOR col : model.columnNames.filter[
+			                         	it != histId && it != validFrom && it != validTo
+			                         ] SEPARATOR ","»
+			                          «col»
+			                         «ENDFOR»
+			                    FROM ]' || in_sta_table || q'[
+			                   WHERE «isDeleted» IS NULL
+			               ),
+			               sta AS (
+			                  -- filter invalid periods, e.g. produced by truncation
+			                  SELECT «FOR col : model.columnNames.filter[it != histId] 
+			                          SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			                    FROM active
+			                   WHERE «validFrom» < «validTo»
+			                      OR «validFrom» IS NULL AND «validTo» IS NOT NULL
+			                      OR «validFrom» IS NOT NULL AND «validTo» IS NULL
+			                      OR «validFrom» IS NULL AND «validTo» IS NULL
+			               )
+			            -- main
+			            SELECT --+use_hash(sta) use_hash(ht)
+			                   «model.objectTypeName» (
+			                      «histId»,
+			                      «FOR col : model.allColumnNames.filter[it != histId] 
+			                       SEPARATOR ","»
+			                      	sta.«col»
+			                      «ENDFOR»
+			                   ) new_row,
+			                   «model.objectTypeName» (
+			                      «histId»,
+			                      «FOR col : model.allColumnNames.filter[it != histId] 
+			                       SEPARATOR ","»
+			                      	ht.«col»
+			                      «ENDFOR»
+			                   ) old_row
+			              FROM sta
+			              JOIN «model.historyTableName» ht
+			                ON «FOR col : model.pkColumnNames
+			                    SEPARATOR System.lineSeparator + '   AND '»ht.«col» = sta.«col»«ENDFOR»
+			             WHERE ( -- overlapping periods
+			                      NVL(ht.«validFrom», «minDate») < NVL(sta.«validTo», «maxDate»)
+			                      AND NVL(ht.«validTo», «maxDate») > NVL(sta.«validTo», «maxDate»)
+			                      OR NVL(ht.«validTo», «maxDate») > NVL(sta.«validFrom», «minDate») 
+			                      AND NVL(ht.«validFrom», «minDate») < NVL(sta.«validFrom», «minDate»)
+			                      OR NVL(ht.«validFrom», «minDate») <= NVL(sta.«validFrom», «minDate»)
+			                      AND NVL(ht.«validTo», «maxDate») >= NVL(sta.«validTo», «maxDate»)
+			                   )
+			               AND ( -- changed column values
+			                     «FOR col : model.updateableLatestColumnNames 
+			                      SEPARATOR System.lineSeparator + 'OR '»
+			                      (
+			                         sta.«col» != ht.«col»
+			                         OR sta.«col» IS NULL AND ht.«col» IS NOT NULL
+			                         OR sta.«col» IS NOT NULL AND ht.«col» IS NULL
+			                      )
+			                     «ENDFOR»
+			                   )
+			         ]';
+			         print_lines(
+			            in_proc  => 'upd_load.do',
+			            in_level => co_trace, 
+			            in_lines => l_stmt
+			         );
+			         OPEN c_sta FOR l_stmt;
+			         <<all_updates>>
+			         LOOP
+			            FETCH c_sta INTO l_new_row, l_old_row;
+			            EXIT WHEN c_sta%NOTFOUND;
+			            upd(in_new_row => l_new_row, in_old_row => l_old_row);
+			            l_ok := l_ok + 1;
+			         END LOOP all_updates;
+			         close c_sta;
+			         print_line(
+			            in_proc  => 'upd_load.do',
+			            in_level => co_debug,
+			            in_line  => l_ok || ' updates processed.'
+			         );
+			      END do;
 			   BEGIN
-			      raise_application_error(«errorNumber
-			      	», 'create_load_tables is not yet implemented'
+			      print_line(in_proc => 'upd_load', in_level => co_info, in_line => 'started.');
+			      check_table_prerequisites(
+			         in_owner => in_owner,
+			         in_sta_table => in_sta_table,
+			         in_log_table => in_log_table
 			      );
+			      do;
+			      print_line(in_proc => 'upd_load', in_level => co_info, in_line => 'completed.');
 			   END upd_load;
 
 			   «ELSE»
