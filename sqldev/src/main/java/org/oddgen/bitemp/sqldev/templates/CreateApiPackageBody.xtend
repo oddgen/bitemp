@@ -105,6 +105,12 @@ class CreateApiPackageBody {
 		]
 	}
 	
+	def getErrTagExpr(GeneratorModel model, String procedureName, String tableLiteral, String startLiteral) {
+		val errorTag = ''''«model.apiPackageName».«procedureName» from ' || «tableLiteral»«
+		» || ' started at ' || TO_CHAR(«startLiteral», 'YYYY-MM-DD HH24:MI:SS.FF6')'''
+		return errorTag
+	}
+	
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
 			--
@@ -312,6 +318,8 @@ class CreateApiPackageBody {
 			   ) IS
 			      l_start TIMESTAMP := SYSTIMESTAMP;
 			   BEGIN
+			      -- use VERSIONS PERIOD FOR to ensure no periods of the target table are filtered 
+			      -- on session level by DBMS_FLASHBACK_ARCHIVE.ENABLE_AT_VALID_TIME
 			      SELECT «model.objectTypeName» (
 			                «FOR col : model.allColumnNames SEPARATOR ','»
 			                	«col»
@@ -370,6 +378,7 @@ class CreateApiPackageBody {
 			   BEGIN
 			      WITH 
 			         diff1 AS (
+			            -- current MINUS original
 			            SELECT «FOR col : model.diffColumnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
 			              FROM TABLE(g_versions)
 			             MINUS
@@ -377,6 +386,7 @@ class CreateApiPackageBody {
 			              FROM TABLE(g_versions_original)
 			         ),
 			         diff2 AS (
+			            -- original MINUS current
 			            SELECT «FOR col : model.diffColumnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
 			              FROM TABLE(g_versions_original)
 			             MINUS
@@ -384,6 +394,7 @@ class CreateApiPackageBody {
 			              FROM TABLE(g_versions)
 			         ),
 			         diff AS (
+			            -- combined differences
 			            SELECT COUNT(*) AS count_diff 
 			              FROM diff1 
 			             WHERE ROWNUM = 1
@@ -463,6 +474,7 @@ class CreateApiPackageBody {
 			      );
 			      WITH
 			         base AS (
+			            -- calculate «validFrom» since this is not maintained within the API package
 			            SELECT «histId»,
 			                   «validFrom»,
 			                   LEAD («validFrom», 1, «validTo») OVER (ORDER BY «validFrom» NULLS FIRST) AS «validTo»,
@@ -482,6 +494,7 @@ class CreateApiPackageBody {
 			                OR «validFrom» IS NULL AND «validTo» IS NULL
 			         ),
 			         merged AS (
+			            -- merge periods with identical column values into a single row
 			            SELECT «FOR col : model.allColumnNames 
 			                    SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
 			              FROM valid
@@ -572,6 +585,8 @@ class CreateApiPackageBody {
 			      print_collection(in_proc => 'save_versions', in_collection => g_versions);
 			      MERGE 
 			       INTO (
+			               -- use VERSIONS PERIOD FOR to ensure no periods of the target table are filtered 
+			               -- on session level by DBMS_FLASHBACK_ARCHIVE.ENABLE_AT_VALID_TIME
 			               SELECT «FOR col : model.allColumnNames SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
 			                 FROM «model.historyTableName» «
 			                      »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
@@ -981,6 +996,27 @@ class CreateApiPackageBody {
 			   END check_table_prerequisites;
 
 			   --
+			   -- check_reject_limit
+			   --
+			   PROCEDURE check_reject_limit (
+			      in_reject_limit IN VARCHAR2
+			   ) IS
+			      l_reject_limit VARCHAR2(100 CHAR);
+			   BEGIN
+			      IF in_reject_limit IS NULL THEN
+			         raise_application_error(«errorNumber
+			            », 'in_reject_limit must not be NULL.'
+			         );
+			      END IF;
+			      l_reject_limit := regexp_replace(UPPER(substr(in_reject_limit,1,100)), '[0-9]+', '');
+			      IF NOT (l_reject_limit IS NULL OR l_reject_limit = 'UNLIMITED') THEN
+			         raise_application_error(«errorNumber
+			            », 'invalid value for in_reject_limit defined. '
+			            || 'Valid is any integer value and UNLIMITED.');
+			      END IF;
+			   END check_reject_limit;
+
+			   --
 			   -- create_load_tables
 			   --
 			   PROCEDURE create_load_tables (
@@ -1019,7 +1055,8 @@ class CreateApiPackageBody {
 			               	it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase && it.virtualColumn == "NO"
 			               ] SEPARATOR ","»
 			               	«col.columnName.toLowerCase» «col.fullDataType»«
-			               	»«IF !col.defaultClause.empty» «col.defaultClause»«ENDIF» «col.notNull»
+			               	»«IF !col.defaultClause.empty» «col.defaultClause»«ENDIF» «
+			               	»«IF model.pkColumnNames.contains(col.columnName.toLowerCase)»«col.notNull»«ENDIF»
 			               «ENDFOR»
 			            )
 			         ]';
@@ -1065,7 +1102,7 @@ class CreateApiPackageBody {
 			      in_owner        IN VARCHAR2 DEFAULT USER,
 			      in_sta_table    IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
 			      in_log_table    IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
-			      in_reject_limit IN VARCHAR2 DEFAULT 'UNLIMITED'
+			      in_reject_limit IN VARCHAR2 DEFAULT '0'
 			   ) IS
 			      CURSOR c_fk IS
 			         SELECT constraint_name 
@@ -1097,24 +1134,6 @@ class CreateApiPackageBody {
 			            );
 			         END IF;
 			      END check_tables_empty;
-			      --
-			      -- init_load.check_reject_limit
-			      --
-			      PROCEDURE check_reject_limit IS
-			         l_reject_limit VARCHAR2(100 CHAR);
-			      BEGIN
-			         IF in_reject_limit IS NULL THEN
-			            raise_application_error(«errorNumber
-			            	», 'in_reject_limit must not be NULL.'
-			            );
-			         END IF;
-			         l_reject_limit := regexp_replace(UPPER(substr(in_reject_limit,1,100)), '[0-9]+', '');
-			         IF NOT (l_reject_limit IS NULL OR l_reject_limit = 'UNLIMITED') THEN
-			            raise_application_error(«errorNumber
-			            	», 'invalid value for in_reject_limit defined. '
-			               || 'Valid is any integer value and UNLIMITED.');
-			         END IF;
-			      END check_reject_limit;
 			      --
 			      -- init_load.disable_fk_constraints
 			      --
@@ -1152,8 +1171,10 @@ class CreateApiPackageBody {
 			      -- init_load.do
 			      --
 			      PROCEDURE do IS
-			         l_stmt CLOB;
+			         l_stmt    CLOB;
+			         l_err_tag VARCHAR2(1000 CHAR);
 			      BEGIN
+			         l_err_tag := «model.getErrTagExpr("init_load", "in_sta_table", "SYSTIMESTAMP")»;
 			         l_stmt := q'[
 			            INSERT ALL
 			               WHEN 1=1 THEN
@@ -1167,8 +1188,7 @@ class CreateApiPackageBody {
 			                            	«col»
 			                            «ENDFOR»
 			                         )
-			                     LOG ERRORS INTO ]' || in_log_table || q'[ ('«
-			                         model.historyTableName»') REJECT LIMIT ]' || in_reject_limit || q'[
+			                     LOG ERRORS INTO ]' || in_log_table || q'[(']' || l_err_tag || q'[') REJECT LIMIT ]' || in_reject_limit || q'[
 			               WHEN «validTo» IS NULL THEN
 			                    INTO «model.latestTableName» (
 			                           «FOR col : model.latestColumnNames SEPARATOR ","»
@@ -1180,10 +1200,10 @@ class CreateApiPackageBody {
 			                           	«col»
 			                           «ENDFOR»
 			                          )
-			                      LOG ERRORS INTO ]' || in_log_table || q'[ ('«
-			                          model.latestTableName»') REJECT LIMIT ]' || in_reject_limit || q'[
+			                     LOG ERRORS INTO ]' || in_log_table || q'[(']' || l_err_tag || q'[') REJECT LIMIT ]' || in_reject_limit || q'[
 			            WITH
 			               active AS (
+			                  -- truncate period columns if granularity is different to the data type default
 			                  «IF model.granularityRequiresTruncation»
 			                  	SELECT TRUNC(«validFrom», '«model.granuarityTruncationFormat»') AS «validFrom»,
 			                  	       TRUNC(«validTo», '«model.granuarityTruncationFormat»') AS «validTo»,
@@ -1210,6 +1230,7 @@ class CreateApiPackageBody {
 			                      OR «validFrom» IS NULL AND «validTo» IS NULL
 			               ),
 			               merged AS (
+			                  -- merge periods with identical column values into a single row
 			                  SELECT «validFrom»,
 			                         LAG («validTo», 1, NULL) OVER (PARTITION BY «
 			                            FOR col : model.pkColumnNames 
@@ -1297,7 +1318,7 @@ class CreateApiPackageBody {
 			         in_log_table => in_log_table
 			      );
 			      check_tables_empty;
-			      check_reject_limit;
+			      check_reject_limit (in_reject_limit => in_reject_limit);
 			      disable_fk_constraints;
 			      do;
 			      enable_fk_constraints;
@@ -1305,37 +1326,81 @@ class CreateApiPackageBody {
 			   END init_load;
 
 			   --
-			   -- upd_load
+			   -- delta_load
 			   --
-			   PROCEDURE upd_load (
-			      in_owner IN VARCHAR2 DEFAULT USER,
-			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
-			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
+			   PROCEDURE delta_load (
+			      in_owner        IN VARCHAR2 DEFAULT USER,
+			      in_sta_table    IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table    IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
+			      in_reject_limit IN VARCHAR2 DEFAULT '0'
 			   ) IS
+			      l_start_at TIMESTAMP(6) := SYSTIMESTAMP;
 			      --
-			      -- upd_load.log_error
+			      -- delta_load.log_error
 			      --
 			      PROCEDURE log_error (
-			         in_row   IN «model.objectTypeName»,
-			         in_error IN VARCHAR2
+			         in_row             IN «model.objectTypeName»,
+			         in_ora_err_number$ IN NUMBER,
+			         in_ora_err_mesg$   IN VARCHAR2,
+			         in_ora_err_rowid$  IN VARCHAR2, -- using UROWID causes error during insert on 12.1.2.0
+			         in_ora_err_optyp$  IN VARCHAR2
 			      ) IS
 			         PRAGMA AUTONOMOUS_TRANSACTION;
+			         l_log_err_stmt CLOB;
 			      BEGIN
-			         NULL;
+			         l_log_err_stmt := q'[
+			            INSERT INTO ]' || in_log_table || q'[ (
+			                           ora_err_number$,
+			                           ora_err_mesg$,
+			                           ora_err_rowid$,
+			                           ora_err_optyp$,
+			                           ora_err_tag$,
+			                           «FOR col : model.columnNames SEPARATOR ","»
+			                           	«col»
+			                           «ENDFOR»
+			                        )
+			                 VALUES (
+			                           :ora_err_number$,
+			                           :ora_err_mesg$,
+			                           CHARTOROWID(:ora_err_rowid$),
+			                           :ora_err_optyp$,
+			                           :ora_err_tag$,
+			                           «FOR col : model.columnNames SEPARATOR ","»
+			                           	:«col»
+			                           «ENDFOR»
+			                        )
+			         ]';
+			         EXECUTE IMMEDIATE l_log_err_stmt
+			                     USING in_ora_err_number$,
+			                           in_ora_err_mesg$,
+			                           in_ora_err_rowid$,
+			                           in_ora_err_optyp$,
+			                           «model.getErrTagExpr("delta_load", "in_sta_table", "l_start_at")»,
+			                           «FOR col : model.columnNames 
+			                            SEPARATOR "," + System.lineSeparator»in_row.«col»«ENDFOR»;
+			         COMMIT;
 			      END log_error;
 			      --
-			      -- upd_load.do
+			      -- delta_load.do
 			      --
 			      PROCEDURE do IS
-			         l_stmt CLOB;
-			         c_sta  SYS_REFCURSOR;
-			         l_new_row «model.objectTypeName»;
-			         l_old_row «model.objectTypeName»;
-			         l_ok      PLS_INTEGER := 0;
+			         l_stmt         CLOB;
+			         c_sta          SYS_REFCURSOR;
+			         l_ok           PLS_INTEGER := 0;
+			         l_nok          PLS_INTEGER := 0;
+			         l_reject_limit PLS_INTEGER := 2**31-1;
+			         l_new_row      «model.objectTypeName»;
+			         l_old_row      «model.objectTypeName»;
+			         l_«operation»  VARCHAR2(1);
+			         l_rowid        VARCHAR2(100);
 			      BEGIN
+			         IF UPPER(in_reject_limit) != 'UNLIMITED' THEN
+			            l_reject_limit := TO_NUMBER(in_reject_limit);
+			         END IF;
 			         l_stmt := q'[
 			            WITH
-			               active AS (
+			               truncated AS (
+			                  -- truncate period columns if granularity is different to the data type default
 			                  «IF model.granularityRequiresTruncation»
 			                  	SELECT TRUNC(«validFrom», '«model.granuarityTruncationFormat»') AS «validFrom»,
 			                  	       TRUNC(«validTo», '«model.granuarityTruncationFormat»') AS «validTo»,
@@ -1349,21 +1414,19 @@ class CreateApiPackageBody {
 			                          «col»
 			                         «ENDFOR»
 			                    FROM ]' || in_sta_table || q'[
-			                   WHERE «isDeleted» IS NULL
 			               ),
 			               sta AS (
 			                  -- filter invalid periods, e.g. produced by truncation
 			                  SELECT «FOR col : model.columnNames.filter[it != histId] 
 			                          SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
-			                    FROM active
+			                    FROM truncated
 			                   WHERE «validFrom» < «validTo»
 			                      OR «validFrom» IS NULL AND «validTo» IS NOT NULL
 			                      OR «validFrom» IS NOT NULL AND «validTo» IS NULL
 			                      OR «validFrom» IS NULL AND «validTo» IS NULL
 			               )
 			            -- main
-			            SELECT --+use_hash(sta) use_hash(ht)
-			                   «model.objectTypeName» (
+			            SELECT «model.objectTypeName» (
 			                      «histId»,
 			                      «FOR col : model.allColumnNames.filter[it != histId] 
 			                       SEPARATOR ","»
@@ -1376,18 +1439,38 @@ class CreateApiPackageBody {
 			                       SEPARATOR ","»
 			                      	ht.«col»
 			                      «ENDFOR»
-			                   ) old_row
+			                   ) old_row,
+			                   sta.ROWID,
+			                   CASE
+			                      WHEN sta.«isDeleted» = 1 THEN
+			                         'D'
+			                      WHEN «FOR col : model.pkColumnNames 
+			                            SEPARATOR ' AND '»ht.«col» IS NULL«ENDFOR» THEN
+			                         'I'
+			                      ELSE
+			                         'U'
+			                    END AS «operation»
 			              FROM sta
-			              JOIN «model.historyTableName» ht
+			              LEFT JOIN «model.historyTableName» ht
 			                ON «FOR col : model.pkColumnNames
 			                    SEPARATOR System.lineSeparator + '   AND '»ht.«col» = sta.«col»«ENDFOR»
 			             WHERE ( -- overlapping periods
+			                     -- sta      |--------|
+			                     -- ht           |--------|
 			                      NVL(ht.«validFrom», «minDate») < NVL(sta.«validTo», «maxDate»)
 			                      AND NVL(ht.«validTo», «maxDate») > NVL(sta.«validTo», «maxDate»)
+			                     -- sta      |--------|
+			                     -- ht   |--------|
 			                      OR NVL(ht.«validTo», «maxDate») > NVL(sta.«validFrom», «minDate») 
 			                      AND NVL(ht.«validFrom», «minDate») < NVL(sta.«validFrom», «minDate»)
+			                     -- sta      |--------|
+			                     -- ht   |...----------...|
 			                      OR NVL(ht.«validFrom», «minDate») <= NVL(sta.«validFrom», «minDate»)
 			                      AND NVL(ht.«validTo», «maxDate») >= NVL(sta.«validTo», «maxDate»)
+			                     -- sta  |...----------...|
+			                     -- ht       |--------|
+			                      OR NVL(ht.«validFrom», «minDate») >= NVL(sta.«validFrom», «minDate»)
+			                      AND NVL(ht.«validTo», «maxDate») <= NVL(sta.«validTo», «maxDate»)
 			                   )
 			               AND ( -- changed column values
 			                     «FOR col : model.updateableLatestColumnNames 
@@ -1399,37 +1482,75 @@ class CreateApiPackageBody {
 			                      )
 			                     «ENDFOR»
 			                   )
+			                OR ( -- new periods
+			                      «FOR col : model.pkColumnNames 
+			                       SEPARATOR System.lineSeparator + 'AND '»ht.«col» IS NULL«ENDFOR»
+			                   )
 			         ]';
 			         print_lines(
-			            in_proc  => 'upd_load.do',
+			            in_proc  => 'delta_load.do',
 			            in_level => co_trace, 
 			            in_lines => l_stmt
 			         );
 			         OPEN c_sta FOR l_stmt;
 			         <<all_updates>>
 			         LOOP
-			            FETCH c_sta INTO l_new_row, l_old_row;
+			            FETCH c_sta INTO l_new_row, l_old_row, l_rowid, l_«operation»;
 			            EXIT WHEN c_sta%NOTFOUND;
-			            upd(in_new_row => l_new_row, in_old_row => l_old_row);
-			            l_ok := l_ok + 1;
+			            <<dml_trap>>
+			            BEGIN
+			               CASE l_«operation» 
+			                  WHEN 'I' THEN
+			                     ins(in_new_row => l_new_row);
+			                  WHEN 'U' THEN
+			                     upd(in_new_row => l_new_row, in_old_row => l_old_row);
+			                  WHEN 'D' THEN
+			                     -- delete the period according new row, might produce new period(s)
+			                     del(in_old_row => l_new_row);
+			               END CASE;
+			               l_ok := l_ok + 1;
+			            EXCEPTION
+			               WHEN OTHERS THEN
+			                  l_nok := l_nok + 1;
+			                  log_error (
+			                     in_row             => l_new_row,
+			                     in_ora_err_number$ => SQLCODE,
+			                  	 in_ora_err_mesg$   => SQLERRM,
+			                  	 in_ora_err_rowid$  => l_rowid,
+			                  	 in_ora_err_optyp$  => l_«operation»
+			                  );
+			                  IF l_nok >= l_reject_limit THEN
+			                     CLOSE c_sta;
+			                     raise_application_error(«errorNumber», 'Limit of ' 
+			                        || l_reject_limit || ' errors reached. See '
+			                        || in_log_table || ' for details.');
+			                  END IF;
+			            END dml_trap;
 			         END LOOP all_updates;
-			         close c_sta;
+			         CLOSE c_sta;
 			         print_line(
-			            in_proc  => 'upd_load.do',
-			            in_level => co_debug,
-			            in_line  => l_ok || ' updates processed.'
+			            in_proc  => 'delta_load.do',
+			            in_level => co_info,
+			            in_line  => l_ok || ' temporal DML operations completed successfully.'
+			         );
+			         print_line(
+			            in_proc  => 'delta_load.do',
+			            in_level => co_info,
+			            in_line  => l_nok || ' temporal DML operations failed. See '
+			                           || in_log_table || ' for details.'
 			         );
 			      END do;
 			   BEGIN
-			      print_line(in_proc => 'upd_load', in_level => co_info, in_line => 'started.');
+			      print_line(in_proc => 'delta_load', in_level => co_info, in_line => 'started.');
 			      check_table_prerequisites(
 			         in_owner => in_owner,
 			         in_sta_table => in_sta_table,
 			         in_log_table => in_log_table
 			      );
+			      check_reject_limit (in_reject_limit => in_reject_limit);
 			      do;
-			      print_line(in_proc => 'upd_load', in_level => co_info, in_line => 'completed.');
-			   END upd_load;
+			      print_line(in_proc => 'delta_load', in_level => co_info, in_line => 'completed.');
+			   END delta_load;
 
 			   «ELSE»
 
