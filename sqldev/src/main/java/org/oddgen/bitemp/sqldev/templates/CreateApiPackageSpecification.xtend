@@ -80,14 +80,14 @@ class CreateApiPackageSpecification {
 			   * @param in_log_table Logging table for error messages
 			   * @param in_reject_limit number of errors before the initial load fails
 			   *           0         load fails after first error
-			   *           100       load fails after the 101st error
+			   *           100       load fails after 100 errors
 			   *           UNLIMITED load should not fail, but may write all staging table rows into the logging table
 			   */
 			   PROCEDURE init_load (
 			      in_owner        IN VARCHAR2 DEFAULT USER,
 			      in_sta_table    IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
 			      in_log_table    IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
-			      in_reject_limit IN VARCHAR2 DEFAULT 'UNLIMITED'
+			      in_reject_limit IN VARCHAR2 DEFAULT '0'
 			   );
 
 			   /**
@@ -96,11 +96,16 @@ class CreateApiPackageSpecification {
 			   * @param in_owner Owner of the staging and logging table
 			   * @param in_sta_table Staging table containing all periods to be initially loaded
 			   * @param in_log_table Logging table for error messages
+			   * @param in_reject_limit number of errors before the initial load fails
+			   *           0         load fails after first error
+			   *           100       load fails after 100 errors
+			   *           UNLIMITED load should not fail, but may write all staging table rows into the logging table
 			   */
-			   PROCEDURE upd_load (
-			      in_owner     IN VARCHAR2 DEFAULT USER,
-			      in_sta_table IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
-			      in_log_table IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»'
+			   PROCEDURE delta_load (
+			      in_owner        IN VARCHAR2 DEFAULT USER,
+			      in_sta_table    IN VARCHAR2 DEFAULT '«model.stagingTableName.toUpperCase»',
+			      in_log_table    IN VARCHAR2 DEFAULT '«model.loggingTableName.toUpperCase»',
+			      in_reject_limit IN VARCHAR2 DEFAULT '0'
 			   );
 
 			   «ENDIF»
