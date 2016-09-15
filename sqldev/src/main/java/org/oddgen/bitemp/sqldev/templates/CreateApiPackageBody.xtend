@@ -133,8 +133,9 @@ class CreateApiPackageBody {
 			   --
 			   --          VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			   --
-			   --       It's expected that future versions will be able to handel the flashback_query_clause accordingly.
-			   --       PL/SQL Developer 11.0.6 for instance produces a complete outline.
+			   --       It's expected that future versions will be able to handle the flashback_query_clause accordingly.
+			   --       See "Bug 24608738 - OUTLINE OF PL/SQL PACKAGE BODY BREAKS WHEN USING PERIOD FOR OF FLASHBACK_QUERY_"
+			   --       on MOS for details.
 			   --
 
 			   --
