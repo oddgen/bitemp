@@ -41,7 +41,7 @@
 		<dependency>
 			<groupId>org.oddgen</groupId>
 			<artifactId>org.oddgen.sqldev</artifactId>
-			<version>0.2.3</version>
+			<version>0.2.5</version>
 			<scope>provided</scope>
 		</dependency>
 		<!-- logging dependencies (not exported by org.oddgen.sqldev) -->
@@ -55,7 +55,7 @@
 			<!-- override dependency from jcabi-aspects -->
 			<groupId>com.jcabi</groupId>
 			<artifactId>jcabi-log</artifactId>
-			<version>0.17.1</version>
+			<version>0.17.2</version>
 		</dependency>
 		<dependency>
 			<!-- override dependency from jcabi-aspects -->
@@ -101,8 +101,8 @@
 			<plugin>
 				<groupId>org.eclipse.xtend</groupId>
 				<artifactId>xtend-maven-plugin</artifactId>
-				<!-- cannot resolve plugin-dependencies for 2.10.0, fallback to 2.9.2 -->
-				<version>2.9.2</version>
+				<!-- change from 2.9.2 to 2.10.0 might need "mvn -U" to update snapshots -->
+				<version>2.10.0</version>
 				<executions>
 					<execution>
 						<id>main</id>
@@ -141,7 +141,7 @@
 			<plugin>
 				<groupId>com.jcabi</groupId>
 				<artifactId>jcabi-maven-plugin</artifactId>
-				<version>0.14</version>
+				<version>0.14.1</version>
 				<executions>
 					<execution>
 						<goals>
@@ -226,7 +226,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.10</version>
+				<version>1.12</version>
 				<executions>
 					<execution>
 						<id>parse-version</id>
@@ -281,8 +281,7 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<!-- version 3.0.1 throws null pointer exception -->
-				<version>2.5.4</version>
+				<version>3.2.0</version>
 				<extensions>true</extensions>
 				<configuration>
 					<finalName>${project.name}</finalName>
@@ -354,7 +353,7 @@
 									<pluginExecutionFilter>
 										<groupId>org.apache.maven.plugins</groupId>
 										<artifactId>maven-dependency-plugin</artifactId>
-										<versionRange>[2.10.0,)</versionRange>
+										<versionRange>[2.10,)</versionRange>
 										<goals>
 											<goal>copy-dependencies</goal>
 										</goals>
@@ -372,7 +371,7 @@
 											build-helper-maven-plugin
 										</artifactId>
 										<versionRange>
-											[1.10,)
+											[1.12,)
 										</versionRange>
 										<goals>
 											<goal>parse-version</goal>
@@ -389,7 +388,7 @@
 											jcabi-maven-plugin
 										</artifactId>
 										<versionRange>
-											[0.14,)
+											[0.14.1,)
 										</versionRange>
 										<goals>
 											<goal>ajc</goal>
