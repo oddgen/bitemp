@@ -25,6 +25,34 @@
 		</dependency>
 		<dependency>
 			<groupId>oracle</groupId>
+			<artifactId>javatools-nodeps</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/modules/oracle.javatools/javatools-nodeps.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>oracle.ide</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/ide/extensions/oracle.ide.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>oracle.dbtools-common</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/sqldeveloper/lib/oracle.dbtools-common.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>uic</artifactId>
+			<version>12.2.2</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/ide/lib/uic.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
 			<artifactId>xmlparserv2</artifactId>
 			<version>12.2.0</version>
 			<scope>system</scope>
@@ -75,6 +103,18 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>
 			<version>1.7.21</version>
+		</dependency>
+		<dependency>
+			<!-- Xtend comes with some runtime dependencies... -->
+			<!-- override version of provided by org.oddgen.sqldev --> 
+			<groupId>org.eclipse.xtend</groupId>
+			<artifactId>org.eclipse.xtend.lib</artifactId>
+			<version>2.10.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<version>4.3.0.RELEASE</version>
 		</dependency>
 		<!-- test dependencies -->
 		<dependency>
