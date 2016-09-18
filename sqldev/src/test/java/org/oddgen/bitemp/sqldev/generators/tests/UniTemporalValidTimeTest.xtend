@@ -93,7 +93,7 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		''')
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60 and is_deleted$ IS NULL"))
 		Assert.assertEquals(2, getCount("D2_HT", "WHERE deptno = 60"))
-		Assert.assertEquals(1, getCount("D2_HT", "WHERE deptno = 60 AND is_deleted$ = 1 AND vt_end < SYSDATE"))
+		Assert.assertEquals(1, getCount("D2_HT", "WHERE deptno = 60 AND is_deleted$ = 1 AND vt_end <= SYSDATE+200"))
 		jdbcTemplate.execute('''
 			INSERT 
 			  INTO d2_hv 
