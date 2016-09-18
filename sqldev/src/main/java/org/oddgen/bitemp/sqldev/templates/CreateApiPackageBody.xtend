@@ -759,33 +759,33 @@ class CreateApiPackageBody {
 			      -- do_ins.upd_version_at_start
 			      --
 			      PROCEDURE upd_version_at_start IS
-			         l_version «model.objectTypeName»;
+			         l_updated BOOLEAN := FALSE;
 			      BEGIN
-			         l_version := get_version_at(in_at => NVL(io_row.«validFrom», co_minvalue));
-			         IF l_version IS NULL THEN
+			         <<all_versions>>
+			         FOR i IN 1..g_versions.COUNT() 
+			         LOOP
+			            IF g_versions(i).«validFrom» = io_row.«validFrom» 
+			               OR g_versions(i).«validFrom» IS NULL AND io_row.«validFrom» IS NULL
+			            THEN
+			               «FOR col : model.allColumnNames.filter[it != histId]»
+			               	g_versions(i).«col» := io_row.«col»;
+			               «ENDFOR»
+			               l_updated := TRUE;
+			            END IF;
+			         END LOOP all_versions;
+			         IF l_updated THEN
+			            print_line(
+			               in_proc  => 'do_ins.upd_version_at_start',
+			               in_level => co_debug,
+			               in_line  => 'updated row at ' || TO_CHAR(io_row.«validFrom», co_format)
+			            );
+			         ELSE
 			            add_version(in_row => io_row);
 			            print_line(
 			               in_proc  => 'do_ins.upd_version_at_start',
 			               in_level => co_debug,
-			               in_line  => 'added row at ' || TO_CHAR(l_version.«validFrom», co_format)
+			               in_line  => 'added row at ' || TO_CHAR(io_row.«validFrom», co_format)
 			            );
-			         ELSE
-			            <<all_versions>>
-			            FOR i IN 1..g_versions.COUNT() 
-			            LOOP
-			               IF g_versions(i).«validFrom» = l_version.«validFrom» 
-			                  OR g_versions(i).«validFrom» IS NULL AND l_version.«validFrom» IS NULL
-			               THEN
-			                  «FOR col : model.allColumnNames.filter[it != histId]»
-			                  	g_versions(i).«col» := io_row.«col»;
-			                  «ENDFOR»
-			               END IF;
-			               print_line(
-			                  in_proc  => 'do_ins.upd_version_at_start',
-			                  in_level => co_debug,
-			                  in_line  => 'updated row at ' || TO_CHAR(l_version.«validFrom», co_format)
-			               );
-			            END LOOP all_versions;
 			         END IF;
 			      END upd_version_at_start;
 			   BEGIN
