@@ -918,8 +918,8 @@ class CreateApiPackageBody {
 			         LOOP
 			            IF g_versions(i).«isDeleted» IS NULL THEN
 			               l_at := NVL(g_versions(i).«validFrom», co_minvalue);
-			               IF (in_row.«validFrom» IS NULL OR in_row.«validFrom» <= l_at)
-			                  AND (in_row.«validTo» IS NULL OR in_row.«validTo» > l_at)
+			               IF (l_row.«validFrom» IS NULL OR l_row.«validFrom» <= l_at)
+			                  AND (l_row.«validTo» IS NULL OR l_row.«validTo» > l_at)
 			               THEN
 			                  -- update period
 			                  g_versions(i).«isDeleted» := 1;
@@ -935,9 +935,12 @@ class CreateApiPackageBody {
 			         END LOOP all_versions;
 			      END set_deleted;
 			   BEGIN
-			      load_versions(in_row => in_row);
-			      add_version_at_start(in_row => in_row);
-			      add_version_at_end(in_row => in_row);
+			      l_row := in_row;
+			      truncate_to_granularity(io_row => l_row);
+			      check_period(in_row => l_row);
+			      load_versions(in_row => l_row);
+			      add_version_at_start(in_row => l_row);
+			      add_version_at_end(in_row => l_row);
 			      set_deleted;
 			      merge_versions;
 			      IF changes_history() THEN
