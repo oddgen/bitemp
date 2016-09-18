@@ -38,6 +38,7 @@ class CreateFullHistoryView {
 			cols.add("VERSIONS_OPERATION")
 		}
 		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {
+			cols.add(BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase)
 			cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME))
 			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME))
 		}
@@ -105,7 +106,10 @@ class CreateFullHistoryView {
 						«col.toLowerCase»,
 					«ENDFOR»
 					«BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase»,
-					PRIMARY KEY («FOR col : model.pkColumnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR») RELY DISABLE NOVALIDATE
+					«IF model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL»
+						PRIMARY KEY («BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase») RELY DISABLE NOVALIDATE,
+					«ENDIF»
+					UNIQUE («FOR col : model.pkColumnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR») RELY DISABLE NOVALIDATE
 				) AS
 				SELECT «FOR col : model.columnNames SEPARATOR System.lineSeparator + '       '»«
 				       	»«col.toLowerCase»,«

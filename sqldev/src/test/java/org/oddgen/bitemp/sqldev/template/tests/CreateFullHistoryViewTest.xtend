@@ -47,7 +47,7 @@ class CreateFullHistoryViewTest extends AbstractJdbcTest {
 			  FROM user_tab_columns
 			 WHERE table_name = ?
 		''', Integer, #["DEPT_FHV"])
-		Assert.assertEquals(12, colCount)
+		Assert.assertEquals(13, colCount)
 	}
 
 	@Test
