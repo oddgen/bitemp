@@ -84,6 +84,7 @@ class AbstractJdbcTest {
 		sysJdbcTemplate.execute("GRANT EXECUTE ON dbms_flashback_archive TO scott")
 		sysJdbcTemplate.execute("GRANT EXECUTE ON dbms_flashback TO scott")
 		sysJdbcTemplate.execute("GRANT FLASHBACK ARCHIVE ADMINISTER TO scott")
+		sysJdbcTemplate.execute("GRANT UNLIMITED TABLESPACE TO scott")
 		// for sys.ku$_fba_period_view
 		sysJdbcTemplate.execute("GRANT select_catalog_role TO scott")
 		// create FBA if not existing

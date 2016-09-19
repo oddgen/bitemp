@@ -51,6 +51,9 @@ class MissingPrerequisiteSolutionTest extends AbstractJdbcTest {
 		val expected = '''
 			-- to solve "«BitempResources.get("ERROR_NO_FLASHBACK_ARCHIVE")»" run the following statements as SYS:
 			GRANT FLASHBACK ARCHIVE ON FBA1 TO SCOTT;
+			-- quotas for flashback archive tablespaces required to ensure the background process does not fail with ORA-01950 when creating archive tables
+			-- alternatively to the UNLIMITED TABLESPACE privilege you may set quotes on tablespaces defined in DBA_FLASHBACK_ARCHIVE_TS
+			GRANT UNLIMITED TABLESPACE TO SCOTT;
 		'''
 		val actual = template.compile(dataSource.connection, BitempResources.get("ERROR_NO_FLASHBACK_ARCHIVE"))
 		Assert.assertEquals(expected, actual)

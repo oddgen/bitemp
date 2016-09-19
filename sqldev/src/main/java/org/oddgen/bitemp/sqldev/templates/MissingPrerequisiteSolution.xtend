@@ -47,6 +47,9 @@ class MissingPrerequisiteSolution {
 						CREATE FLASHBACK ARCHIVE fba TABLESPACE fba RETENTION 1 YEAR;
 						GRANT FLASHBACK ARCHIVE ON fba TO «conn.metaData.userName»;
 					«ENDIF»
+					-- quotas for flashback archive tablespaces required to ensure the background process does not fail with ORA-01950 when creating archive tables
+					-- alternatively to the UNLIMITED TABLESPACE privilege you may set quotes on tablespaces defined in DBA_FLASHBACK_ARCHIVE_TS
+					GRANT UNLIMITED TABLESPACE TO «conn.metaData.userName»;
 				'''
 			case BitempResources.get("ERROR_CREATE_TABLE_REQUIRED"):
 				'''
