@@ -53,7 +53,7 @@ class CreateApiPackageSpecification {
 
 			   «IF model.targetModel == ApiType.BI_TEMPORAL || model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME»
 			   /**
-			   * Create staging and logging table for bulk processing via init_load and upd_load.
+			   * Create staging and logging table for bulk processing via init_load and delta_load.
 			   *
 			   * @param in_sta_table Name of the staging table
 			   * @param in_sta_table Name of the logging table
