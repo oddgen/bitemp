@@ -27,7 +27,7 @@ prompt APPLICATION 100 - oddgen Bitemp Remodeler Demo App
 -- Application Export:
 --   Application:     100
 --   Name:            oddgen Bitemp Remodeler Demo App
---   Date and Time:   00:05 Tuesday September 20, 2016
+--   Date and Time:   02:56 Tuesday September 20, 2016
 --   Exported By:     PHS
 --   Flashback:       0
 --   Export Type:     Application Export
@@ -112,7 +112,7 @@ wwv_flow_api.create_flow(
 ,p_csv_encoding=>'Y'
 ,p_auto_time_zone=>'N'
 ,p_last_updated_by=>'PHS'
-,p_last_upd_yyyymmddhh24miss=>'20160919234948'
+,p_last_upd_yyyymmddhh24miss=>'20160920021414'
 ,p_file_prefix => nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_ui_type_name => null
 );
@@ -11375,7 +11375,7 @@ wwv_flow_api.create_page(
 ,p_cache_mode=>'NOCACHE'
 ,p_help_text=>'No help is available for this page.'
 ,p_last_updated_by=>'PHS'
-,p_last_upd_yyyymmddhh24miss=>'20160919011521'
+,p_last_upd_yyyymmddhh24miss=>'20160920021414'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(2121055420119219)
@@ -11593,7 +11593,7 @@ wwv_flow_api.create_page_item(
 '    OR :P41_EMPNO IS NULL',
 ' ORDER BY empno'))
 ,p_lov_display_null=>'YES'
-,p_lov_cascade_parent_items=>'P41_ENAME'
+,p_lov_cascade_parent_items=>'P41_EMPNO'
 ,p_ajax_optimize_refresh=>'Y'
 ,p_cSize=>30
 ,p_field_template=>wwv_flow_api.id(1863298215813317)
@@ -12199,7 +12199,7 @@ wwv_flow_api.create_page(
 ,p_cache_mode=>'NOCACHE'
 ,p_help_text=>'No help is available for this page.'
 ,p_last_updated_by=>'PHS'
-,p_last_upd_yyyymmddhh24miss=>'20160919003843'
+,p_last_upd_yyyymmddhh24miss=>'20160920021121'
 );
 wwv_flow_api.create_page_plug(
  p_id=>wwv_flow_api.id(2044819937363679)
@@ -12417,7 +12417,7 @@ wwv_flow_api.create_page_item(
 '    OR :P43_EMPNO IS NULL',
 ' ORDER BY empno'))
 ,p_lov_display_null=>'YES'
-,p_lov_cascade_parent_items=>'P43_ENAME'
+,p_lov_cascade_parent_items=>'P43_EMPNO'
 ,p_ajax_optimize_refresh=>'Y'
 ,p_cSize=>30
 ,p_field_template=>wwv_flow_api.id(1863298215813317)
