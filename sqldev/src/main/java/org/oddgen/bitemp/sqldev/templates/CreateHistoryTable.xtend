@@ -16,7 +16,6 @@
 package org.oddgen.bitemp.sqldev.templates
 
 import com.jcabi.aspects.Loggable
-import java.util.ArrayList
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
@@ -26,20 +25,6 @@ import org.oddgen.sqldev.LoggableConstants
 class CreateHistoryTable {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 	
-	def getLatestPkColumnNames(GeneratorModel model) {
-		val cols = new ArrayList<String>
-		for (col : model.inputTable.primaryKeyConstraint.columnNames) {
-			cols.add(col.toLowerCase)
-		}
-		return cols
-	}
-
-	def getHistoryUkColumnNames(GeneratorModel model) {
-		val cols = model.latestPkColumnNames
-		cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase)
-		return cols
-	}
-
 	def compile(
 		GeneratorModel model) '''
 		«IF model.inputTable.exists»
