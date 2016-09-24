@@ -15,6 +15,7 @@
  */
 package org.oddgen.bitemp.sqldev.model.generator
 
+import java.util.ArrayList
 import java.util.Collections
 import java.util.LinkedHashMap
 import java.util.List
@@ -346,6 +347,20 @@ class GeneratorModelTools {
 		GeneratorModel model) {
 		val name = '''«model.baseTableName.toLowerCase»«model.params.get(BitempRemodeler.COLLECTION_TYPE_SUFFIX).toLowerCase»'''
 		return name.toString
+	}
+
+	def getLatestPkColumnNames(GeneratorModel model) {
+		val cols = new ArrayList<String>
+		for (col : model.inputTable.primaryKeyConstraint.columnNames) {
+			cols.add(col.toLowerCase)
+		}
+		return cols
+	}
+
+	def getHistoryUkColumnNames(GeneratorModel model) {
+		val cols = model.latestPkColumnNames
+		cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase)
+		return cols
 	}
 
 }
