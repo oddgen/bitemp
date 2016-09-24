@@ -1133,6 +1133,11 @@ class CreateApiPackageBody {
 			           FROM user_constraints 
 			          WHERE table_name = '«model.historyTableName.toUpperCase»'
 			            AND constraint_type = 'R';
+			      CURSOR c_uk IS
+			         SELECT constraint_name 
+			           FROM user_constraints 
+			          WHERE table_name = '«model.historyTableName.toUpperCase»'
+			            AND constraint_type = 'U';
 			      --
 			      -- init_load.check_tables_empty
 			      --
@@ -1171,7 +1176,7 @@ class CreateApiPackageBody {
 			            print_line(
 			               in_proc  => 'init_load.enable_fk_constraints', 
 			               in_level => co_debug, 
-			               in_line  => r_fk.constraint_name || ' disabled.'
+			               in_line  => 'fk constraint ' || r_fk.constraint_name || ' disabled.'
 			            );
 			         END LOOP all_fk_constraints;
 			      END disable_fk_constraints;
@@ -1187,141 +1192,174 @@ class CreateApiPackageBody {
 			            print_line(
 			               in_proc  => 'init_load.enable_fk_constraints', 
 			               in_level => co_debug, 
-			               in_line  => r_fk.constraint_name || ' enabled.'
+			               in_line  => 'fk constraint ' || r_fk.constraint_name || ' enabled.'
 			            );
 			         END LOOP all_fk_constraints;
 			      END enable_fk_constraints;
 			      --
+			      -- init_load.drop_uk_constraints
+			      --
+			      PROCEDURE drop_uk_constraints IS
+			      BEGIN
+			         -- It is just too expensive to keep UK constraints during load
+			         -- All UK constraints are dropped, even just one is expected.
+			         <<all_uk_constraints>>
+			         FOR r_uk IN c_uk LOOP
+			            EXECUTE IMMEDIATE 'ALTER TABLE «model.historyTableName» DROP CONSTRAINT "' 
+			               || r_uk.constraint_name || '" DROP INDEX';
+			            print_line(
+			               in_proc  => 'init_load.drop_uk_constraints', 
+			               in_level => co_debug, 
+			               in_line  => 'uk constraint ' || r_uk.constraint_name || ' and dropped (including index).'
+			            );
+			         END LOOP all_uk_constraints;
+			      END drop_uk_constraints;
+			      --
+			      -- init_load.create_uk_constraint
+			      --
+			      PROCEDURE create_uk_constraint IS
+			      BEGIN
+			         EXECUTE IMMEDIATE 'ALTER TABLE «model.historyTableName» ADD UNIQUE («
+			            FOR col : model.historyUkColumnNames SEPARATOR ", "»«col»«ENDFOR») DEFERRABLE INITIALLY DEFERRED';
+			         print_line(
+			            in_proc  => 'init_load.create_uk_constraint', 
+			            in_level => co_debug, 
+			            in_line  => 'uk constraint created.'
+			         );
+			      END create_uk_constraint;
+			      --
 			      -- init_load.do
 			      --
 			      PROCEDURE do IS
-			         l_stmt    CLOB;
-			         l_err_tag VARCHAR2(1000 CHAR);
+			         l_ins_lt_stmt CLOB;
+			         l_ins_ht_stmt CLOB;
+			         l_sel_stmt    CLOB;
+			         l_stmt        CLOB;
+			         l_err_tag     VARCHAR2(1000 CHAR);
 			      BEGIN
 			         l_err_tag := «model.getErrTagExpr("init_load", "in_sta_table", "SYSTIMESTAMP")»;
-			         l_stmt := q'[
-			            INSERT ALL
-			               WHEN 1=1 THEN
-			                    INTO «model.historyTableName» (
-			                            «FOR col : model.columnNames.filter[it != histId] SEPARATOR ","»
-			                            	«col»
-			                            «ENDFOR»
-			                         )
-			                  VALUES (
-			                            «FOR col : model.columnNames.filter[it != histId] SEPARATOR ","»
-			                            	«col»
-			                            «ENDFOR»
-			                         )
-			                     LOG ERRORS INTO ]' || in_log_table || q'[(']' || l_err_tag || q'[') REJECT LIMIT ]' || in_reject_limit || q'[
-			               WHEN «validTo» IS NULL THEN
-			                    INTO «model.latestTableName» (
+			         l_ins_lt_stmt := q'[
+			            INSERT /*+ append */ 
+			                   INTO «model.latestTableName» (
 			                           «FOR col : model.latestColumnNames SEPARATOR ","»
 			                           	«col»
 			                           «ENDFOR»
-			                         ) 
-			                  VALUES (
-			                           «FOR col : model.latestColumnNames SEPARATOR ","»
+			            		     )
+			                 SELECT «FOR col : model.latestColumnNames 
+			                 		  SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			                   FROM (${the_select_statement})
+			                  WHERE «validTo» IS NULL
+			                    LOG ERRORS INTO ]' || in_log_table || q'[(']' || l_err_tag || q'[') REJECT LIMIT ]' || in_reject_limit;
+			         l_ins_ht_stmt := q'[
+			            INSERT /*+ append */
+			                   INTO «model.historyTableName» (
+			                           «FOR col : model.columnNames.filter[it != histId] SEPARATOR ","»
 			                           	«col»
 			                           «ENDFOR»
-			                          )
-			                     LOG ERRORS INTO ]' || in_log_table || q'[(']' || l_err_tag || q'[') REJECT LIMIT ]' || in_reject_limit || q'[
-			            WITH
-			               active AS (
-			                  -- truncate period columns if granularity is different to the data type default
-			                  «IF model.granularityRequiresTruncation»
-			                  	SELECT TRUNC(«validFrom», '«model.granuarityTruncationFormat»') AS «validFrom»,
-			                  	       TRUNC(«validTo», '«model.granuarityTruncationFormat»') AS «validTo»,
-			                  «ELSE»
-			                  	SELECT «validFrom»,
-			                  	       «validTo»,
-			                  «ENDIF»
-			                         «FOR col : model.columnNames.filter[
-			                         	it != histId && it != validFrom && it != validTo
-			                         ] SEPARATOR ","»
-			                          «col»
-			                         «ENDFOR»
-			                    FROM ]' || in_sta_table || q'[
-			                   WHERE «isDeleted» IS NULL
-			               ),
-			               valid AS (
-			                  -- filter invalid periods, e.g. produced by truncation
-			                  SELECT «FOR col : model.columnNames.filter[it != histId] 
-			                          SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
-			                    FROM active
-			                   WHERE «validFrom» < «validTo»
-			                      OR «validFrom» IS NULL AND «validTo» IS NOT NULL
-			                      OR «validFrom» IS NOT NULL AND «validTo» IS NULL
-			                      OR «validFrom» IS NULL AND «validTo» IS NULL
-			               ),
-			               merged AS (
-			                  -- merge periods with identical column values into a single row
-			                  SELECT «validFrom»,
-			                         LAG («validTo», 1, NULL) OVER (PARTITION BY «
-			                            FOR col : model.pkColumnNames 
-			                         	SEPARATOR ", "»«col»«ENDFOR» ORDER BY «validFrom» NULLS FIRST) AS «gapStart»,
-			                         «validTo»,
-			                         LEAD («validFrom», 1, NULL) OVER (PARTITION BY «
-			                         	FOR col : model.pkColumnNames 
-			                         	SEPARATOR ", "»«col»«ENDFOR» ORDER BY «validFrom» NULLS FIRST) AS «gapEnd»,
-			                         «FOR col : model.columnNames.filter[
-			                         	it != validFrom && it != validTo && it != histId
-			                         ] SEPARATOR ","»
-			                         	«col»
-			                         «ENDFOR»
-			                    FROM valid
-			                         MATCH_RECOGNIZE (
-			                            PARTITION BY «FOR col : model.columnNames.filter[it != validFrom && it != validTo && it != histId] 
-			                                          SEPARATOR ", "»«col»«ENDFOR»
-			                            ORDER BY «validFrom» NULLS FIRST
-			                            MEASURES FIRST(«validFrom») AS «validFrom», LAST(«validTo») AS «validTo»
-			                            ONE ROW PER MATCH
-			                            PATTERN ( strt nxt* )
-			                            DEFINE nxt AS «validFrom» = PREV(«validTo»)
-			                         )
-			               ),
-			               combined AS (
-			                  -- active periods
-			                  SELECT «validFrom»,
-			                         «validTo»,
-			                         NULL AS «isDeleted»,
-			                         «FOR col : model.columnNames.filter[
-			                         	it != validFrom && it != validTo && it != isDeleted && it != histId
-			                         ] SEPARATOR ","»
-			                         	«col»
-			                         «ENDFOR»
-			                    FROM merged
-			                  UNION ALL
-			                  -- deleted start periods
-			                  SELECT «gapStart» AS «validFrom»,
-			                         «validFrom» as «validTo»,
-			                         1 AS «isDeleted»,
-			                         «FOR col : model.columnNames.filter[
-			                         	it != validFrom && it != validTo && it != isDeleted && it != histId
-			                         ] SEPARATOR ","»
-			                         	«col»
-			                         «ENDFOR»
-			                    FROM merged
-			                   WHERE «validFrom» IS NOT NULL AND «gapStart» IS NULL
-			                  UNION ALL
-			                  -- deleted non-starting periods
-			                  SELECT «validTo» AS «validFrom»,
-			                         «gapEnd» as «validTo»,
-			                         1 AS «isDeleted»,
-			                         «FOR col : model.columnNames.filter[
-			                         	it != validFrom && it != validTo && it != isDeleted && it != histId
-			                         ] SEPARATOR ","»
-			                         	«col»
-			                         «ENDFOR»
-			                    FROM merged
-			                   WHERE «validTo» != «gapEnd» 
-			                      OR «validTo» IS NULL AND «gapEnd» IS NOT NULL
-			                      OR «validTo» IS NOT NULL AND «gapEnd» IS NULL
-			               )
-			            -- main
-			            SELECT «FOR col : model.columnNames.filter[it != histId] 
-			                    SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
-			              FROM combined
-			         ]';
+			            	        )
+			                 SELECT «FOR col : model.columnNames.filter[it != histId] 
+			                         SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			                   FROM (${the_select_statement})
+			                    LOG ERRORS INTO ]' || in_log_table || q'[(']' || l_err_tag || q'[') REJECT LIMIT ]' || in_reject_limit;
+			         l_sel_stmt := q'[
+			                           WITH
+			                              active AS (
+			                                 -- truncate period columns if granularity is different to the data type default
+			                                 «IF model.granularityRequiresTruncation»
+			                                 	SELECT TRUNC(«validFrom», '«model.granuarityTruncationFormat»') AS «validFrom»,
+			                                 	       TRUNC(«validTo», '«model.granuarityTruncationFormat»') AS «validTo»,
+			                                 «ELSE»
+			                                 	SELECT «validFrom»,
+			                                 	       «validTo»,
+			                                 «ENDIF»
+			                                        «FOR col : model.columnNames.filter[
+			                                        	it != histId && it != validFrom && it != validTo
+			                                        ] SEPARATOR ","»
+			                                         «col»
+			                                        «ENDFOR»
+			                                   FROM ]' || in_sta_table || q'[
+			                                  WHERE «isDeleted» IS NULL
+			                              ),
+			                              valid AS (
+			                                 -- filter invalid periods, e.g. produced by truncation
+			                                 SELECT «FOR col : model.columnNames.filter[it != histId] 
+			                                         SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			                                   FROM active
+			                                  WHERE «validFrom» < «validTo»
+			                                     OR «validFrom» IS NULL AND «validTo» IS NOT NULL
+			                                     OR «validFrom» IS NOT NULL AND «validTo» IS NULL
+			                                     OR «validFrom» IS NULL AND «validTo» IS NULL
+			                              ),
+			                              merged AS (
+			                                 -- merge periods with identical column values into a single row
+			                                 SELECT «validFrom»,
+			                                        LAG («validTo», 1, NULL) OVER (PARTITION BY «
+			                                           FOR col : model.pkColumnNames 
+			                                        	SEPARATOR ", "»«col»«ENDFOR» ORDER BY «validFrom» NULLS FIRST) AS «gapStart»,
+			                                        «validTo»,
+			                                        LEAD («validFrom», 1, NULL) OVER (PARTITION BY «
+			                                        	FOR col : model.pkColumnNames 
+			                                        	SEPARATOR ", "»«col»«ENDFOR» ORDER BY «validFrom» NULLS FIRST) AS «gapEnd»,
+			                                        «FOR col : model.columnNames.filter[
+			                                        	it != validFrom && it != validTo && it != histId
+			                                        ] SEPARATOR ","»
+			                                        	«col»
+			                                        «ENDFOR»
+			                                   FROM valid
+			                                        MATCH_RECOGNIZE (
+			                                           PARTITION BY «FOR col : model.columnNames.filter[it != validFrom && it != validTo && it != histId] 
+			                                                         SEPARATOR ", "»«col»«ENDFOR»
+			                                           ORDER BY «validFrom» NULLS FIRST
+			                                           MEASURES FIRST(«validFrom») AS «validFrom», LAST(«validTo») AS «validTo»
+			                                           ONE ROW PER MATCH
+			                                           PATTERN ( strt nxt* )
+			                                           DEFINE nxt AS «validFrom» = PREV(«validTo»)
+			                                        )
+			                              ),
+			                              combined AS (
+			                                 -- active periods
+			                                 SELECT «validFrom»,
+			                                        «validTo»,
+			                                        NULL AS «isDeleted»,
+			                                        «FOR col : model.columnNames.filter[
+			                                        	it != validFrom && it != validTo && it != isDeleted && it != histId
+			                                        ] SEPARATOR ","»
+			                                        	«col»
+			                                        «ENDFOR»
+			                                   FROM merged
+			                                 UNION ALL
+			                                 -- deleted start periods
+			                                 SELECT «gapStart» AS «validFrom»,
+			                                        «validFrom» as «validTo»,
+			                                        1 AS «isDeleted»,
+			                                        «FOR col : model.columnNames.filter[
+			                                        	it != validFrom && it != validTo && it != isDeleted && it != histId
+			                                        ] SEPARATOR ","»
+			                                        	«col»
+			                                        «ENDFOR»
+			                                   FROM merged
+			                                  WHERE «validFrom» IS NOT NULL AND «gapStart» IS NULL
+			                                 UNION ALL
+			                                 -- deleted non-starting periods
+			                                 SELECT «validTo» AS «validFrom»,
+			                                        «gapEnd» as «validTo»,
+			                                        1 AS «isDeleted»,
+			                                        «FOR col : model.columnNames.filter[
+			                                        	it != validFrom && it != validTo && it != isDeleted && it != histId
+			                                        ] SEPARATOR ","»
+			                                        	«col»
+			                                        «ENDFOR»
+			                                   FROM merged
+			                                  WHERE «validTo» != «gapEnd» 
+			                                     OR «validTo» IS NULL AND «gapEnd» IS NOT NULL
+			                                     OR «validTo» IS NOT NULL AND «gapEnd» IS NULL
+			                              )
+			                           -- main
+			                           SELECT «FOR col : model.columnNames.filter[it != histId] 
+			                                   SEPARATOR ',' + System.lineSeparator + '       '»«col»«ENDFOR»
+			                             FROM combined
+			                        ]';
+			         l_stmt := replace(l_ins_lt_stmt, '${the_select_statement}', l_sel_stmt);
 			         print_lines(
 			            in_proc  => 'init_load.do',
 			            in_level => co_trace, 
@@ -1331,7 +1369,19 @@ class CreateApiPackageBody {
 			         print_line(
 			            in_proc  => 'init_load.do',
 			            in_level => co_debug,
-			            in_line  => SQL%ROWCOUNT || ' rows inserted.'
+			            in_line  => SQL%ROWCOUNT || ' rows inserted into «model.latestTableName».'
+			         );
+			         l_stmt := replace(l_ins_ht_stmt, '${the_select_statement}', l_sel_stmt);
+			         print_lines(
+			            in_proc  => 'init_load.do',
+			            in_level => co_trace, 
+			            in_lines => l_stmt
+			         );
+			         EXECUTE IMMEDIATE l_stmt;
+			         print_line(
+			            in_proc  => 'init_load.do',
+			            in_level => co_debug,
+			            in_line  => SQL%ROWCOUNT || ' rows inserted into «model.historyTableName».'
 			         );
 			      END do;
 			   BEGIN
@@ -1344,8 +1394,10 @@ class CreateApiPackageBody {
 			      check_tables_empty;
 			      check_reject_limit (in_reject_limit => in_reject_limit);
 			      disable_fk_constraints;
+			      drop_uk_constraints;
 			      do;
 			      enable_fk_constraints;
+			      create_uk_constraint;
 			      print_line(in_proc => 'init_load', in_level => co_info, in_line => 'completed.');
 			   END init_load;
 
