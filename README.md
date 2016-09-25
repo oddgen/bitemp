@@ -20,7 +20,7 @@ The Oracle Database 12c supports the transaction time dimension through flashbac
 
 ### Switching To Any Model
 
-The goal is to keep a model as simple as possible. This means to use non-temporal table whenever feasible. However, if you need to switch the to a temporal model, it should be as easy as possible.
+The goal is to keep a model as simple as possible. This means to use non-temporal tables whenever feasible. However, if you need to switch the to a temporal model, it should be as easy as possible.
 
 When switching from a source to a target model
 
@@ -46,18 +46,17 @@ The history table is maintained for uni-temporal valid-time and bi-temporal mode
 | :---------------- | :------------ | :-------------------------: |
 |```HIST_ID$```    | primary key, identity column, always generated | No |
 |```VT_START```    | start of valid time period | Yes |
-|```VT_END```      | end of valid time period | Yes ||```VT$```	        | hidden vitual column, temporal validity period definition | No ||```IS_DELETED$``` | ```1``` means that a period is marked as deleted, ```NULL``` means that the period is active (default) | No |
-
+|```VT_END```      | end of valid time period | Yes ||```VT$```	        | hidden vitual column, temporal validity period definition | No |
 ### Temporal vs. Non-Temporal Columns
 
-All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define per column which attribute is temporal (e.g. in dimensions on a Data Mart model you assign SCD1 or SCD2 to an attribute). To not loose this information, it is recommended ammend the table and/or column comments accordingly. 
+All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define that per column and not per table. E.g. for every attribute of dimension in a Data Mart model you assign the slowly changing dimension type. SCD1 for non-temporal attributes or SCD2 for temporal attributes. To not loose this information, it is recommended ammend the table and/or column comments accordingly. 
 
 Technically this simplifies the model defintion, since there is no formal need to distinguish between temporal and non-temporal columns.
 
 But the drawback is, that a change on an non-temporal column leads to additional - from a business perspective - unnecessary periods.
 ### Periods and Temporal Constraints
 
-Periods are defined as right-open intervals. This means that ```VT_START``` is part of the period but ```VT_END``` is not. Oracle defines periods that way for flashback data archive and temporal validity. To query the actual valid data, you have to define a filter condition as the follows:
+Periods are defined as right-open intervals. This means that ```VT_START``` is part of the period but ```VT_END``` is not. Oracle defines periods that way for flashback data archive and temporal validity. To query the actual valid data, you have to define a filter condition as the following one:
 
 ```
 WHERE (vt_start IS NULL OR vt_start <= SYSTIMESTAMP)
@@ -86,18 +85,18 @@ This is either a uni-temporal valid-time or an bi-temporal data model. The diagr
 
 ### Generated Table API
 
-For the temporal example model above the following objects as part of the table API will be generated:
+For the temporal example model above, the following objects are generated as part of the table API:
 
 | Object Type | Object Name | Description |
 | ----------- | ----------- | ----------- | 
 | **View** | ```EMP(_LV)``` | Latest view, latest rows only, updateable |
 | | ```EMP_HV``` | History view, all but deleted rows, updateable |
 | | ```EMP_FHV``` | Full history view, all rows, FBA version columns, readonly |
-| Trigger | ```EMP_TRG``` |Instead-of-trigger on ```EMP(_LV)```, calls ```EMP_API``` (```ins```, ```upd```, ```del```) |
-| | ```EMP_HV_TRG``` | Instead-of-trigger on ```EMP_HV```, calls ```EMP_API``` (```ins```, ```upd```, ```del```) |
-| **Package** | ```EMP_API``` | API package specification (```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output```) |
-| | ```EMP_HOOK``` | Package specification for ```pre_ins```, ```post_ins```, ```pre_upd```, ```post_upd```, ```pre_del``` and ```post_del```. No package body is generated. The implementation of the body is optional. In fact the API ignores errors caused by a missing hook package body. |
-| Package Body | ```EMP_API``` | API package body (```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output```) |
+| Trigger | ```EMP_TRG``` | Instead-of-trigger on ```EMP(_LV)```, calls ```EMP_API.ins```, ```EMP_API.upd``` and ```EMP_API.del``` |
+| | ```EMP_HV_TRG``` | Instead-of-trigger on ```EMP_HV```, calls ```EMP_API.ins```, ```EMP_API.upd``` and ```EMP_API.del```. |
+| **Package** | ```EMP_API``` | API package specification with procedures  ```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output``` |
+| | ```EMP_HOOK``` | Package specification with procedures ```pre_ins```, ```post_ins```, ```pre_upd```, ```post_upd```, ```pre_del``` and ```post_del```. No package body is generated. The implementation of the body is optional. In fact the API ignores errors caused by a missing hook package body. |
+| Package Body | ```EMP_API``` | API package body with implementation of the public procedures ```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output``` |
 | Type | ```EMP_OT``` | Object type for ```EMP_HT``` columns |
 | | ```EMP_CT``` | Collection type, table of emp_ot |
 | Type Body | ```EMP_OT``` | Type body with default constuctor implementation |
@@ -114,7 +113,7 @@ From a user point of view the most important objects are the views and the packa
 
 * Period changed only (vt_start, vt_end)   * Adjust validity of overlapping periods   * Update **all** columns in affected periods   * Requires period to be enlarged to have an impact* Application columns changed (ename, job, mgr, hiredate, sal, comm, deptno)   * Adjust validity of overlapping periods   * Update **changed** columns in all affected periods* Enforces temporal constraints* Keeps history and latest table in sync ### Temporal DELETE
 
-* Delete period from an existing object   * Adjust validity of overlapping periods   * Set ```IS_DELETED$``` to ```1`` in affected periods* Enforces temporal constraints* Keeps history and latest table in sync * Deleting a non-existent period is supported via ```EMP_API.DEL``` or ```EMP_API.INS```* Deleted periods are not shown in updateable latest/history view* Deleted periods are visible in read-only full history view 
+* Delete period from an existing object   * Adjust validity of overlapping periods   * Set ```IS_DELETED$``` to ```1``` in affected periods* Enforces temporal constraints* Keeps history and latest table in sync * Deleting a non-existent period is supported via ```EMP_API.DEL``` or ```EMP_API.INS```* Deleted periods are not shown in updateable latest/history view* Deleted periods are visible in read-only full history view 
 
 ### Bulk Processing
 
