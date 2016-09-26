@@ -20,7 +20,7 @@ The Oracle Database 12c supports the transaction time dimension through flashbac
 
 ### Switching To Any Model
 
-To keep the model as simple you use non-temporal tables whenever feasible. However, if you need to switch the to a temporal model, it should be as easy as possible.
+To keep the model simple you use non-temporal tables. However, if you need to switch to a temporal model, it should be as easy as possible.
 
 When switching from a source to a target model
 
@@ -36,7 +36,7 @@ The latest table contains all columns of the original non-temporal table plus
 
 | Column            | Comment       | Override Name in Generator? |
 | :---------------- | :------------ | :-------------------------: |
-|```IS_DELETED$``` | This column is added when an associated history table is part of the model. ```1``` means that a period is marked as deleted, ```NULL``` means that the period is active (default) | No |
+|```IS_DELETED$``` | This column is added when history table is part of the model. ```1``` means that a period is marked as deleted, ```NULL``` means that the period is active (default) | No |
 ### History Table
 
 The history table is maintained for uni-temporal valid-time and bi-temporal models. Each row represents a period.
@@ -49,7 +49,7 @@ The history table is maintained for uni-temporal valid-time and bi-temporal mode
 |```VT_END```      | end of valid time period | Yes ||```VT$```	        | hidden virtual column, temporal validity period definition | No |
 ### Temporal vs. Non-Temporal Columns
 
-All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define temporality per column and not per table. For example in a dimensional data mart model you assign the slowly changing dimension type SCD1 or SCD2 per column. This definition drives the creation of a new dimension record. It is basically the information why a table is temporal. To not loose this information, it is recommended amend the table and/or column comments accordingly. 
+All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define temporality per column and not per table. For example in a dimensional data mart model you assign the slowly changing dimension type SCD1 or SCD2 per column. This definition drives the creation of a new dimension record. It is basically the information why a table is temporal. To not loose this information, it is recommended to amend the table and/or column comments accordingly. 
 
 Technically this simplifies the model definition, since there is no formal need to distinguish between temporal and non-temporal columns.
 
@@ -77,7 +77,7 @@ WHERE (vt_start IS NULL OR vt_start <= SYSTIMESTAMP)
 
 ### Temporal Example Data Model
 
-This is either a uni-temporal valid-time or a bi-temporal data model. The diagram looks for both model the same. On a bi-temporal model a flashback data archive is associated with the history tables ```EMP_HT``` and ```DEPT_HT```.
+The diagram looks the same for a uni-temporal valid-time and bi-temporal data model. On a bi-temporal model a flashback data archive is associated with the history tables ```EMP_HT``` and ```DEPT_HT```.
 
 <img src="https://github.com/oddgen/bitemp/blob/master/images/temporal_model.png?raw=true" title="Temporal Example Model"/>
 
@@ -89,12 +89,12 @@ For the temporal example model above, the following objects are generated as par
 
 | Object Type | Object Name | Description |
 | ----------- | ----------- | ----------- | 
-| **View** | ```EMP(_LV)``` | Latest view, latest rows only, updateable |
+| View | ```EMP(_LV)``` | Latest view, latest rows only, updateable |
 | | ```EMP_HV``` | History view, all but deleted rows, updateable |
 | | ```EMP_FHV``` | Full history view, all rows, FBA version columns, read-only |
 | Trigger | ```EMP_TRG``` | Instead-of-trigger on ```EMP(_LV)```, calls ```EMP_API.ins```, ```EMP_API.upd``` and ```EMP_API.del``` |
 | | ```EMP_HV_TRG``` | Instead-of-trigger on ```EMP_HV```, calls ```EMP_API.ins```, ```EMP_API.upd``` and ```EMP_API.del```. |
-| **Package** | ```EMP_API``` | API package specification with procedures  ```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output``` |
+| Package | ```EMP_API``` | API package specification with procedures  ```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output``` |
 | | ```EMP_HOOK``` | Package specification with procedures ```pre_ins```, ```post_ins```, ```pre_upd```, ```post_upd```, ```pre_del``` and ```post_del```. No package body is generated. The implementation of the body is optional. In fact the API ignores errors caused by a missing hook package body. |
 | Package Body | ```EMP_API``` | API package body with implementation of the public procedures ```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output``` |
 | Type | ```EMP_OT``` | Object type for ```EMP_HT``` columns |
