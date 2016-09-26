@@ -6,7 +6,7 @@
 
 Bitemp Remodeler for SQL Developer is a code generator for Oracle SQL Developer. It generates code to switch between non-temporal, uni-temporal and bi-temporal models while preserving data. The generated table API provides compatibility for existing applications, handles temporal DML and supports temporal queries. 
 
-Business logik may be placed in hooks, call pre or post an insert, update or delete. These hooks are implemented in an optional PL/SQL package body. Optional means that the generated code runs without the hook package body.
+Business logic may be placed in hooks, call pre or post an insert, update or delete. These hooks are implemented in an optional PL/SQL package body. Optional means that the generated code runs without the hook package body.
 
 For efficient bulk operations, dedicated procedures for initial and delta load operations are generated.
 
@@ -30,9 +30,9 @@ When switching from a source to a target model
 
 ### Latest Table
 
-The latest table ist maintained for all model variants. Each row represents the latest (newest, youngest) period. This period is not the actual valid row when periods starting in the future are managed.
+The latest table is maintained for all model variants. Each row represents the latest (newest, youngest) period. This period is not the actual valid row when periods starting in the future are managed.
 
-The lastest table contains all columns of the original non-temporal table plus
+The latest table contains all columns of the original non-temporal table plus
 
 | Column            | Comment       | Override Name in Generator? |
 | :---------------- | :------------ | :-------------------------: |
@@ -46,12 +46,12 @@ The history table is maintained for uni-temporal valid-time and bi-temporal mode
 | :---------------- | :------------ | :-------------------------: |
 |```HIST_ID$```    | primary key, identity column, always generated | No |
 |```VT_START```    | start of valid time period | Yes |
-|```VT_END```      | end of valid time period | Yes ||```VT$```	        | hidden vitual column, temporal validity period definition | No |
+|```VT_END```      | end of valid time period | Yes ||```VT$```	        | hidden virtual column, temporal validity period definition | No |
 ### Temporal vs. Non-Temporal Columns
 
-All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define temporality per column and not per table. For example in a dimensional data mart model you assign the slowly changing dimension type SCD1 or SCD2 per column. This definition drives the creation of a new dimension record. It is basically the information why a table is temporal. To not loose this information, it is recommended ammend the table and/or column comments accordingly. 
+All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define temporality per column and not per table. For example in a dimensional data mart model you assign the slowly changing dimension type SCD1 or SCD2 per column. This definition drives the creation of a new dimension record. It is basically the information why a table is temporal. To not loose this information, it is recommended amend the table and/or column comments accordingly. 
 
-Technically this simplifies the model defintion, since there is no formal need to distinguish between temporal and non-temporal columns.
+Technically this simplifies the model definition, since there is no formal need to distinguish between temporal and non-temporal columns.
 
 But the drawback is, that a change on non-temporal columns may create additional - from a business perspective - unnecessary periods.
 ### Periods and Temporal Constraints
@@ -77,7 +77,7 @@ WHERE (vt_start IS NULL OR vt_start <= SYSTIMESTAMP)
 
 ### Temporal Example Data Model
 
-This is either a uni-temporal valid-time or an bi-temporal data model. The diagram looks for both model the same. On a bi-temporal model a flashback data archive is associated with the history tables ```EMP_HT``` and ```DEPT_HT```.
+This is either a uni-temporal valid-time or a bi-temporal data model. The diagram looks for both model the same. On a bi-temporal model a flashback data archive is associated with the history tables ```EMP_HT``` and ```DEPT_HT```.
 
 <img src="https://github.com/oddgen/bitemp/blob/master/images/temporal_model.png?raw=true" title="Temporal Example Model"/>
 
@@ -91,7 +91,7 @@ For the temporal example model above, the following objects are generated as par
 | ----------- | ----------- | ----------- | 
 | **View** | ```EMP(_LV)``` | Latest view, latest rows only, updateable |
 | | ```EMP_HV``` | History view, all but deleted rows, updateable |
-| | ```EMP_FHV``` | Full history view, all rows, FBA version columns, readonly |
+| | ```EMP_FHV``` | Full history view, all rows, FBA version columns, read-only |
 | Trigger | ```EMP_TRG``` | Instead-of-trigger on ```EMP(_LV)```, calls ```EMP_API.ins```, ```EMP_API.upd``` and ```EMP_API.del``` |
 | | ```EMP_HV_TRG``` | Instead-of-trigger on ```EMP_HV```, calls ```EMP_API.ins```, ```EMP_API.upd``` and ```EMP_API.del```. |
 | **Package** | ```EMP_API``` | API package specification with procedures  ```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output``` |
@@ -99,9 +99,9 @@ For the temporal example model above, the following objects are generated as par
 | Package Body | ```EMP_API``` | API package body with implementation of the public procedures ```ins```, ```upd```, ```del```, ```init_load```, ```delta_load```, ```create_load_tables``` and ```set_debug_output``` |
 | Type | ```EMP_OT``` | Object type for ```EMP_HT``` columns |
 | | ```EMP_CT``` | Collection type, table of emp_ot |
-| Type Body | ```EMP_OT``` | Type body with default constuctor implementation |
+| Type Body | ```EMP_OT``` | Type body with default constructor implementation |
 
-All suffixes may be overriden when running the generator.
+All suffixes may be overridden when running the generator.
 
 From a user point of view the most important objects are the views and the packages. They are the public interface of the table API.
 
@@ -111,13 +111,13 @@ From a user point of view the most important objects are the views and the packa
 
 ### Temporal UPDATE
 
-* Period changed only (vt_start, vt_end)   * Adjust validity of overlapping periods   * Update **all** columns in affected periods   * Requires period to be enlarged to have an impact* Application columns changed (ename, job, mgr, hiredate, sal, comm, deptno)   * Adjust validity of overlapping periods   * Update **changed** columns in all affected periods* Enforces temporal constraints* Keeps history and latest table in sync ### Temporal DELETE
+* Period changed only (```vt_start```, ```vt_end```)   * Adjust validity of overlapping periods   * Update **all** columns in affected periods   * Requires period to be enlarged to have an impact* Application columns changed (```ename```, ```job```, ```mgr```, ```hiredate```, ```sal```, ```comm```, ```deptno```)   * Adjust validity of overlapping periods   * Update **changed** columns in all affected periods* Enforces temporal constraints* Keeps history and latest table in sync ### Temporal DELETE
 
 * Delete period from an existing object   * Adjust validity of overlapping periods   * Set ```IS_DELETED$``` to ```1``` in affected periods* Enforces temporal constraints* Keeps history and latest table in sync * Deleting a non-existent period is supported via ```EMP_API.DEL``` or ```EMP_API.INS```* Deleted periods are not shown in updateable latest/history view* Deleted periods are visible in read-only full history view 
 
 ### Bulk Processing
 
-Use the procedures ```create_load_tables```, ```init_load``` and ```delta_load``` for processing large data sets. See documentation in generated package specifiction for details.
+Use the procedures ```create_load_tables```, ```init_load``` and ```delta_load``` for processing large data sets. See documentation in generated package specification for details.
 ## Releases
 
 Binary releases are published [here](https://github.com/oddgen/bitemp/releases).
@@ -133,7 +133,7 @@ Please file your bug reports, enhancement requests, questions and other support 
 ## How to Contribute
 
 1. Describe your idea by [submitting an issue](https://github.com/oddgen/bitemp/issues/new)
-2. [Fork the bitemp respository](https://github.com/oddgen/bitemp/fork)
+2. [Fork the bitemp repository](https://github.com/oddgen/bitemp/fork)
 3. [Create a branch](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/), commit and publish your changes and enhancements
 4. [Create a pull request](https://help.github.com/articles/creating-a-pull-request/)
 
