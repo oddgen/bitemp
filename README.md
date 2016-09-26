@@ -20,7 +20,7 @@ The Oracle Database 12c supports the transaction time dimension through flashbac
 
 ### Switching To Any Model
 
-The goal is to keep a model as simple as possible. This means to use non-temporal tables whenever feasible. However, if you need to switch the to a temporal model, it should be as easy as possible.
+To keep the model as simple you use non-temporal tables whenever feasible. However, if you need to switch the to a temporal model, it should be as easy as possible.
 
 When switching from a source to a target model
 
@@ -49,14 +49,14 @@ The history table is maintained for uni-temporal valid-time and bi-temporal mode
 |```VT_END```      | end of valid time period | Yes ||```VT$```	        | hidden vitual column, temporal validity period definition | No |
 ### Temporal vs. Non-Temporal Columns
 
-All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define that per column and not per table. E.g. for every attribute of dimension in a Data Mart model you assign the slowly changing dimension type. SCD1 for non-temporal attributes or SCD2 for temporal attributes. To not loose this information, it is recommended ammend the table and/or column comments accordingly. 
+All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define temporality per column and not per table. For example in a dimensional data mart model you assign the slowly changing dimension type SCD1 or SCD2 per column. This definition drives the creation of a new dimension record. It is basically the information why a table is temporal. To not loose this information, it is recommended ammend the table and/or column comments accordingly. 
 
 Technically this simplifies the model defintion, since there is no formal need to distinguish between temporal and non-temporal columns.
 
-But the drawback is, that a change on an non-temporal column leads to additional - from a business perspective - unnecessary periods.
+But the drawback is, that a change on non-temporal columns may create additional - from a business perspective - unnecessary periods.
 ### Periods and Temporal Constraints
 
-Periods are defined as right-open intervals. This means that ```VT_START``` is part of the period but ```VT_END``` is not. Oracle defines periods that way for flashback data archive and temporal validity. To query the actual valid data, you have to define a filter condition as the following one:
+Oracle uses right-open intervals for periods in flashback data archive and temporal validity. This means that ```VT_START``` is part of the period but ```VT_END``` is not. To query the actual valid data, you have to define a filter condition as the following one:
 
 ```
 WHERE (vt_start IS NULL OR vt_start <= SYSTIMESTAMP)
