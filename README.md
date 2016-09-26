@@ -36,10 +36,10 @@ The latest table contains all columns of the original non-temporal table plus
 
 | Column            | Comment       | Override Name in Generator? |
 | :---------------- | :------------ | :-------------------------: |
-|```IS_DELETED$``` | This column is added when history table is part of the model. ```1``` means that a period is marked as deleted, ```NULL``` means that the period is active (default) | No |
+|```IS_DELETED$``` | This column is added for uni-temporal valid time and bi-temporal models. ```1``` means that a period is marked as deleted, ```NULL``` means that the period is active (default) | No |
 ### History Table
 
-The history table is maintained for uni-temporal valid-time and bi-temporal models. Each row represents a period.
+The history table is maintained for uni-temporal valid time and bi-temporal models. Each row represents a period.
 The history table contains all columns of the latest table plus
 
 | Column            | Comment       | Override Name in Generator? |
@@ -63,7 +63,7 @@ WHERE (vt_start IS NULL OR vt_start <= SYSTIMESTAMP)
   AND (vt_end IS NULL OR vt_end > SYSTIMESTAMP) 
 ```
 
-* For uni-temporal valid-time and bi-temporal models
+* For uni-temporal valid time and bi-temporal models
 * No gaps between periods   * First ```VT_START``` ```IS NULL```   * Last ```VT_END``` ```IS NULL```   * Deleted periods are identified with the condition ```IS_DELETED$ = 1```
    * No overlapping periods* No invalid periods* No duplicate periods* Merge identical, connected periods immediately
 
@@ -77,7 +77,7 @@ WHERE (vt_start IS NULL OR vt_start <= SYSTIMESTAMP)
 
 ### Temporal Example Data Model
 
-The diagram looks the same for a uni-temporal valid-time and bi-temporal data model. On a bi-temporal model a flashback data archive is associated with the history tables ```EMP_HT``` and ```DEPT_HT```.
+The diagram looks the same for a uni-temporal valid time and bi-temporal data model. In a bi-temporal model a flashback data archive is associated with the history tables ```EMP_HT``` and ```DEPT_HT```.
 
 <img src="https://github.com/oddgen/bitemp/blob/master/images/temporal_model.png?raw=true" title="Temporal Example Model"/>
 
