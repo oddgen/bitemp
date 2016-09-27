@@ -6,6 +6,7 @@
 	<groupId>org.oddgen</groupId>
 	<artifactId>org.oddgen.bitemp.sqldev</artifactId>
 	<version>0.2.0-SNAPSHOT</version>
+	<packaging>bundle</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jdk.version>1.7</jdk.version>
