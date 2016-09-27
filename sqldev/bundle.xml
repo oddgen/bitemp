@@ -5,6 +5,6 @@
 		<u:version>#EXTENSION_VERSION#</u:version>
 		<u:author>#EXTENSION_OWNER#</u:author>
 		<u:author-url>https://www.oddgen.org/</u:author-url>
-		<u:description><![CDATA[SQL Developer extension to generate non-temporal, uni-temporal and bi-temporal table API.]]></u:description>
+		<u:description><![CDATA[SQL Developer extension to generate non-temporal&#44; uni-temporal and bi-temporal table API.]]></u:description>
 	</u:update>
 </update-bundle>
