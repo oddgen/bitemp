@@ -309,6 +309,31 @@ class CreateApiPackageBody {
 			      in_row IN «model.objectTypeName»
 			   ) IS
 			   BEGIN
+			      -- In 12.1.0.2 locked rows are recognized as a change and may lead to unwanted FBA history
+			      -- To avoid this the row in the master table will be locked instead (issue #1)
+			      <<lock_latest>>
+			      DECLARE
+			         l_rid UROWID;
+			      BEGIN
+			         SELECT ROWID
+			           INTO l_rid
+			           FROM «model.latestTableName»
+			          WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»
+			            FOR UPDATE;
+			         print_line(
+			            in_proc  => 'load_version',
+			            in_level => co_debug,
+			            in_line  => 'Locked Latest row.'
+			         );
+			         EXCEPTION
+			            WHEN NO_DATA_FOUND THEN
+			               print_line(
+			                  in_proc  => 'load_version',
+			                  in_level => co_debug,
+			                  in_line  => 'Latest row does not exist, therefore cannot lock it.'
+			               );
+			            
+			      END lock_latest;
 			      -- use VERSIONS PERIOD FOR to ensure no periods of the target table are filtered 
 			      -- on session level by DBMS_FLASHBACK_ARCHIVE.ENABLE_AT_VALID_TIME
 			      SELECT «model.objectTypeName» (
@@ -319,8 +344,7 @@ class CreateApiPackageBody {
 			        BULK COLLECT INTO g_versions_original
 			        FROM «model.historyTableName» «
 			             »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
-			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»
-			         FOR UPDATE;
+			       WHERE «FOR col : model.pkColumnNames SEPARATOR System.lineSeparator + '  AND '»«col» = in_row.«col»«ENDFOR»;
 			      print_line(
 			         in_proc  => 'load_version',
 			         in_level => co_debug,
@@ -574,6 +598,21 @@ class CreateApiPackageBody {
 			   PROCEDURE save_versions IS
 			   BEGIN
 			      print_collection(in_proc => 'save_versions', in_collection => g_versions);
+			      -- dedicated delete step due to issue #1
+			      DELETE
+			        FROM «model.historyTableName»
+			       WHERE «histId» IN (
+			                SELECT o.«histId»
+			                  FROM TABLE(g_versions_original) o
+			                  LEFT JOIN TABLE(g_versions) w
+			                    ON w.«histId» = o.«histId»
+			                 WHERE w.«histId» IS NULL
+			             );
+			      print_line(
+			         in_proc  => 'save_versions', 
+			         in_level => co_debug, 
+			         in_line  => SQL%ROWCOUNT || ' rows deleted.'
+			      );
 			      MERGE 
 			       INTO (
 			               -- use VERSIONS PERIOD FOR to ensure no periods of the target table are filtered 
@@ -583,8 +622,7 @@ class CreateApiPackageBody {
 			                      »VERSIONS PERIOD FOR «BitempRemodeler.VALID_TIME_PERIOD_NAME.toLowerCase» BETWEEN MINVALUE AND MAXVALUE
 			            ) t
 			      USING (
-			               SELECT NULL AS «operation»,
-			                      «FOR col : model.allColumnNames SEPARATOR ","»
+			               SELECT «FOR col : model.allColumnNames SEPARATOR ","»
 			                      	«IF col == validTo»
 			                      		LEAD («validFrom», 1, NULL) OVER (ORDER BY «validFrom» NULLS FIRST) AS «validTo»
 			                      	«ELSE»
@@ -592,23 +630,20 @@ class CreateApiPackageBody {
 			                      	«ENDIF»
 			                      «ENDFOR»
 			                 FROM TABLE(g_versions)
-			               UNION ALL
-			               SELECT 'D' AS «operation», -- NOSONAR, PL/SQL Cop guideline 27, false positive
-			                      «FOR col : model.allColumnNames SEPARATOR ","»
-			                      	o.«col»
-			                      «ENDFOR»
-			                 FROM TABLE(g_versions_original) o
-			                 LEFT JOIN TABLE(g_versions) w
-			                   ON w.«histId» = o.«histId»
-			                WHERE w.«histId» IS NULL
 			            ) s
 			         ON (s.«histId» = t.«histId»)
 			       WHEN MATCHED THEN
 			               UPDATE
 			                  SET «FOR col : model.updateableColumnNames
 			                       SEPARATOR ',' + System.lineSeparator + '    '»t.«col» = s.«col»«ENDFOR»
-			               DELETE
-			                WHERE «operation» = 'D'
+			                WHERE (
+			                         «FOR col : model.updateableColumnNames 
+			                          SEPARATOR System.lineSeparator + 'OR'»
+			                         	(s.«col» != t.«col»
+			                         	 OR s.«col» IS NULL AND t.«col» IS NOT NULL
+			                         	 OR s.«col» IS NOT NULL AND t.«col» IS NULL)
+			                         «ENDFOR»
+			                      )
 			       WHEN NOT MATCHED THEN
 			               INSERT (
 			                         «FOR col : model.updateableColumnNames SEPARATOR ","»
