@@ -6,7 +6,7 @@
 
 Bitemp Remodeler for SQL Developer is a code generator for Oracle SQL Developer. It generates code to switch between non-temporal, uni-temporal and bi-temporal models while preserving data. The generated table API provides compatibility for existing applications, handles temporal DML and supports temporal queries. 
 
-Business logic may be placed in hooks, call pre or post an insert, update or delete. These hooks are implemented in an optional PL/SQL package body. Optional means that the generated code runs without the hook package body.
+Business logic may be placed in hooks, to be called before or after an insert, update or delete. These hooks are implemented in an optional PL/SQL package body. Optional means that the generated code runs without the hook package body.
 
 For efficient bulk operations, dedicated procedures for initial and delta load operations are generated.
 
@@ -63,7 +63,8 @@ WHERE (vt_start IS NULL OR vt_start <= SYSTIMESTAMP)
   AND (vt_end IS NULL OR vt_end > SYSTIMESTAMP) 
 ```
 
-* For uni-temporal valid time and bi-temporal models
+The following temporal constraints are enforced for uni-temporal valid time and bi-temporal models:
+
 * No gaps between periods   * First ```VT_START``` ```IS NULL```   * Last ```VT_END``` ```IS NULL```   * Deleted periods are identified with the condition ```IS_DELETED$ = 1```
    * No overlapping periods* No invalid periods* No duplicate periods* Merge identical, connected periods immediately
 
