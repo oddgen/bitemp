@@ -40,6 +40,7 @@ class MissingPrerequisiteSolutionTest extends AbstractJdbcTest {
 		val expected = '''
 			-- to solve "«BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED")»" run the following statement as SYS:
 			GRANT SELECT_CATALOG_ROLE TO SCOTT;
+			ALTER USER SCOTT DEFAULT ROLE ALL;
 		'''
 		val actual = template.compile(dataSource.connection, BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED"))
 		Assert.assertEquals(expected, actual)
