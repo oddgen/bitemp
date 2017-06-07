@@ -78,6 +78,7 @@ class TableDao {
 			    ON col.table_name = icol.table_name
 			       AND col.column_name = icol.column_name
 			 WHERE col.table_name = ?
+			   AND col.user_generated = 'YES'
 			 ORDER BY col.internal_column_id
 		'''
 		val result = jdbcTemplate.query(sql, new BeanPropertyRowMapper<Column>(Column),
