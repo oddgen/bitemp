@@ -346,10 +346,11 @@
 						<Require-Bundle>
 							org.oddgen.sqldev,
 							oracle.javatools-nodeps,
-							oracle.uic,
 							oracle.idert,
+							oracle.ide,
 							oracle.ide.db,
-							oracle.sqldeveloper
+							oracle.sqldeveloper,
+							oracle.uic
 						</Require-Bundle>
 						<Import-Package>!*</Import-Package>
 						<Embed-Directory>lib</Embed-Directory>
