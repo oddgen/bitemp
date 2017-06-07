@@ -32,6 +32,7 @@ class Column extends AbstractModel {
 	String hiddenColumn
 	String virtualColumn
 	String identityColumn
+	String userGenerated
 	String generationType
 	String sequenceName
 }

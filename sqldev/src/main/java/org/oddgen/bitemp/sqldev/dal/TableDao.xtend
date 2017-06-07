@@ -71,6 +71,7 @@ class TableDao {
 			       col.hidden_column,
 			       col.virtual_column,
 			       col.identity_column,
+			       col.user_generated,
 			       icol.generation_type,
 			       icol.sequence_name
 			  FROM user_tab_cols col
@@ -78,7 +79,10 @@ class TableDao {
 			    ON col.table_name = icol.table_name
 			       AND col.column_name = icol.column_name
 			 WHERE col.table_name = ?
-			   AND col.user_generated = 'YES'
+			   AND NOT (   
+			          user_generated = 'NO'
+			          AND regexp_like(col.column_name, '^SYS_NC[0-9]+\$$')
+			       )
 			 ORDER BY col.internal_column_id
 		'''
 		val result = jdbcTemplate.query(sql, new BeanPropertyRowMapper<Column>(Column),
