@@ -34,6 +34,7 @@ class MissingPrerequisiteSolution {
 				'''
 					-- to solve "«BitempResources.get("ERROR_SELECT_CATALOG_ROLE_REQUIRED")»" run the following statement as SYS:
 					GRANT SELECT_CATALOG_ROLE TO «conn.metaData.userName»;
+					ALTER USER «conn.metaData.userName» DEFAULT ROLE ALL;
 				'''
 			case BitempResources.get("ERROR_NO_FLASHBACK_ARCHIVE"):
 				'''
