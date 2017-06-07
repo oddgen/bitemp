@@ -43,7 +43,7 @@ class MissingPrerequisiteSolution {
 					«IF fbas.size > 0»
 						GRANT FLASHBACK ARCHIVE ON «fbas.get(0)» TO «conn.metaData.userName»;
 					«ELSE»
-						CREATE TABLESPACE fba DATAFILE '«dao.dataFilePath»fba01.dbf' SIZE 10M AUTOEXTEND ON NEXT 1M;
+						CREATE TABLESPACE fba DATAFILE '«dao.dataFilePath»fba01.dbf' SIZE 10M REUSE AUTOEXTEND ON NEXT 1M;
 						CREATE FLASHBACK ARCHIVE fba TABLESPACE fba RETENTION 1 YEAR;
 						GRANT FLASHBACK ARCHIVE ON fba TO «conn.metaData.userName»;
 					«ENDIF»
