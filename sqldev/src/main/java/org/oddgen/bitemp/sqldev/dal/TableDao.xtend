@@ -73,11 +73,37 @@ class TableDao {
 			       col.identity_column,
 			       col.user_generated,
 			       icol.generation_type,
-			       icol.sequence_name
+			       icol.sequence_name,
+			    CASE
+			       WHEN col.data_type_owner IS NOT NULL THEN
+			           'YES'
+			       ELSE
+			          'NO'
+			    END AS is_object_type,
+			    CASE 
+			       WHEN tmap.type_name IS NOT NULL THEN
+			          'YES'
+			       ELSE
+			          'NO'
+			    END AS has_map_method,
+			    CASE 
+			       WHEN tord.type_name IS NOT NULL THEN
+			          'YES'
+			       ELSE
+			          'NO'
+			    END AS has_order_method
 			  FROM user_tab_cols col
 			  LEFT JOIN user_tab_identity_cols icol
 			    ON col.table_name = icol.table_name
 			       AND col.column_name = icol.column_name
+			  LEFT JOIN all_type_methods tmap
+			    ON tmap.owner = col.data_type_owner
+			       AND tmap.type_name = col.data_type
+			       AND tmap.method_type = 'MAP'
+			  LEFT JOIN all_type_methods tord
+			    ON tord.owner = col.data_type_owner
+			       AND tord.type_name = col.data_type
+			       AND tord.method_type = 'ORDER'
 			 WHERE col.table_name = ?
 			   AND NOT (   
 			          user_generated = 'NO'

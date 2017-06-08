@@ -19,6 +19,7 @@ import com.jcabi.aspects.Loggable
 import java.util.ArrayList
 import org.oddgen.bitemp.sqldev.generators.BitempRemodeler
 import org.oddgen.bitemp.sqldev.model.generator.ApiType
+import org.oddgen.bitemp.sqldev.model.generator.Column
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModel
 import org.oddgen.bitemp.sqldev.model.generator.GeneratorModelTools
 import org.oddgen.bitemp.sqldev.resources.BitempResources
@@ -39,6 +40,41 @@ class CreateApiPackageBody {
 		for (col : model.inputTable.columns.values.filter [
 			it.virtualColumn == "NO" && !cols.contains(it.columnName) &&
 				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase
+		]) {
+			cols.add(col.columnName.toLowerCase)
+		}
+		return cols
+	}
+	
+	def isPrintable(Column col) {
+		if (col.isObjectType == "YES") {
+			// printing object types requires knowledge of its structure
+			return false
+		}
+		switch (col.dataType) {
+			case "CLOB":
+				// printing large CLOBs is not feasible
+				return false
+			case "BLOB":
+				// printing BLOBs is (usually) not helpful 
+				return false
+			default:
+				// should be feasible
+				return true
+		}
+	}
+
+	def getAllPrintableColumnNames(GeneratorModel model) {
+		val cols = new ArrayList<String>
+		if (model.targetModel == ApiType.UNI_TEMPORAL_VALID_TIME || model.targetModel == ApiType.BI_TEMPORAL) {
+			cols.add(BitempRemodeler.HISTORY_ID_COL_NAME.toLowerCase)
+			cols.add(model.params.get(BitempRemodeler.VALID_FROM_COL_NAME).toLowerCase)
+			cols.add(model.params.get(BitempRemodeler.VALID_TO_COL_NAME).toLowerCase)
+			cols.add(BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase)
+		}
+		for (col : model.inputTable.columns.values.filter [
+			it.virtualColumn == "NO" && !cols.contains(it.columnName) &&
+				it.columnName != BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase && it.isPrintable
 		]) {
 			cols.add(col.columnName.toLowerCase)
 		}
@@ -251,7 +287,7 @@ class CreateApiPackageBody {
 			         «val dates = model.inputTable.columns.filter[
 			         	k, v| v.dataType == "DATE" || v.dataType == "TIMESTAMP"
 			         ]»
-			         «FOR col : model.allColumnNames»
+			         «FOR col : model.allPrintableColumnNames»
 			         	print_line(
 			         	   in_proc  => in_proc,
 			         	   in_level => co_trace,
@@ -578,10 +614,21 @@ class CreateApiPackageBody {
 			          WHERE «FOR col : model.pkColumnNames 
 			                 SEPARATOR System.lineSeparator + '  AND '»«col» = l_latest_row.«col»«ENDFOR»
 			            AND (
-			                    «FOR col : model.updateableLatestColumnNames SEPARATOR " OR"»
-			                    	(«col» != l_latest_row.«col» OR «
-			                    	col» IS NULL AND l_latest_row.«col» IS NOT NULL OR «
-			                    	col» IS NOT NULL AND l_latest_row.«col» IS NULL)
+			                    «FOR col : model.updateableLatestColumnNames 
+			                     SEPARATOR System.lineSeparator + 'OR' »
+			                    	«val column = model.inputTable.columns.get(col.toUpperCase)»
+			                    	«IF column?.dataType == "CLOB" || column?.dataType == "BLOB"»
+			                    		(sys.dbms_lob.compare(«col», l_latest_row.«col») != 0
+			                    		 OR «col» IS NULL AND l_latest_row.«col» IS NOT NULL
+			                    		 OR «col» IS NOT NULL AND l_latest_row.«col» IS NULL)
+			                    	«ELSEIF column?.isObjectType == "YES" && column?.hasMapMethod == "NO" && column?.hasOrderMethod == "NO"»
+			                    		(«col» IS NULL AND l_latest_row.«col» IS NOT NULL
+			                    		 OR «col» IS NOT NULL AND l_latest_row.«col» IS NULL)
+			                    	«ELSE»
+			                    		(«col» != l_latest_row.«col» 
+			                    		 OR «col» IS NULL AND l_latest_row.«col» IS NOT NULL
+			                    		 OR «col» IS NOT NULL AND l_latest_row.«col» IS NULL)
+				                    «ENDIF»
 			                    «ENDFOR»
 			                );
 			         print_line(
@@ -639,9 +686,19 @@ class CreateApiPackageBody {
 			                WHERE (
 			                         «FOR col : model.updateableColumnNames 
 			                          SEPARATOR System.lineSeparator + 'OR'»
-			                         	(s.«col» != t.«col»
-			                         	 OR s.«col» IS NULL AND t.«col» IS NOT NULL
-			                         	 OR s.«col» IS NOT NULL AND t.«col» IS NULL)
+			                         	«val column = model.inputTable.columns.get(col.toUpperCase)»
+			                         	«IF column?.dataType == "CLOB" || column?.dataType == "BLOB"»
+			                         	 	(sys.dbms_lob.compare(s.«col», t.«col») != 0
+			                         	 	 OR s.«col» IS NULL AND t.«col» IS NOT NULL
+			                         	 	 OR s.«col» IS NOT NULL AND t.«col» IS NULL)
+			                         	«ELSEIF column?.isObjectType == "YES" && column?.hasMapMethod == "NO" && column?.hasOrderMethod == "NO"»
+			                         	 	(s.«col» IS NULL AND t.«col» IS NOT NULL
+			                         	 	 OR s.«col» IS NOT NULL AND t.«col» IS NULL)
+			                         	«ELSE»
+			                         	 	(s.«col» != t.«col»
+			                         	 	 OR s.«col» IS NULL AND t.«col» IS NOT NULL
+			                         	 	 OR s.«col» IS NOT NULL AND t.«col» IS NULL)
+				                        «ENDIF»
 			                         «ENDFOR»
 			                      )
 			       WHEN NOT MATCHED THEN
@@ -874,9 +931,19 @@ class CreateApiPackageBody {
 			         IF (
 			               «FOR col : model.updateableLatestColumnNames.filter[it != isDeleted] 
 			                SEPARATOR System.lineSeparator + 'OR'»
-			               	(io_new_row.«col» != in_old_row.«col» 
-			               	 OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
-			               	 OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL)
+			                «val column = model.inputTable.columns.get(col.toUpperCase)»
+			                «IF column?.dataType == "CLOB" || column?.dataType == "BLOB"»
+			                	(sys.dbms_lob.compare(io_new_row.«col», in_old_row.«col») != 0
+			                	 OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			                	 OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL)
+			                «ELSEIF column?.isObjectType == "YES" && column?.hasMapMethod == "NO" && column?.hasOrderMethod == "NO"»
+			                	(io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			                	 OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL)
+			                «ELSE»
+			                	(io_new_row.«col» != in_old_row.«col»
+			                	 OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			                	 OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL)
+			                «ENDIF»
 			               «ENDFOR»
 			            ) 
 			         THEN
@@ -931,13 +998,31 @@ class CreateApiPackageBody {
 			               THEN
 			                  -- update period
 			                  «FOR col : model.updateableColumnNames.filter[it != validFrom && it != validTo && it != isDeleted]»
-			                  	IF io_new_row.«col» != in_old_row.«col» 
-			                  	   OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
-			                  	   OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
-			                  	THEN
-			                  	   -- update changed column
-			                  	   g_versions(i).«col» := io_new_row.«col»;
-			                  	END IF;
+			                  	«val column = model.inputTable.columns.get(col.toUpperCase)»
+			                  	«IF column?.dataType == "CLOB" || column?.dataType == "BLOB"»
+			                  		IF sys.dbms_lob.compare(io_new_row.«col», in_old_row.«col») != 0
+			                  		   OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			                  		   OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
+			                  		THEN
+			                  		   -- update changed column
+			                  		   g_versions(i).«col» := io_new_row.«col»;
+			                  		END IF;
+			                  	«ELSEIF column?.isObjectType == "YES" && column?.hasMapMethod == "NO" && column?.hasOrderMethod == "NO"»
+			                  		IF io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			                  		   OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
+			                  		THEN
+			                  		   -- update changed column
+			                  		   g_versions(i).«col» := io_new_row.«col»;
+			                  		END IF;
+			                  	«ELSE»
+			                  		IF io_new_row.«col» != in_old_row.«col»
+			                  		   OR io_new_row.«col» IS NULL AND in_old_row.«col» IS NOT NULL
+			                  		   OR io_new_row.«col» IS NOT NULL AND in_old_row.«col» IS NULL
+			                  		THEN
+			                  		   -- update changed column
+			                  		   g_versions(i).«col» := io_new_row.«col»;
+			                  		END IF;
+			                  	«ENDIF»
 			                  «ENDFOR»
 			                  print_line(
 			                     in_proc  => 'do_upd.upd_changed_cols',
@@ -1572,11 +1657,25 @@ class CreateApiPackageBody {
 			               AND ( -- changed column values
 			                     «FOR col : model.updateableLatestColumnNames 
 			                      SEPARATOR System.lineSeparator + 'OR '»
-			                      (
-			                         sta.«col» != ht.«col»
-			                         OR sta.«col» IS NULL AND ht.«col» IS NOT NULL
-			                         OR sta.«col» IS NOT NULL AND ht.«col» IS NULL
-			                      )
+			                     	«val column = model.inputTable.columns.get(col.toUpperCase)»
+			                     	«IF column?.dataType == "CLOB" || column?.dataType == "BLOB"»
+			                     		(
+			                     			  sys.dbms_lob.compare(sta.«col», ht.«col») != 0
+			                     		   OR sta.«col» IS NULL AND ht.«col» IS NOT NULL
+			                     		   OR sta.«col» IS NOT NULL AND ht.«col» IS NULL
+			                     		)
+			                     	«ELSEIF column?.isObjectType == "YES" && column?.hasMapMethod == "NO" && column?.hasOrderMethod == "NO"»
+			                     		(
+			                     			  sta.«col» IS NULL AND ht.«col» IS NOT NULL
+			                     		   OR sta.«col» IS NOT NULL AND ht.«col» IS NULL
+			                     		)
+			                     	«ELSE»
+			                     		(
+			                     			  sta.«col» != ht.«col»
+			                     		   OR sta.«col» IS NULL AND ht.«col» IS NOT NULL
+			                     		   OR sta.«col» IS NOT NULL AND ht.«col» IS NULL
+			                     		)
+			                      	«ENDIF»
 			                     «ENDFOR»
 			                   )
 			                OR ( -- new periods

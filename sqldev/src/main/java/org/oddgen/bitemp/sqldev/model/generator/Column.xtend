@@ -35,4 +35,7 @@ class Column extends AbstractModel {
 	String userGenerated
 	String generationType
 	String sequenceName
+	String isObjectType
+	String hasMapMethod
+	String hasOrderMethod
 }
