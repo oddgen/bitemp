@@ -40,6 +40,7 @@ class CreateHistoryView {
 		]) {
 			cols.add(col.columnName)
 		}
+		cols.add(BitempRemodeler.IS_DELETED_COL_NAME)
 		return cols
 	}
 
@@ -70,8 +71,7 @@ class CreateHistoryView {
 				SELECT «FOR col : model.columnNames SEPARATOR ',' + System.lineSeparator + '       '»«
 				       	»«col.toLowerCase»«
 				       »«ENDFOR»
-				  FROM «model.historyTableName»
-				 WHERE «BitempRemodeler.IS_DELETED_COL_NAME.toLowerCase» IS NULL;
+				  FROM «model.historyTableName»;
 			«ENDIF»
 		«ENDIF»
 	'''

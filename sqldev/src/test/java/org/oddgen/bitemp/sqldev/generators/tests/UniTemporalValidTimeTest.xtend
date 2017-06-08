@@ -66,38 +66,38 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		Assert.assertEquals(5, getCount("D2", ""))
 		Assert.assertEquals(6, getCount("D2_HT", ""))
 		jdbcTemplate.execute('''
-			INSERT 
-			  INTO d2_hv 
-			VALUES (NULL, SYSDATE, SYSDATE+10, 50, 'TEST', 'Zürich')
+			INSERT
+			  INTO d2_hv (vt_start, vt_end, deptno, dname, loc)
+			VALUES (SYSDATE, SYSDATE+10, 50, 'TEST', 'Zürich')
 		''')
 		Assert.assertEquals(5, getCount("D2", ""))
 		Assert.assertEquals(7, getCount("D2_HT", ""))
 		Assert.assertEquals(5, getCount("D2_LV", ""))
-		Assert.assertEquals(6, getCount("D2_HV", ""))
+		Assert.assertEquals(6, getCount("D2_HV", "WHERE is_deleted$ IS NULL"))
 		Assert.assertEquals(0, getCount("D2_LV", "WHERE loc = 'Zürich'"))
 		Assert.assertEquals(1, getCount("D2_LV", "WHERE loc = 'ZUERICH'"))
 		Assert.assertEquals(1, getCount("D2_HT", "WHERE loc = 'Zürich' AND is_deleted$ IS NULL"))
 		Assert.assertEquals(1, getCount("D2_HT", "WHERE loc = 'ZUERICH' AND is_deleted$ IS NULL"))
 		jdbcTemplate.execute('''
 			INSERT 
-			  INTO d2_hv 
-			VALUES (NULL, SYSDATE, SYSDATE+400, 60, 'TEST2', 'BERN')
+			  INTO d2_hv (vt_start, vt_end, deptno, dname, loc)
+			VALUES (SYSDATE, SYSDATE+400, 60, 'TEST2', 'BERN')
 		''')
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60 and is_deleted$ = 1"))
 		Assert.assertEquals(1, getCount("D2_HT", "WHERE deptno = 60 and is_deleted$ IS NULL"))
 		Assert.assertEquals(2, getCount("D2_HT", "WHERE deptno = 60 and is_deleted$ = 1"))
 		jdbcTemplate.execute('''
 			INSERT 
-			  INTO d2_hv 
-			VALUES (NULL, SYSDATE+200, NULL, 60, 'TEST2', 'BERN')
+			  INTO d2_hv (vt_start, vt_end, deptno, dname, loc)
+			VALUES (SYSDATE+200, NULL, 60, 'TEST2', 'BERN')
 		''')
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60 and is_deleted$ IS NULL"))
 		Assert.assertEquals(2, getCount("D2_HT", "WHERE deptno = 60"))
 		Assert.assertEquals(1, getCount("D2_HT", "WHERE deptno = 60 AND is_deleted$ = 1 AND vt_end <= SYSDATE+200"))
 		jdbcTemplate.execute('''
 			INSERT 
-			  INTO d2_hv 
-			VALUES (NULL, NULL, SYSDATE, 60, 'TEST2', 'BERN')
+			  INTO d2_hv (vt_start, vt_end, deptno, dname, loc)
+			VALUES (NULL, SYSDATE, 60, 'TEST2', 'BERN')
 		''')
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60 and is_deleted$ IS NULL"))
 		Assert.assertEquals(1, getCount("D2", "WHERE deptno = 60"))
@@ -128,9 +128,9 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 		''', Integer)
 		Assert.assertEquals(0, invalids)
 		jdbcTemplate.execute('''
-			INSERT 
-			  INTO d3_hv 
-			VALUES (NULL, NULL, NULL, 200 /* ignored */, 'Text')
+			INSERT
+			  INTO d3_hv (vt_start, vt_end, c1, c2)
+			VALUES (NULL, NULL, 200 /* ignored */, 'Text')
 		''')
 		Assert.assertEquals(1, getCount("D3", ""))
 		Assert.assertEquals(1, getCount("D3_HT", ""))
@@ -146,7 +146,7 @@ class UniTemporalValidTimeTest extends AbstractJdbcTest {
 			  FROM d3_hv
 		''')
 		Assert.assertEquals(0, getCount("D3_LV", ""))
-		Assert.assertEquals(0, getCount("D3_HV", ""))
+		Assert.assertEquals(0, getCount("D3_HV", "WHERE is_deleted$ IS NULL"))
 	}
 
 	@Test

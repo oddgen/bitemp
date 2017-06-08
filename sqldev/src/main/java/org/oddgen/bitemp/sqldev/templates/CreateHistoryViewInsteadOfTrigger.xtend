@@ -39,6 +39,7 @@ class CreateHistoryViewInsteadOfTrigger {
 		]) {
 			cols.add(col.columnName)
 		}
+		cols.add(BitempRemodeler.IS_DELETED_COL_NAME)
 		return cols
 	}
 

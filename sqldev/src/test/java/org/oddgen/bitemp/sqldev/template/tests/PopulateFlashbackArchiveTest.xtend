@@ -119,6 +119,7 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 				  FROM (
 				           SELECT c1, c2
 				             FROM t1_ht AS OF SCN ?
+				            WHERE is_deleted$ IS NULL
 				            MINUS
 				           SELECT c1, c2
 				             FROM t1_lt AS OF SCN ?
