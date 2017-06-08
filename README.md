@@ -91,7 +91,7 @@ For the temporal example model above, the following objects are generated as par
 | Object Type | Object Name | Description |
 | ----------- | ----------- | ----------- | 
 | View | ```EMP(_LV)``` | Latest view, latest rows only, updateable |
-| | ```EMP_HV``` | History view, all but deleted rows, updateable |
+| | ```EMP_HV``` | History view, all rows, updateable |
 | | ```EMP_FHV``` | Full history view, all rows, FBA version columns, read-only |
 | Trigger | ```EMP_TRG``` | Instead-of-trigger on ```EMP(_LV)```, calls ```EMP_API.ins```, ```EMP_API.upd``` and ```EMP_API.del``` |
 | | ```EMP_HV_TRG``` | Instead-of-trigger on ```EMP_HV```, calls ```EMP_API.ins```, ```EMP_API.upd``` and ```EMP_API.del```. |
@@ -114,7 +114,7 @@ From a user point of view the most important objects are the views and the packa
 
 * Period changed only (```vt_start```, ```vt_end```)   * Adjust validity of overlapping periods   * Update **all** columns in affected periods   * Requires period to be enlarged to have an impact* Application columns changed (```ename```, ```job```, ```mgr```, ```hiredate```, ```sal```, ```comm```, ```deptno```)   * Adjust validity of overlapping periods   * Update **changed** columns in all affected periods* Enforces temporal constraints* Keeps history and latest table in sync ### Temporal DELETE
 
-* Delete period from an existing object   * Adjust validity of overlapping periods   * Set ```IS_DELETED$``` to ```1``` in affected periods* Enforces temporal constraints* Keeps history and latest table in sync * Deleting a non-existent period is supported via ```EMP_API.DEL``` or ```EMP_API.INS```* Deleted periods are not shown in updateable latest/history view* Deleted periods are visible in read-only full history view 
+* Delete period from an existing object   * Adjust validity of overlapping periods   * Set ```IS_DELETED$``` to ```1``` in affected periods* Enforces temporal constraints* Keeps history and latest table in sync * Deleting a non-existent period is supported via ```EMP_API.DEL``` or ```EMP_API.INS```* Deleted periods are not shown in updateable latest view* Deleted periods are visible in updateable history view and in read-only full history view 
 
 ### Bulk Processing
 
