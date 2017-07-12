@@ -41,23 +41,27 @@ class SessionDao {
 		val sql = '''
 			WITH 
 			  tabs AS (
-			     SELECT /*+ materialize */ object_name AS table_name
+			     SELECT /*+ materialize */ DISTINCT object_name AS table_name
 			       FROM user_objects
 			      WHERE object_type = 'TABLE'
 			        AND generated = 'N'
 			   ),
+			   cols AS (
+			      SELECT /*+ materialize */ table_name, column_name, hidden_column
+			        FROM user_tab_cols
+			   ),
 			   hist_tabs AS (
-			      SELECT /*+ materialize */ table_name
+			      SELECT DISTINCT table_name
 			        FROM user_tab_cols
 			       WHERE column_name = '«BitempRemodeler.VALID_TIME_PERIOD_NAME.toUpperCase»'
 			         AND hidden_column = 'YES'
 			   ),
 			   pk_tabs AS (
-			      SELECT /*+ materialize */ table_name 
+			      SELECT /*+ materialize */ DISTINCT table_name 
 			        FROM all_constraints
 			        WHERE constraint_type = 'P' AND owner = USER
 			   )
-			SELECT /*+ordered use_hash(tabs) use_hash(hist_tabs) use_has(pk_tabs) */ tabs.table_name
+			SELECT /*+ordered use_hash(tabs) use_hash(hist_tabs) use_hash(pk_tabs) */ tabs.table_name
 			  FROM tabs
 			  JOIN pk_tabs ON pk_tabs.table_name = tabs.table_name 
 			  LEFT JOIN hist_tabs ON hist_tabs.table_name = tabs.table_name
