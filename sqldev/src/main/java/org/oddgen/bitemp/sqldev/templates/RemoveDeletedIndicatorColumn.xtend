@@ -27,7 +27,7 @@ class RemoveDeletedIndicatorColumn {
 
 	def compile(GeneratorModel model) '''
 		«val isDeletedColumName = BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase»
-		«IF model.inputTable.columns.get(isDeletedColumName) != null»
+		«IF model.inputTable.columns.get(isDeletedColumName) !== null»
 			--
 			-- Delete rows marked as deleted
 			--

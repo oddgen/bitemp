@@ -27,7 +27,7 @@ class InitializeHistoryTable {
 
 	def compile(GeneratorModel model) '''
 		«IF model.inputTable.exists»
-			«IF model.inputTable.histTable == null»
+			«IF model.inputTable.histTable === null»
 				«val columns = model.inputTable.columns.values.filter[!it.isTemporalValidityColumn(model) && 
 					it.columnName != BitempRemodeler.IS_DELETED_COL_NAME && it.virtualColumn == "NO"
 				]»

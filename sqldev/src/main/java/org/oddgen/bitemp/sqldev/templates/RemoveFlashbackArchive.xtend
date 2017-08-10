@@ -25,7 +25,7 @@ class RemoveFlashbackArchive {
 	private extension GeneratorModelTools generatorModelTools = new GeneratorModelTools
 	
 	def compile(Table table) '''
-		«IF table.exists && table.flashbackArchiveTable != null»
+		«IF table.exists && table.flashbackArchiveTable !== null»
 			--
 			-- Remove archive table (remove historical data)
 			--

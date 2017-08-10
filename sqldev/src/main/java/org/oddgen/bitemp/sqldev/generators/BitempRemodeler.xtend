@@ -229,14 +229,14 @@ class BitempRemodeler implements OddgenGenerator {
 		generatorModel.inputTable = tableDao.getTable(tableName)
 		generatorModel.conn = conn
 		val historyTable = generatorModel.inputTable.histTable
-		if (historyTable == null) {
-			if (generatorModel.inputTable.flashbackArchiveTable != null) {
+		if (historyTable === null) {
+			if (generatorModel.inputTable.flashbackArchiveTable !== null) {
 				generatorModel.originModel = ApiType.UNI_TEMPORAL_TRANSACTION_TIME
 			} else {
 				generatorModel.originModel = ApiType.NON_TEMPORAL
 			}
 		} else {
-			if (historyTable.flashbackArchiveTable != null) {
+			if (historyTable.flashbackArchiveTable !== null) {
 				generatorModel.originModel = ApiType.BI_TEMPORAL
 			} else {
 				generatorModel.originModel = ApiType.UNI_TEMPORAL_VALID_TIME

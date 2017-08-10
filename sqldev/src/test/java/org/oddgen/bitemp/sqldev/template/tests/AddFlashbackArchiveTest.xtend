@@ -35,7 +35,7 @@ class AddFlashbackArchiveTest extends AbstractJdbcTest {
 		val template = new AddFlashbackArchive
 		val dao = new TableDao(dataSource.connection)
 		val table = dao.getTable("T1")
-		Assert.assertTrue(table.flashbackArchiveTable == null)
+		Assert.assertTrue(table.flashbackArchiveTable === null)
 		val gen = new BitempRemodeler
 		val params = gen.getParams(dataSource.connection, "TABLE", "T1")
 		params.put(BitempRemodeler.CRUD_COMPATIBILITY_ORIGINAL_TABLE, "0")
@@ -47,7 +47,7 @@ class AddFlashbackArchiveTest extends AbstractJdbcTest {
 			jdbcTemplate.execute(stmt)
 		}
 		val tableAfter = dao.getTable("T1")
-		Assert.assertTrue(tableAfter.flashbackArchiveTable != null)
+		Assert.assertTrue(tableAfter.flashbackArchiveTable !== null)
 	}
 
 	@BeforeClass

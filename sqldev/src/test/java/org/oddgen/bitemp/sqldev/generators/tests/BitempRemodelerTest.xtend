@@ -71,6 +71,7 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 	@Test
 	def generateEmpDefaultTest() {
 		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
+		val fbaName = params.get(BitempRemodeler.FLASHBACK_ARCHIVE_NAME)
 		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
 		val expectedStart = '''
 			-- 
@@ -81,7 +82,7 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 			-- - Parameters
 			--     - Generate table API?                   : Yes
 			--     - CRUD compatibility for original table?: No
-			--     - Flashback data archive name           : FBA1
+			--     - Flashback data archive name           : «fbaName»
 			--     - Flashback archive context level       : Keep current level
 			--     - Granularity                           : Day
 			--     - Column name for valid from            : vt_start
@@ -109,7 +110,7 @@ class BitempRemodelerTest extends AbstractJdbcTest {
 		params.put(BitempRemodeler.GEN_TRANSACTION_TIME, "1")
 		params.put(BitempRemodeler.GEN_VALID_TIME, "1")
 		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
-		Assert.assertTrue(result != null)
+		Assert.assertTrue(result !== null)
 	}
 
 	@BeforeClass

@@ -28,7 +28,7 @@ class CreateHistoryTable {
 	def compile(
 		GeneratorModel model) '''
 		«IF model.inputTable.exists»
-			«IF model.inputTable.histTable == null»
+			«IF model.inputTable.histTable === null»
 				--
 				-- Create history table
 				--

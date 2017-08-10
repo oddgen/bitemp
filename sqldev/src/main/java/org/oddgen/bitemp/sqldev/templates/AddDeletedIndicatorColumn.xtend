@@ -27,7 +27,7 @@ class AddDeletedIndicatorColumn {
 
 	def compile(GeneratorModel model) '''
 		«val isDeletedColumName = BitempRemodeler.IS_DELETED_COL_NAME.toUpperCase»
-		«IF model.inputTable.columns.get(isDeletedColumName) == null»
+		«IF model.inputTable.columns.get(isDeletedColumName) === null»
 			--
 			-- Add indicator for deleted rows
 			--

@@ -193,14 +193,14 @@ class SessionDao {
 				       AND rownum = 1
 			'''
 			val fileName = jdbcTemplate.queryForObject(sql, String)
-			if (fileName != null && !fileName.empty) {
+			if (fileName !== null && !fileName.empty) {
 				var String separator = null
 				if (fileName.contains("/")) {
 					separator = "/"
 				} else if (fileName.contains("\\")) {
 					separator = "\\"
 				}
-				if (separator != null) {
+				if (separator !== null) {
 					return '''«fileName.substring(0,fileName.lastIndexOf(separator))»«separator»'''
 				} else {
 					return ""

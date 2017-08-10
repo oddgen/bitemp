@@ -27,7 +27,7 @@ class FlashbackArchiveTableDaoTest extends AbstractJdbcTest {
 	def void notFound() {
 		val dao = new TableDao(dataSource.connection)
 		val table = dao.getArchiveTable("BONUS")
-		Assert.assertTrue(table == null)
+		Assert.assertTrue(table === null)
 	}
 
 	@Test
@@ -37,7 +37,7 @@ class FlashbackArchiveTableDaoTest extends AbstractJdbcTest {
 		''')
 		val dao = new TableDao(dataSource.connection)
 		val table = dao.getArchiveTable("FBA_TABLE")
-		Assert.assertTrue(table != null)
+		Assert.assertTrue(table !== null)
 		Assert.assertEquals("FBA1", table.flashbackArchiveName)
 		val objectId = jdbcTemplate.queryForObject('''
 			SELECT object_id 

@@ -42,13 +42,13 @@ class RemoveFlashbackArchiveTest extends AbstractJdbcTest {
 		val template = new RemoveFlashbackArchive
 		val dao = new TableDao(dataSource.connection)
 		val table = dao.getTable("T1")
-		Assert.assertTrue(table.flashbackArchiveTable != null)
+		Assert.assertTrue(table.flashbackArchiveTable !== null)
 		val script = template.compile(table).toString
 		for (stmt : script.statements) {
 			jdbcTemplate.execute(stmt)
 		}
 		val tableAfter = dao.getTable("T1")
-		Assert.assertTrue(tableAfter.flashbackArchiveTable == null || tableAfter.flashbackArchiveTable.status == 'DISABLED')
+		Assert.assertTrue(tableAfter.flashbackArchiveTable === null || tableAfter.flashbackArchiveTable.status == 'DISABLED')
 	}
 
 	@BeforeClass

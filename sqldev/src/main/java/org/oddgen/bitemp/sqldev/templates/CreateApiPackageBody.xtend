@@ -292,7 +292,7 @@ class CreateApiPackageBody {
 			         	   in_proc  => in_proc,
 			         	   in_level => co_trace,
 			         	   in_line => '   - «String.format("%-30s", col)»: ' || «
-			         	      IF col == validFrom || col == validTo || dates.get(col.toUpperCase) != null
+			         	      IF col == validFrom || col == validTo || dates.get(col.toUpperCase) !== null
 			         	      	»TO_CHAR(in_collection(i).«col», co_format)«
 			         	      ELSE
 			         	      	»in_collection(i).«col

@@ -51,14 +51,14 @@ class GeneratorModelTools {
 
 	def relevantParams(GeneratorModel model) {
 		val relevantParams = model.params.keySet.filter [
-			(model.paramStates.get(it) == null || model.paramStates.get(it) == true) &&
+			(model.paramStates.get(it) === null || model.paramStates.get(it) == true) &&
 				it != BitempRemodeler.GEN_TRANSACTION_TIME && it != BitempRemodeler.GEN_VALID_TIME
 		]
 		return relevantParams
 	}
 
 	def exists(Table table) {
-		return table != null && table.columns != null && !table.columns.empty
+		return table !== null && table.columns !== null && !table.columns.empty
 	}
 
 	def getHistTable(Table table) {
@@ -68,7 +68,7 @@ class GeneratorModelTools {
 
 	def getNewHistTable(GeneratorModel model) {
 		val histTable = model.inputTable.histTable
-		if (histTable !=
+		if (histTable !==
 			null) {
 			return histTable
 		} else {
@@ -134,9 +134,9 @@ class GeneratorModelTools {
 	def getFullDataType(Column column) {
 		val result = '''
 			«IF column.dataType == "NUMBER"»
-				«column.dataType»(«IF column.dataPrecision != null»«column.dataPrecision»«ELSE»38«ENDIF»«IF column.dataScale != null», «column.dataScale»«ENDIF»)
+				«column.dataType»(«IF column.dataPrecision !== null»«column.dataPrecision»«ELSE»38«ENDIF»«IF column.dataScale !== null», «column.dataScale»«ENDIF»)
 			«ELSEIF column.dataType == "FLOAT"»
-				«column.dataType»«IF column.dataPrecision != null»(«column.dataPrecision»)«ENDIF»
+				«column.dataType»«IF column.dataPrecision !== null»(«column.dataPrecision»)«ENDIF»
 			«ELSEIF #["CHAR", "VARCHAR2", "NCHAR", "NVARCHAR2"].contains(column.dataType)»
 				«column.dataType»(«column.charLength»«IF column.charUsed == "C"» CHAR«ENDIF»)
 			«ELSE»
@@ -156,7 +156,7 @@ class GeneratorModelTools {
 	def getDefaultClause(
 		Column column) {
 		val result = '''
-			«IF column.dataDefault != null && column.identityColumn == "NO"»DEFAULT«IF column.defaultOnNull == "YES"» ON NULL«ENDIF» «column.dataDefault»«ENDIF»
+			«IF column.dataDefault !== null && column.identityColumn == "NO"»DEFAULT«IF column.defaultOnNull == "YES"» ON NULL«ENDIF» «column.dataDefault»«ENDIF»
 		'''
 		return result.toString.trim
 	}
