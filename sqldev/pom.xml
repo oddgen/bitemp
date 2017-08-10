@@ -5,11 +5,13 @@
 	<!-- The Basics -->
 	<groupId>org.oddgen</groupId>
 	<artifactId>org.oddgen.bitemp.sqldev</artifactId>
-	<version>0.3.1</version>
+	<version>0.4.0-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jdk.version>1.7</jdk.version>
+		<jdk.version.test>1.8</jdk.version.test>
+		<xtend.version>2.12.0</xtend.version>
 		<sqldev.basedir>/Applications/SQLDeveloper17.2.0.app/Contents/Resources/sqldeveloper</sqldev.basedir>
 		<final.name>bitemp_for_SQLDev_${project.version}</final.name>
 	</properties>
@@ -77,7 +79,7 @@
 			<!-- configure annotated logging via class com.jcabi, see https://github.com/jcabi/jcabi-aspects/issues/156 -->
 			<groupId>com.jcabi</groupId>
 			<artifactId>jcabi-aspects</artifactId>
-			<version>0.22.5</version>
+			<version>0.22.6</version>
 		</dependency>
 		<dependency>
 			<!-- override dependency from jcabi-aspects -->
@@ -87,12 +89,14 @@
 		</dependency>
 		<dependency>
 			<!-- override dependency from jcabi-aspects -->
+			<!-- version 1.8.10 throws Exception: Not a valid class file (no CAFEBABE header)  -->
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjrt</artifactId>
 			<version>1.8.9</version>
 		</dependency>
 		<dependency>
 			<!-- required for jcabi-aspects when weaving Java 1.8 classes -->
+			<!-- version 1.8.10 throws Exception: Not a valid class file (no CAFEBABE header)  -->
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjtools</artifactId>
 			<version>1.8.9</version>
@@ -102,19 +106,19 @@
 				on http://www.slf4j.org/ -->
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>
-			<version>1.7.21</version>
+			<version>1.7.25</version>
 		</dependency>
 		<dependency>
 			<!-- Xtend comes with some runtime dependencies... -->
-			<!-- override version of provided by org.oddgen.sqldev --> 
+			<!-- override version of provided by org.oddgen.sqldev -->
 			<groupId>org.eclipse.xtend</groupId>
 			<artifactId>org.eclipse.xtend.lib</artifactId>
-			<version>2.10.0</version>
+			<version>${xtend.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
-			<version>4.3.2.RELEASE</version>
+			<version>4.3.10.RELEASE</version>
 		</dependency>
 		<!-- test dependencies -->
 		<dependency>
@@ -141,8 +145,8 @@
 			<plugin>
 				<groupId>org.eclipse.xtend</groupId>
 				<artifactId>xtend-maven-plugin</artifactId>
-				<!-- change from 2.9.2 to 2.10.0 might need "mvn -U" to update snapshots -->
-				<version>2.10.0</version>
+				<!-- change version might need "mvn -U" to update snapshots -->
+				<version>${xtend.version}</version>
 				<executions>
 					<execution>
 						<id>main</id>
@@ -160,7 +164,7 @@
 							<goal>testCompile</goal>
 						</goals>
 						<configuration>
-							<javaSourceVersion>${jdk.version}</javaSourceVersion>
+							<javaSourceVersion>${jdk.version.test}</javaSourceVersion>
 							<testOutputDirectory>${project.basedir}/src/test/xtend-gen</testOutputDirectory>
 						</configuration>
 					</execution>
@@ -168,15 +172,32 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<version>3.5.1</version>
+				<version>3.6.2</version>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<source>${jdk.version}</source>
 					<target>${jdk.version}</target>
+					<!-- used by Maven build -->
+					<testSource>${jdk.version.test}</testSource>
+					<testTarget>${jdk.version.test}</testTarget>
 					<includes>
 						<include>**/*.java</include>
 					</includes>
 				</configuration>
+				<executions>
+					<!-- used by Eclipse when updating project -->
+					<execution>
+						<id>test-compile</id>
+						<phase>process-test-sources</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+						<configuration>
+							<source>${jdk.version.test}</source>
+							<target>${jdk.version.test}</target>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>com.jcabi</groupId>
@@ -193,7 +214,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.19.1</version>
+				<version>2.20</version>
 				<configuration>
 					<!-- -noverify is required in some environments to avoid java.lang.VerifyError -->
 					<argLine>-noverify
@@ -230,12 +251,12 @@
 					<execution>
 						<phase>prepare-package</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<copy failonerror="true" file="sqldeveloper.xml" tofile="target/sqldeveloper.xml" />
 								<copy failonerror="true" file="bundle.xml" tofile="target/bundle.xml" />
 								<copy failonerror="true" file="extension.xml"
 									tofile="target/classes/META-INF/extension.xml" />
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>
@@ -266,7 +287,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.12</version>
+				<version>3.0.0</version>
 				<executions>
 					<execution>
 						<id>parse-version</id>
@@ -321,7 +342,7 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.3.0</version>
 				<extensions>true</extensions>
 				<configuration>
 					<finalName>${project.name}</finalName>
@@ -341,8 +362,17 @@
 							org.oddgen.bitemp.sqldev,
 							org.oddgen.bitemp.sqldev.generators,
 							org.oddgen.bitemp.sqldev.model,
+							org.oddgen.bitemp.sqldev.model.generator,
 							org.oddgen.bitemp.sqldev.resources
 						</Export-Package>
+						<_exportcontents>
+							org.eclipse.xtext.xbase.lib,
+							org.aspectj.runtime.internal,
+							com.jcabi.aspects,
+							org.aspectj.lang,
+							org.aspectj.runtime,
+							org.aspectj.lang.reflect
+						</_exportcontents>
 						<Require-Bundle>
 							org.oddgen.sqldev,
 							oracle.javatools-nodeps,
@@ -361,7 +391,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.6</version>
+				<version>3.0.0</version>
 				<configuration>
 					<finalName>${final.name}</finalName>
 					<appendAssemblyId>false</appendAssemblyId>
@@ -394,7 +424,7 @@
 									<pluginExecutionFilter>
 										<groupId>org.apache.maven.plugins</groupId>
 										<artifactId>maven-dependency-plugin</artifactId>
-										<versionRange>[2.10,)</versionRange>
+										<versionRange>[3.0.1,)</versionRange>
 										<goals>
 											<goal>copy-dependencies</goal>
 										</goals>
@@ -412,7 +442,7 @@
 											build-helper-maven-plugin
 										</artifactId>
 										<versionRange>
-											[1.12,)
+											[3.0.0,)
 										</versionRange>
 										<goals>
 											<goal>parse-version</goal>
@@ -492,22 +522,4 @@
 		<tag>master</tag>
 		<url>https://github.com/oddgen/bitemp/</url>
 	</scm>
-	<prerequisites>
-		<!-- SQL Developer 4.1.3 installation for Oracle dependencies, see sqldev.basedir -->
-		<!-- JDK 1.7 to ensure compatiblity to SQL Developer 4.0.x, using JDK 1.8 
-			with target 1.7 should be OK -->
-		<maven>3.3.9</maven>
-	</prerequisites>
-
-	<!-- Distribution Management for Maven Central Repository -->
-	<distributionManagement>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<repository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
 </project>
