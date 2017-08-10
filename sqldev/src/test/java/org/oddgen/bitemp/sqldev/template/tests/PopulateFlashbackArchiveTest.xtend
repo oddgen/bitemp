@@ -96,6 +96,8 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		val stmts = getStatements(script)
 		for (stmt : stmts) {
 			jdbcTemplate.execute(stmt)
+			// try to avoid wrong results (3 instead of 0)
+			Thread.sleep(500)
 		}
 		val scns = jdbcTemplate.queryForList('''
 			SELECT versions_startscn
@@ -247,9 +249,9 @@ class PopulateFlashbackArchiveTest extends AbstractJdbcTest {
 		val stmts = getStatements(script)
 		for (stmt : stmts) {
 			jdbcTemplate.execute(stmt)
+			// try to avoid wrong query result (3 rows instead of 7)
+			Thread.sleep(1000)
 		} 
-		// try to avoid wrong query result (3 rows instead of 7)
-		Thread.sleep(500)
 		val scns = jdbcTemplate.queryForList('''
 			SELECT versions_startscn
 			 FROM t2_ht VERSIONS BETWEEN TIMESTAMP SYSTIMESTAMP - INTERVAL '1' DAY AND SYSTIMESTAMP

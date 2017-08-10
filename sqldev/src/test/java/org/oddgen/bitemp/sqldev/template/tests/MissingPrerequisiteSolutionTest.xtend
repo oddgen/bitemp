@@ -17,6 +17,7 @@ package org.oddgen.bitemp.sqldev.template.tests
 
 import org.junit.Assert
 import org.junit.Test
+import org.oddgen.bitemp.sqldev.dal.SessionDao
 import org.oddgen.bitemp.sqldev.resources.BitempResources
 import org.oddgen.bitemp.sqldev.templates.MissingPrerequisiteSolution
 import org.oddgen.bitemp.sqldev.tests.AbstractJdbcTest
@@ -48,10 +49,12 @@ class MissingPrerequisiteSolutionTest extends AbstractJdbcTest {
 
 	@Test
 	def noFlashbackArchive() {
+		val dao = new SessionDao(dataSource.connection)
+		val fbas = dao.allFlashbackArchives
 		val template = new MissingPrerequisiteSolution
 		val expected = '''
 			-- to solve "«BitempResources.get("ERROR_NO_FLASHBACK_ARCHIVE")»" run the following statements as SYS:
-			GRANT FLASHBACK ARCHIVE ON FBA1 TO SCOTT;
+			GRANT FLASHBACK ARCHIVE ON «fbas?.get(0)» TO SCOTT;
 			-- quotas for flashback archive tablespaces required to ensure the background process does not fail with ORA-01950 when creating archive tables
 			-- alternatively to the UNLIMITED TABLESPACE privilege you may set quotes on tablespaces defined in DBA_FLASHBACK_ARCHIVE_TS
 			GRANT UNLIMITED TABLESPACE TO SCOTT;
