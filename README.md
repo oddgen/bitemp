@@ -1,6 +1,6 @@
 # Bitemp Remodeler for SQL Developer
 
-<img src="https://github.com/oddgen/bitemp/blob/master/images/switch_models.png?raw=true" style="padding-left:15px; padding-bottom:20px" title="Tooling for dictionary-driven code generation" align="right" width="299px"/>
+<img src="https://raw.github.com/oddgen/bitemp/master/images/switch_models.png" style="padding-left:15px; padding-bottom:20px" title="Tooling for dictionary-driven code generation" align="right" width="299px"/>
 
 ## Introduction
 
@@ -16,7 +16,7 @@ For efficient bulk operations, dedicated procedures for initial and delta load o
 
 The Oracle Database 12c supports the transaction time dimension through flashback data archive and the valid time dimension through temporal validity. Bitemp Remodeler uses these features to support the following four models:
 
-<img src="https://github.com/oddgen/bitemp/blob/master/images/four_models.png?raw=true" title="Four models"/>
+<img src="https://raw.github.com/oddgen/bitemp/master/images/four_models.png" title="Four models"/>
 
 ### Switching To Any Model
 
@@ -36,24 +36,28 @@ The latest table contains all columns of the original non-temporal table plus
 
 | Column            | Comment       | Override Name in Generator? |
 | :---------------- | :------------ | :-------------------------: |
-|```IS_DELETED$``` | This column is added for uni-temporal valid time and bi-temporal models. ```1``` means that a period is marked as deleted, ```NULL``` means that the period is active (default) | No |
+|```IS_DELETED$``` | This column is added for uni-temporal valid time and bi-temporal models. ```1``` means that a period is marked as deleted, ```NULL``` means that the period is active (default) | No |
+
 ### History Table
 
 The history table is maintained for uni-temporal valid time and bi-temporal models. Each row represents a period.
-The history table contains all columns of the latest table plus
+
+The history table contains all columns of the latest table plus
 
 | Column            | Comment       | Override Name in Generator? |
 | :---------------- | :------------ | :-------------------------: |
 |```HIST_ID$```    | primary key, identity column, always generated | No |
 |```VT_START```    | start of valid time period | Yes |
-|```VT_END```      | end of valid time period | Yes ||```VT$```	        | hidden virtual column, temporal validity period definition | No |
+|```VT_END```      | end of valid time period | Yes |
+|```VT$```	        | hidden virtual column, temporal validity period definition | No |
 ### Temporal vs. Non-Temporal Columns
 
 All columns in a temporal table are temporal. This sounds obvious, but it is not. Usually you define temporality per column and not per table. For example in a dimensional data mart model you assign the slowly changing dimension type SCD1 or SCD2 per column. This definition drives the creation of a new dimension record. It is basically the information why a table is temporal. To not loose this information, it is recommended to amend the table and/or column comments accordingly. 
 
 Technically this simplifies the model definition, since there is no formal need to distinguish between temporal and non-temporal columns.
 
-But the drawback is, that a change on non-temporal columns may create additional - from a business perspective - unnecessary periods.
+But the drawback is, that a change on non-temporal columns may create additional - from a business perspective - unnecessary periods.
+
 ### Periods and Temporal Constraints
 
 Oracle uses right-open intervals for periods in flashback data archive and temporal validity. This means that ```VT_START``` is part of the period but ```VT_END``` is not. To query the actual valid data, you have to define a filter condition as the following one:
@@ -65,22 +69,32 @@ WHERE (vt_start IS NULL OR vt_start <= SYSTIMESTAMP)
 
 The following temporal constraints are enforced for uni-temporal valid time and bi-temporal models:
 
-* No gaps between periods   * First ```VT_START``` ```IS NULL```   * Last ```VT_END``` ```IS NULL```   * Deleted periods are identified with the condition ```IS_DELETED$ = 1```
-   * No overlapping periods* No invalid periods* No duplicate periods* Merge identical, connected periods immediately
+* No gaps between periods
+   * First ```VT_START``` ```IS NULL```
+   * Last ```VT_END``` ```IS NULL```
+   * Deleted periods are identified with the condition ```IS_DELETED$ = 1```
+   * No overlapping periods
+* No invalid periods
+* No duplicate periods
+* Merge identical, connected periods immediately
 
 ### Original Primary Key
 
-* Identification over all periods* Foreign key constraint on history table to latest table* Unique constraint for original primary key columns plus ```VT_START``` in history table* Must not be changed (use surrogate key, if this is not acceptable)
+* Identification over all periods
+* Foreign key constraint on history table to latest table
+* Unique constraint for original primary key columns plus ```VT_START``` in history table
+* Must not be changed (use surrogate key, if this is not acceptable)
 
 ### Original Foreign Keys
 
-* No foreign key constraints on history table for original foreign keys* Non-unique indexes on original foreign keys in history table
+* No foreign key constraints on history table for original foreign keys
+* Non-unique indexes on original foreign keys in history table
 
 ### Temporal Example Data Model
 
 The diagram looks the same for a uni-temporal valid time and bi-temporal data model. In a bi-temporal model a flashback data archive is associated with the history tables ```EMP_HT``` and ```DEPT_HT```.
 
-<img src="https://github.com/oddgen/bitemp/blob/master/images/temporal_model.png?raw=true" title="Temporal Example Model"/>
+<img src="https://raw.github.com/oddgen/bitemp/master/images/temporal_model.png" title="Temporal Example Model"/>
 
 ## Temporal DML
 
@@ -108,18 +122,41 @@ From a user point of view the most important objects are the views and the packa
 
 ### Temporal INSERT
 
-* Adds a period to a new or existing object   * Deletes enclosing, existing periods   * Adjusts validity of existing, overlapping periods* ```SYSTIMESTAMP``` is used for ```VT_START``` for inserts on latest view* Enforces temporal constraints* Keeps history and latest table in sync
+* Adds a period to a new or existing object
+   * Deletes enclosing, existing periods
+   * Adjusts validity of existing, overlapping periods
+* ```SYSTIMESTAMP``` is used for ```VT_START``` for inserts on latest view
+* Enforces temporal constraints
+* Keeps history and latest table in sync
 
 ### Temporal UPDATE
 
-* Period changed only (```vt_start```, ```vt_end```)   * Adjust validity of overlapping periods   * Update **all** columns in affected periods   * Requires period to be enlarged to have an impact* Application columns changed (```ename```, ```job```, ```mgr```, ```hiredate```, ```sal```, ```comm```, ```deptno```)   * Adjust validity of overlapping periods   * Update **changed** columns in all affected periods* Enforces temporal constraints* Keeps history and latest table in sync ### Temporal DELETE
+* Period changed only (```vt_start```, ```vt_end```)
+   * Adjust validity of overlapping periods
+   * Update **all** columns in affected periods
+   * Requires period to be enlarged to have an impact
+* Application columns changed (```ename```, ```job```, ```mgr```, ```hiredate```, ```sal```, ```comm```, ```deptno```)
+   * Adjust validity of overlapping periods
+   * Update **changed** columns in all affected periods
+* Enforces temporal constraints
+* Keeps history and latest table in sync 
 
-* Delete period from an existing object   * Adjust validity of overlapping periods   * Set ```IS_DELETED$``` to ```1``` in affected periods* Enforces temporal constraints* Keeps history and latest table in sync * Deleting a non-existent period is supported via ```EMP_API.DEL``` or ```EMP_API.INS```* Deleted periods are not shown in updateable latest view* Deleted periods are visible in updateable history view and in read-only full history view 
+### Temporal DELETE
+
+* Delete period from an existing object
+   * Adjust validity of overlapping periods
+   * Set ```IS_DELETED$``` to ```1``` in affected periods
+* Enforces temporal constraints
+* Keeps history and latest table in sync 
+* Deleting a non-existent period is supported via ```EMP_API.DEL``` or ```EMP_API.INS```
+* Deleted periods are not shown in updateable latest view
+* Deleted periods are visible in updateable history view and in read-only full history view 
 
 ### Bulk Processing
 
 Use the procedures ```create_load_tables```, ```init_load``` and ```delta_load``` for processing large data sets. See documentation in generated package specification for details.
-## Releases
+
+## Releases
 
 Binary releases are published [here](https://github.com/oddgen/bitemp/releases).
 
