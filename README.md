@@ -1,6 +1,6 @@
 # Bitemp Remodeler for SQL Developer
 
-<img src="https://raw.github.com/oddgen/bitemp/master/images/switch_models.png" style="padding-left:15px; padding-bottom:20px" title="Tooling for dictionary-driven code generation" align="right" width="299px"/>
+<img src="https://raw.github.com/oddgen/bitemp/main/images/switch_models.png" style="padding-left:15px; padding-bottom:20px" title="Tooling for dictionary-driven code generation" align="right" width="299px"/>
 
 ## Introduction
 
@@ -16,7 +16,7 @@ For efficient bulk operations, dedicated procedures for initial and delta load o
 
 The Oracle Database 12c supports the transaction time dimension through flashback data archive and the valid time dimension through temporal validity. Bitemp Remodeler uses these features to support the following four models:
 
-<img src="https://raw.github.com/oddgen/bitemp/master/images/four_models.png" title="Four models"/>
+<img src="https://raw.github.com/oddgen/bitemp/main/images/four_models.png" title="Four models"/>
 
 ### Switching To Any Model
 
@@ -94,7 +94,7 @@ The following temporal constraints are enforced for uni-temporal valid time and 
 
 The diagram looks the same for a uni-temporal valid time and bi-temporal data model. In a bi-temporal model a flashback data archive is associated with the history tables ```EMP_HT``` and ```DEPT_HT```.
 
-<img src="https://raw.github.com/oddgen/bitemp/master/images/temporal_model.png" title="Temporal Example Model"/>
+<img src="https://raw.github.com/oddgen/bitemp/main/images/temporal_model.png" title="Temporal Example Model"/>
 
 ## Temporal DML
 
