@@ -160,21 +160,6 @@ Use the procedures ```create_load_tables```, ```init_load``` and ```delta_load``
 
 Binary releases are published [here](https://github.com/oddgen/bitemp/releases).
 
-## Issues
-Please file your bug reports, enhancement requests, questions and other support requests within [Github's issue tracker](https://help.github.com/articles/about-issues/).
-
-* [Questions](https://github.com/oddgen/bitemp/issues?q=is%3Aissue+label%3Aquestion)
-* [Open enhancements](https://github.com/oddgen/bitemp/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
-* [Open bugs](https://github.com/oddgen/bitemp/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
-* [Submit new issue](https://github.com/oddgen/bitemp/issues/new)
-
-## How to Contribute
-
-1. Describe your idea by [submitting an issue](https://github.com/oddgen/bitemp/issues/new)
-2. [Fork the bitemp repository](https://github.com/oddgen/bitemp/fork)
-3. [Create a branch](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/), commit and publish your changes and enhancements
-4. [Create a pull request](https://help.github.com/articles/creating-a-pull-request/)
-
 ## How to Build
 
 1. [Download](http://www.oracle.com/technetwork/developer-tools/sql-developer/downloads/index.html) and install SQL Developer 4.1.3
